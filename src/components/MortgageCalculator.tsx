@@ -10,7 +10,7 @@ import GoalSettingStep from "./steps/GoalSettingStep";
 import { Heading } from "./ui/Heading";
 
 const MortgageCalculator: React.FC = () => {
-  const { currentStep } = useMortgage();
+  const { currentStep, setCurrentStep, userData } = useMortgage();
   const [apiKey, setApiKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,6 +20,19 @@ const MortgageCalculator: React.FC = () => {
       setApiKey(storedApiKey);
     }
   }, []);
+
+  // Validate step progression
+  useEffect(() => {
+    if (currentStep === 1 && (!userData.location.city || !userData.location.state)) {
+      setCurrentStep(0);
+    } else if (currentStep === 2 && !userData.financials.annualIncome) {
+      setCurrentStep(1);
+    } else if (currentStep === 3 && (!userData.loanDetails.interestRate || !userData.loanDetails.propertyTax)) {
+      setCurrentStep(2);
+    } else if (currentStep === 4 && !userData.results.maxHomePrice) {
+      setCurrentStep(3);
+    }
+  }, [currentStep, userData]);
 
   const handleApiKeySet = (key: string) => {
     setApiKey(key);
