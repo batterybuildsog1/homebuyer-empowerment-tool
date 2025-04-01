@@ -7,14 +7,49 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
-import { DollarSign, ArrowLeft } from "lucide-react";
+import { DollarSign, ArrowLeft, CreditCard, ChevronDown, HelpCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { 
+  Collapsible, 
+  CollapsibleContent, 
+  CollapsibleTrigger 
+} from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const mitigatingFactorsOptions = [
-  { id: "reserves", label: "Cash reserves (at least 3 months of payments)" },
-  { id: "residualIncome", label: "High residual income" },
-  { id: "housingHistory", label: "Excellent housing payment history" },
-  { id: "minimalDebt", label: "Minimal increase in housing payment" },
+  { 
+    id: "reserves", 
+    label: "Cash reserves (at least 3 months of payments)",
+    description: "You have enough cash saved to cover at least three months of mortgage payments, including principal, interest, taxes, and insurance."
+  },
+  { 
+    id: "residualIncome", 
+    label: "High residual income",
+    description: "After paying all monthly obligations (including the new mortgage), you have a significant amount of income left over (typically at least 20% of your gross monthly income)."
+  },
+  { 
+    id: "housingHistory", 
+    label: "Excellent housing payment history",
+    description: "You have a perfect 12-24 month history of on-time rent or mortgage payments, ideally with payments similar to your proposed new payment."
+  },
+  { 
+    id: "minimalDebt", 
+    label: "Minimal increase in housing payment",
+    description: "Your proposed new monthly housing payment is not significantly higher than your current rent or mortgage payment (typically less than 20% increase)."
+  },
+];
+
+const debtCategories = [
+  { id: "carLoan", label: "Car Loans" },
+  { id: "studentLoan", label: "Student Loans" },
+  { id: "creditCard", label: "Credit Cards" },
+  { id: "personalLoan", label: "Personal Loans" },
+  { id: "otherDebt", label: "Other Debt" }
 ];
 
 const FinancialStep: React.FC = () => {
@@ -23,12 +58,39 @@ const FinancialStep: React.FC = () => {
   const [formData, setFormData] = useState({
     annualIncome: userData.financials.annualIncome || 0,
     monthlyDebts: userData.financials.monthlyDebts || 0,
+    debtItems: userData.financials.debtItems || {
+      carLoan: 0,
+      studentLoan: 0,
+      creditCard: 0,
+      personalLoan: 0,
+      otherDebt: 0
+    },
     ficoScore: userData.financials.ficoScore || 680,
-    downPayment: userData.financials.downPayment || 0,
+    downPaymentPercent: userData.financials.downPaymentPercent || 20,
     mitigatingFactors: userData.financials.mitigatingFactors || [],
   });
   
+  const [isDebtsOpen, setIsDebtsOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const calculateTotalMonthlyDebt = () => {
+    return Object.values(formData.debtItems).reduce((sum, value) => sum + (Number(value) || 0), 0);
+  };
+
+  const handleDebtItemChange = (id: string, value: number) => {
+    setFormData(prev => {
+      const updatedDebtItems = {
+        ...prev.debtItems,
+        [id]: value
+      };
+      
+      return {
+        ...prev,
+        debtItems: updatedDebtItems,
+        monthlyDebts: Object.values(updatedDebtItems).reduce((sum, val) => sum + (Number(val) || 0), 0)
+      };
+    });
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -37,8 +99,8 @@ const FinancialStep: React.FC = () => {
       newErrors.annualIncome = "Annual income must be greater than 0";
     }
     
-    if (formData.downPayment < 0) {
-      newErrors.downPayment = "Down payment cannot be negative";
+    if (formData.downPaymentPercent < 0 || formData.downPaymentPercent > 100) {
+      newErrors.downPaymentPercent = "Down payment percentage must be between 0 and 100";
     }
     
     if (formData.ficoScore < 300 || formData.ficoScore > 850) {
@@ -52,7 +114,16 @@ const FinancialStep: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      updateFinancials(formData);
+      // Convert downPaymentPercent to an actual dollar amount in the context later
+      updateFinancials({
+        annualIncome: formData.annualIncome,
+        monthlyDebts: formData.monthlyDebts,
+        debtItems: formData.debtItems,
+        ficoScore: formData.ficoScore,
+        downPaymentPercent: formData.downPaymentPercent,
+        downPayment: 0, // This will be calculated based on home price
+        mitigatingFactors: formData.mitigatingFactors,
+      });
       toast.success("Financial information saved!");
       setCurrentStep(2);
     }
@@ -111,37 +182,67 @@ const FinancialStep: React.FC = () => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="monthlyDebts">Monthly Debt Payments</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="monthlyDebts"
-                type="number"
-                className="pl-10"
-                value={formData.monthlyDebts}
-                onChange={(e) => setFormData({ ...formData, monthlyDebts: parseFloat(e.target.value) || 0 })}
-                placeholder="500"
-              />
-            </div>
+            <Label>Monthly Debt Payments: {formatCurrency(formData.monthlyDebts)}</Label>
+            <Collapsible
+              open={isDebtsOpen}
+              onOpenChange={setIsDebtsOpen}
+              className="border rounded-md"
+            >
+              <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-secondary">
+                <div className="flex items-center">
+                  <CreditCard className="mr-2 h-5 w-5 text-muted-foreground" />
+                  <span>Itemize your monthly debts</span>
+                </div>
+                <ChevronDown className={`h-4 w-4 transform transition-transform ${isDebtsOpen ? 'rotate-180' : ''}`} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 pt-0 space-y-3">
+                {debtCategories.map((category) => (
+                  <div key={category.id} className="space-y-1">
+                    <Label htmlFor={category.id}>{category.label}</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        id={category.id}
+                        type="number"
+                        placeholder="0"
+                        className="pl-10"
+                        value={(formData.debtItems as any)[category.id] || 0}
+                        onChange={(e) => handleDebtItemChange(category.id, parseFloat(e.target.value) || 0)}
+                      />
+                    </div>
+                  </div>
+                ))}
+                <div className="flex justify-between items-center font-medium pt-2 border-t">
+                  <span>Total Monthly Debt:</span>
+                  <span>{formatCurrency(calculateTotalMonthlyDebt())}</span>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
             <p className="text-sm text-muted-foreground">
-              Include car loans, student loans, credit cards, personal loans, etc.
+              Include all recurring monthly debt obligations.
             </p>
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="downPayment">Down Payment Amount</Label>
-            <div className="relative">
-              <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-              <Input
-                id="downPayment"
-                type="number"
-                className="pl-10"
-                value={formData.downPayment}
-                onChange={(e) => setFormData({ ...formData, downPayment: parseFloat(e.target.value) || 0 })}
-                placeholder="50000"
+            <Label htmlFor="downPaymentPercent">Down Payment Percentage</Label>
+            <div className="flex gap-4 items-center">
+              <Slider
+                id="downPaymentPercent"
+                min={0}
+                max={100}
+                step={1}
+                value={[formData.downPaymentPercent]}
+                onValueChange={(value) => setFormData({ ...formData, downPaymentPercent: value[0] })}
+                className="flex-grow"
               />
+              <div className="w-16 text-center font-medium">
+                {formData.downPaymentPercent}%
+              </div>
             </div>
-            {errors.downPayment && <p className="text-sm text-destructive">{errors.downPayment}</p>}
+            {errors.downPaymentPercent && <p className="text-sm text-destructive">{errors.downPaymentPercent}</p>}
+            <p className="text-sm text-muted-foreground">
+              Typical down payments range from 3% to 20% of the purchase price.
+            </p>
           </div>
           
           <div className="space-y-4">
@@ -169,29 +270,51 @@ const FinancialStep: React.FC = () => {
             </div>
           </div>
           
-          <div className="space-y-3">
-            <Label>Mitigating Factors (if any)</Label>
-            <div className="space-y-2">
-              {mitigatingFactorsOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={option.id}
-                    checked={formData.mitigatingFactors.includes(option.id)}
-                    onCheckedChange={() => handleMitigatingFactorChange(option.id)}
-                  />
-                  <Label
-                    htmlFor={option.id}
-                    className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
+          <TooltipProvider>
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                Mitigating Factors (if any)
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    These factors can help you qualify for a higher debt-to-income ratio, potentially increasing your borrowing power.
+                  </TooltipContent>
+                </Tooltip>
+              </Label>
+              <div className="space-y-2">
+                {mitigatingFactorsOptions.map((option) => (
+                  <div key={option.id} className="flex items-center gap-2">
+                    <Checkbox
+                      id={option.id}
+                      checked={formData.mitigatingFactors.includes(option.id)}
+                      onCheckedChange={() => handleMitigatingFactorChange(option.id)}
+                    />
+                    <div className="flex items-center">
+                      <Label
+                        htmlFor={option.id}
+                        className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {option.label}
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 ml-1 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          {option.description}
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                These factors may help you qualify for a higher loan amount.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              These factors may help you qualify for a higher loan amount.
-            </p>
-          </div>
+          </TooltipProvider>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button 
