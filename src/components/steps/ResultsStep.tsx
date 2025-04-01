@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,8 @@ import {
   calculateMaxPurchasePrice,
   calculateMonthlyPayment,
   getNextFicoBand,
-  getLowerLtvOption
+  getLowerLtvOption,
+  getFhaMipRates
 } from "@/utils/mortgageCalculations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -109,11 +109,8 @@ const ResultsStep: React.FC = () => {
       // Get alternative MIP/PMI rate
       let altPmiRate = 0;
       if (alternativeLoanType === 'fha') {
-        const { annualMipPercent } = {
-          upfrontMipPercent: 1.75,
-          annualMipPercent: userData.loanDetails.ltv > 90 ? 0.55 : 0.50
-        };
-        altPmiRate = annualMipPercent;
+        const mipRates = getFhaMipRates(loanAmount, userData.loanDetails.ltv);
+        altPmiRate = mipRates.annualMipPercent;
       } else if (userData.loanDetails.ltv > 80) {
         // Simple PMI estimate for conventional
         altPmiRate = userData.loanDetails.ltv > 95 ? 1.1 : 
@@ -200,11 +197,8 @@ const ResultsStep: React.FC = () => {
         // Recalculate PMI based on lower LTV
         let lowerLtvPmiRate = 0;
         if (userData.loanDetails.loanType === 'fha') {
-          const { annualMipPercent } = {
-            upfrontMipPercent: 1.75,
-            annualMipPercent: lowerLtv > 90 ? 0.55 : 0.50
-          };
-          lowerLtvPmiRate = annualMipPercent;
+          const mipRates = getFhaMipRates(loanAmount, lowerLtv);
+          lowerLtvPmiRate = mipRates.annualMipPercent;
         } else if (lowerLtv > 80) {
           lowerLtvPmiRate = lowerLtv > 95 ? 1.1 : 
                       lowerLtv > 90 ? 0.8 : 

@@ -29,7 +29,7 @@ const DTI_LIMITS = {
 };
 
 // Base rates adjustment based on FICO score
-const FICO_RATE_ADJUSTMENTS: Record<string, number> = {
+const FICO_RATE_ADJUSTMENTS = {
   "conventional": {
     "740+": 0,
     "720-739": 0.125,

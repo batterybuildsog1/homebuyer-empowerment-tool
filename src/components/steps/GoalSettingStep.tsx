@@ -225,7 +225,7 @@ const GoalSettingStep: React.FC = () => {
                     <span>{formatCurrency(amount)}</span>
                     <Button 
                       variant="ghost" 
-                      size="icon-sm" 
+                      size="sm" 
                       onClick={() => removeExpense(name)}
                       className="h-6 w-6 rounded-full text-muted-foreground hover:text-destructive"
                     >
