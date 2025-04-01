@@ -1,4 +1,3 @@
-
 // FHA MIP rates for different scenarios
 const FHA_UPFRONT_MIP = 1.75; // 1.75% of loan amount
 const FHA_ANNUAL_MIP: Record<string, number> = {
@@ -124,19 +123,21 @@ export const calculateMaxDTI = (
   // Check for strong mitigating factors
   if (loanType === 'conventional') {
     if (ficoScore >= 720) maxDTI = dtiLimits.strongFactors.highFICO;
-    if (mitigatingFactors.includes('reserves') && maxDTI < dtiLimits.strongFactors.reserves) {
-      maxDTI = dtiLimits.strongFactors.reserves;
+    if (mitigatingFactors.includes('reserves')) {
+      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
     }
-    if (ltv <= 75 && maxDTI < dtiLimits.strongFactors.lowLTV) {
-      maxDTI = dtiLimits.strongFactors.lowLTV;
+    if (ltv <= 75) {
+      // For conventional loans, lowLTV is a valid property
+      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.lowLTV);
     }
   } else { // FHA
     if (ficoScore >= 680) maxDTI = dtiLimits.strongFactors.highFICO;
-    if (mitigatingFactors.includes('reserves') && maxDTI < dtiLimits.strongFactors.reserves) {
-      maxDTI = dtiLimits.strongFactors.reserves;
+    if (mitigatingFactors.includes('reserves')) {
+      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
     }
-    if (mitigatingFactors.length >= 2 && maxDTI < dtiLimits.strongFactors.compensatingFactors) {
-      maxDTI = dtiLimits.strongFactors.compensatingFactors;
+    if (mitigatingFactors.length >= 2) {
+      // For FHA loans, compensatingFactors is a valid property
+      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.compensatingFactors);
     }
   }
 
