@@ -1,3 +1,4 @@
+
 // FHA MIP rates for different scenarios
 const FHA_UPFRONT_MIP = 1.75; // 1.75% of loan amount
 const FHA_ANNUAL_MIP: Record<string, number> = {
@@ -127,8 +128,9 @@ export const calculateMaxDTI = (
       maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
     }
     if (ltv <= 75) {
-      // For conventional loans, lowLTV is a valid property
-      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.lowLTV);
+      // For conventional loans, we need to cast to access the lowLTV property
+      const conventionalFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.conventional.strongFactors;
+      maxDTI = Math.max(maxDTI, conventionalFactors.lowLTV);
     }
   } else { // FHA
     if (ficoScore >= 680) maxDTI = dtiLimits.strongFactors.highFICO;
@@ -136,8 +138,9 @@ export const calculateMaxDTI = (
       maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
     }
     if (mitigatingFactors.length >= 2) {
-      // For FHA loans, compensatingFactors is a valid property
-      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.compensatingFactors);
+      // For FHA loans, we need to cast to access the compensatingFactors property
+      const fhaFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.fha.strongFactors;
+      maxDTI = Math.max(maxDTI, fhaFactors.compensatingFactors);
     }
   }
 

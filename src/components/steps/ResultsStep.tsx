@@ -24,64 +24,76 @@ const ResultsStep: React.FC = () => {
     setIsCalculating(true);
     
     try {
-      // Validate required data
-      if (!userData.financials.annualIncome ||
-          userData.financials.annualIncome <= 0 ||
-          !userData.loanDetails.interestRate ||
-          !userData.loanDetails.propertyTax) {
-        toast.error("Missing required financial data. Please go back and complete the previous steps.");
+      // Enhanced validation for required data
+      const { financials, loanDetails } = userData;
+      
+      if (!financials.annualIncome || financials.annualIncome <= 0) {
+        toast.error("Please enter your annual income in the Financial Information step.");
+        setIsCalculating(false);
+        return;
+      }
+      
+      if (!loanDetails.interestRate || loanDetails.interestRate <= 0) {
+        toast.error("Interest rate is required. Please complete the Loan Details step.");
+        setIsCalculating(false);
+        return;
+      }
+      
+      if (!loanDetails.propertyTax || loanDetails.propertyTax <= 0) {
+        toast.error("Property tax rate is required. Please complete the Loan Details step.");
+        setIsCalculating(false);
         return;
       }
       
       // Calculate the max DTI based on FICO score, LTV, and mitigating factors
       const maxDTI = calculateMaxDTI(
-        userData.financials.ficoScore,
-        userData.loanDetails.ltv,
-        userData.loanDetails.loanType,
-        userData.financials.mitigatingFactors
+        financials.ficoScore,
+        loanDetails.ltv,
+        loanDetails.loanType,
+        financials.mitigatingFactors
       );
       
       // Calculate the adjusted interest rate based on FICO and LTV
       const adjustedRate = calculateAdjustedRate(
-        userData.loanDetails.interestRate,
-        userData.financials.ficoScore,
-        userData.loanDetails.ltv,
-        userData.loanDetails.loanType
+        loanDetails.interestRate,
+        financials.ficoScore,
+        loanDetails.ltv,
+        loanDetails.loanType
       );
       
       // Get MIP/PMI rate (for now simplified)
       let pmiRate = 0;
-      if (userData.loanDetails.loanType === 'fha' && userData.loanDetails.ongoingMIP) {
-        pmiRate = userData.loanDetails.ongoingMIP;
-      } else if (userData.loanDetails.ltv > 80) {
+      if (loanDetails.loanType === 'fha' && loanDetails.ongoingMIP) {
+        pmiRate = loanDetails.ongoingMIP;
+      } else if (loanDetails.ltv > 80) {
         // Simple PMI estimate based on LTV for conventional loans
-        pmiRate = userData.loanDetails.ltv > 95 ? 1.1 : 
-                  userData.loanDetails.ltv > 90 ? 0.8 : 
-                  userData.loanDetails.ltv > 85 ? 0.5 : 0.3;
+        pmiRate = loanDetails.ltv > 95 ? 1.1 : 
+                  loanDetails.ltv > 90 ? 0.8 : 
+                  loanDetails.ltv > 85 ? 0.5 : 0.3;
       }
       
       // Calculate max purchase price
       const maxPurchasePrice = calculateMaxPurchasePrice(
-        userData.financials.annualIncome,
-        userData.financials.monthlyDebts,
+        financials.annualIncome,
+        financials.monthlyDebts,
         maxDTI,
         adjustedRate,
-        userData.loanDetails.propertyTax,
-        userData.loanDetails.propertyInsurance || 1200, // Default to $1200 if not available
-        100 - userData.loanDetails.ltv, // Convert LTV to down payment %
+        loanDetails.propertyTax,
+        loanDetails.propertyInsurance || 1200, // Default to $1200 if not available
+        100 - loanDetails.ltv, // Convert LTV to down payment %
         pmiRate
       );
       
       // Calculate loan amount
-      const loanAmount = maxPurchasePrice * (userData.loanDetails.ltv / 100);
+      const loanAmount = maxPurchasePrice * (loanDetails.ltv / 100);
       
       // Calculate monthly payment
       const monthlyPayment = calculateMonthlyPayment(
         loanAmount,
         adjustedRate,
         30, // 30-year term
-        (userData.loanDetails.propertyTax / 100) * maxPurchasePrice, // Annual property tax
-        userData.loanDetails.propertyInsurance || 1200, // Annual insurance
+        (loanDetails.propertyTax / 100) * maxPurchasePrice, // Annual property tax
+        loanDetails.propertyInsurance || 1200, // Annual insurance
         pmiRate // PMI/MIP rate
       );
       
@@ -89,54 +101,54 @@ const ResultsStep: React.FC = () => {
       const scenarios = [];
       
       // Scenario 1: Switch loan type
-      const alternativeLoanType = userData.loanDetails.loanType === 'conventional' ? 'fha' : 'conventional';
+      const alternativeLoanType = loanDetails.loanType === 'conventional' ? 'fha' : 'conventional';
       
       // Calculate for alternative loan type
       const altDTI = calculateMaxDTI(
-        userData.financials.ficoScore,
-        userData.loanDetails.ltv,
+        financials.ficoScore,
+        loanDetails.ltv,
         alternativeLoanType,
-        userData.financials.mitigatingFactors
+        financials.mitigatingFactors
       );
       
       const altRate = calculateAdjustedRate(
-        userData.loanDetails.interestRate,
-        userData.financials.ficoScore,
-        userData.loanDetails.ltv,
+        loanDetails.interestRate,
+        financials.ficoScore,
+        loanDetails.ltv,
         alternativeLoanType
       );
       
       // Get alternative MIP/PMI rate
       let altPmiRate = 0;
       if (alternativeLoanType === 'fha') {
-        const mipRates = getFhaMipRates(loanAmount, userData.loanDetails.ltv);
-        altPmiRate = mipRates.annualMipPercent;
-      } else if (userData.loanDetails.ltv > 80) {
+        const { annualMipPercent } = getFhaMipRates(loanAmount, loanDetails.ltv);
+        altPmiRate = annualMipPercent;
+      } else if (loanDetails.ltv > 80) {
         // Simple PMI estimate for conventional
-        altPmiRate = userData.loanDetails.ltv > 95 ? 1.1 : 
-                    userData.loanDetails.ltv > 90 ? 0.8 : 
-                    userData.loanDetails.ltv > 85 ? 0.5 : 0.3;
+        altPmiRate = loanDetails.ltv > 95 ? 1.1 : 
+                    loanDetails.ltv > 90 ? 0.8 : 
+                    loanDetails.ltv > 85 ? 0.5 : 0.3;
       }
       
       const altMaxPrice = calculateMaxPurchasePrice(
-        userData.financials.annualIncome,
-        userData.financials.monthlyDebts,
+        financials.annualIncome,
+        financials.monthlyDebts,
         altDTI,
         altRate,
-        userData.loanDetails.propertyTax,
-        userData.loanDetails.propertyInsurance || 1200,
-        100 - userData.loanDetails.ltv,
+        loanDetails.propertyTax,
+        loanDetails.propertyInsurance || 1200,
+        100 - loanDetails.ltv,
         altPmiRate
       );
       
-      const altLoanAmount = altMaxPrice * (userData.loanDetails.ltv / 100);
+      const altLoanAmount = altMaxPrice * (loanDetails.ltv / 100);
       
       const altMonthlyPayment = calculateMonthlyPayment(
         altLoanAmount,
         altRate,
         30,
-        (userData.loanDetails.propertyTax / 100) * altMaxPrice,
-        userData.loanDetails.propertyInsurance || 1200,
+        (loanDetails.propertyTax / 100) * altMaxPrice,
+        loanDetails.propertyInsurance || 1200,
         altPmiRate
       );
       
@@ -149,41 +161,41 @@ const ResultsStep: React.FC = () => {
       });
       
       // Scenario 2: Higher FICO score
-      const nextFicoBand = getNextFicoBand(userData.financials.ficoScore, userData.loanDetails.loanType);
+      const nextFicoBand = getNextFicoBand(financials.ficoScore, loanDetails.loanType);
       
       if (nextFicoBand) {
         const betterFicoRate = calculateAdjustedRate(
-          userData.loanDetails.interestRate,
+          loanDetails.interestRate,
           nextFicoBand,
-          userData.loanDetails.ltv,
-          userData.loanDetails.loanType
+          loanDetails.ltv,
+          loanDetails.loanType
         );
         
         const betterFicoPrice = calculateMaxPurchasePrice(
-          userData.financials.annualIncome,
-          userData.financials.monthlyDebts,
+          financials.annualIncome,
+          financials.monthlyDebts,
           maxDTI,
           betterFicoRate,
-          userData.loanDetails.propertyTax,
-          userData.loanDetails.propertyInsurance || 1200,
-          100 - userData.loanDetails.ltv,
+          loanDetails.propertyTax,
+          loanDetails.propertyInsurance || 1200,
+          100 - loanDetails.ltv,
           pmiRate
         );
         
-        const betterFicoLoan = betterFicoPrice * (userData.loanDetails.ltv / 100);
+        const betterFicoLoan = betterFicoPrice * (loanDetails.ltv / 100);
         
         const betterFicoPayment = calculateMonthlyPayment(
           betterFicoLoan,
           betterFicoRate,
           30,
-          (userData.loanDetails.propertyTax / 100) * betterFicoPrice,
-          userData.loanDetails.propertyInsurance || 1200,
+          (loanDetails.propertyTax / 100) * betterFicoPrice,
+          loanDetails.propertyInsurance || 1200,
           pmiRate
         );
         
         scenarios.push({
-          loanType: userData.loanDetails.loanType,
-          ficoChange: nextFicoBand - userData.financials.ficoScore,
+          loanType: loanDetails.loanType,
+          ficoChange: nextFicoBand - financials.ficoScore,
           ltvChange: 0,
           maxHomePrice: betterFicoPrice,
           monthlyPayment: betterFicoPayment,
@@ -191,14 +203,14 @@ const ResultsStep: React.FC = () => {
       }
       
       // Scenario 3: Lower LTV (higher down payment)
-      const lowerLtv = getLowerLtvOption(userData.loanDetails.ltv);
+      const lowerLtv = getLowerLtvOption(loanDetails.ltv);
       
       if (lowerLtv) {
         // Recalculate PMI based on lower LTV
         let lowerLtvPmiRate = 0;
-        if (userData.loanDetails.loanType === 'fha') {
-          const mipRates = getFhaMipRates(loanAmount, lowerLtv);
-          lowerLtvPmiRate = mipRates.annualMipPercent;
+        if (loanDetails.loanType === 'fha') {
+          const { annualMipPercent } = getFhaMipRates(loanAmount, lowerLtv);
+          lowerLtvPmiRate = annualMipPercent;
         } else if (lowerLtv > 80) {
           lowerLtvPmiRate = lowerLtv > 95 ? 1.1 : 
                       lowerLtv > 90 ? 0.8 : 
@@ -206,19 +218,19 @@ const ResultsStep: React.FC = () => {
         }
         
         const lowerLtvRate = calculateAdjustedRate(
-          userData.loanDetails.interestRate,
-          userData.financials.ficoScore,
+          loanDetails.interestRate,
+          financials.ficoScore,
           lowerLtv,
-          userData.loanDetails.loanType
+          loanDetails.loanType
         );
         
         const lowerLtvPrice = calculateMaxPurchasePrice(
-          userData.financials.annualIncome,
-          userData.financials.monthlyDebts,
+          financials.annualIncome,
+          financials.monthlyDebts,
           maxDTI,
           lowerLtvRate,
-          userData.loanDetails.propertyTax,
-          userData.loanDetails.propertyInsurance || 1200,
+          loanDetails.propertyTax,
+          loanDetails.propertyInsurance || 1200,
           100 - lowerLtv,
           lowerLtvPmiRate
         );
@@ -229,15 +241,15 @@ const ResultsStep: React.FC = () => {
           lowerLtvLoan,
           lowerLtvRate,
           30,
-          (userData.loanDetails.propertyTax / 100) * lowerLtvPrice,
-          userData.loanDetails.propertyInsurance || 1200,
+          (loanDetails.propertyTax / 100) * lowerLtvPrice,
+          loanDetails.propertyInsurance || 1200,
           lowerLtvPmiRate
         );
         
         scenarios.push({
-          loanType: userData.loanDetails.loanType,
+          loanType: loanDetails.loanType,
           ficoChange: 0,
-          ltvChange: lowerLtv - userData.loanDetails.ltv,
+          ltvChange: lowerLtv - loanDetails.ltv,
           maxHomePrice: lowerLtvPrice,
           monthlyPayment: lowerLtvPayment,
         });
