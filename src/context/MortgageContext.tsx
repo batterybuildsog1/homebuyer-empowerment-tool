@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 export interface UserData {
@@ -6,13 +5,22 @@ export interface UserData {
     city: string;
     state: string;
     zipCode: string;
+    county: string;
   };
   financials: {
     annualIncome: number;
     monthlyDebts: number;
     ficoScore: number;
     downPayment: number;
+    downPaymentPercent: number;
     mitigatingFactors: string[];
+    debtItems: {
+      carLoan: number;
+      studentLoan: number;
+      creditCard: number;
+      personalLoan: number;
+      otherDebt: number;
+    };
   };
   loanDetails: {
     loanType: 'conventional' | 'fha';
@@ -63,13 +71,22 @@ const defaultUserData: UserData = {
     city: '',
     state: '',
     zipCode: '',
+    county: '',
   },
   financials: {
     annualIncome: 0,
     monthlyDebts: 0,
     ficoScore: 680,
     downPayment: 0,
+    downPaymentPercent: 20,
     mitigatingFactors: [],
+    debtItems: {
+      carLoan: 0,
+      studentLoan: 0,
+      creditCard: 0,
+      personalLoan: 0,
+      otherDebt: 0
+    },
   },
   loanDetails: {
     loanType: 'conventional',
