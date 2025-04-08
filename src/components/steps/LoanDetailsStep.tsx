@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
 import { FileText, ArrowLeft, Loader2 } from "lucide-react";
 // Import service functions but NOT fallbackData
-import { getInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
+import { getInterestRates, getFhaInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getFhaMipRates } from "@/utils/mortgageCalculations";
@@ -18,7 +18,8 @@ interface LoanDetailsStepProps {
 }
 
 interface FetchedData {
-  interestRate: number | null;
+  conventionalInterestRate: number | null;
+  fhaInterestRate: number | null;
   propertyTax: number | null;
   propertyInsurance: number | null;
 }
@@ -32,7 +33,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const [formData, setFormData] = useState({
     loanType: userData.loanDetails.loanType || 'conventional',
     downPayment: initialDownPayment, // Store down payment percentage instead of LTV
-    interestRate: userData.loanDetails.interestRate || null,
+    conventionalInterestRate: userData.loanDetails.interestRate || null,
+    fhaInterestRate: null, // Add separate field for FHA interest rate
     propertyTax: userData.loanDetails.propertyTax || null,
     propertyInsurance: userData.loanDetails.propertyInsurance || null,
     upfrontMIP: userData.loanDetails.upfrontMIP || null,
@@ -46,7 +48,12 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   // Calculate LTV from down payment
   const ltv = 100 - formData.downPayment;
 
-  // Modified to handle API errors without fallback
+  // Get the current interest rate based on loan type
+  const currentInterestRate = formData.loanType === 'conventional' 
+    ? formData.conventionalInterestRate 
+    : formData.fhaInterestRate;
+
+  // Modified to handle API errors without fallback and fetch both interest rates
   const fetchExternalData = async (): Promise<FetchedData | null> => {
     if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       toast.error("Location information is incomplete. Please go back and complete it.");
@@ -60,11 +67,21 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       setLoadingMessage("Fetching current interest rates...");
       setLoadingProgress(10);
       
-      // Get interest rate data using the Edge Function
-      const interestRate = await getInterestRates(userData.location.state);
+      // Get conventional interest rate data
+      const conventionalInterestRate = await getInterestRates(userData.location.state);
 
-      if (interestRate === null) {
-        toast.error("Failed to fetch interest rate data. Please try again or check your connection.");
+      if (conventionalInterestRate === null) {
+        toast.error("Failed to fetch conventional interest rate data. Please try again.");
+      }
+
+      setLoadingProgress(25);
+      setLoadingMessage("Fetching FHA interest rates...");
+
+      // Get FHA interest rate data
+      const fhaInterestRate = await getFhaInterestRates(userData.location.state);
+
+      if (fhaInterestRate === null) {
+        toast.error("Failed to fetch FHA interest rate data. Please try again.");
       }
 
       setLoadingProgress(40);
@@ -74,7 +91,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city);
 
       if (propertyTaxRate === null) {
-        toast.error("Failed to fetch property tax data. Please try again or check your connection.");
+        toast.error("Failed to fetch property tax data. Please try again.");
       }
 
       setLoadingProgress(70);
@@ -84,17 +101,17 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode);
 
       if (annualInsurance === null) {
-        toast.error("Failed to fetch property insurance data. Please try again or check your connection.");
+        toast.error("Failed to fetch property insurance data. Please try again.");
       }
 
       setLoadingProgress(100);
       setLoadingMessage("Processing data...");
 
-      // Only use fetched values, no fallbacks
       // Update local form state immediately for display
       setFormData(prev => ({
         ...prev,
-        interestRate: interestRate,
+        conventionalInterestRate: conventionalInterestRate,
+        fhaInterestRate: fhaInterestRate,
         propertyTax: propertyTaxRate,
         propertyInsurance: annualInsurance,
       }));
@@ -112,8 +129,9 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
         }));
       }
 
-      // Only show success if we got all data
-      if (interestRate !== null && propertyTaxRate !== null && annualInsurance !== null) {
+      // Only show success if we got all necessary data
+      if (conventionalInterestRate !== null && fhaInterestRate !== null && 
+          propertyTaxRate !== null && annualInsurance !== null) {
         toast.success("Successfully processed mortgage data!");
       } else {
         toast.warning("Some data could not be fetched. Please try again.");
@@ -121,7 +139,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       
       // Return the fetched data (which may include nulls)
       return {
-        interestRate,
+        conventionalInterestRate,
+        fhaInterestRate,
         propertyTax: propertyTaxRate,
         propertyInsurance: annualInsurance,
       };
@@ -161,8 +180,9 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
     e.preventDefault();
     let fetchedData: FetchedData | null = null;
 
-    // If data hasn't been fetched yet (or needs refresh), fetch it first
-    if (!formData.interestRate || !formData.propertyTax || !formData.propertyInsurance) {
+    // If any required data hasn't been fetched yet (or needs refresh), fetch it first
+    if (!formData.conventionalInterestRate || !formData.fhaInterestRate || 
+        !formData.propertyTax || !formData.propertyInsurance) {
       fetchedData = await fetchExternalData();
       if (fetchedData === null) {
          toast.error("Failed to retrieve necessary data. Cannot proceed.");
@@ -170,18 +190,26 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       }
     }
 
+    // Determine which interest rate to use based on the selected loan type
+    const interestRate = formData.loanType === 'conventional' 
+      ? (fetchedData?.conventionalInterestRate ?? formData.conventionalInterestRate)
+      : (fetchedData?.fhaInterestRate ?? formData.fhaInterestRate);
+
     // Construct the final loan details object
     const finalLoanDetails = {
       ...formData, // Includes loanType, downPayment, potentially MIP from state
       ltv: ltv, // Add calculated LTV
-      // Ensure fetched data is included, either from the fetch call or existing state
-      interestRate: fetchedData?.interestRate ?? formData.interestRate,
+      // Store the correct interest rate based on loan type
+      interestRate: interestRate,
+      // Store both rates for future reference
+      conventionalInterestRate: fetchedData?.conventionalInterestRate ?? formData.conventionalInterestRate,
+      fhaInterestRate: fetchedData?.fhaInterestRate ?? formData.fhaInterestRate,
       propertyTax: fetchedData?.propertyTax ?? formData.propertyTax,
       propertyInsurance: fetchedData?.propertyInsurance ?? formData.propertyInsurance,
     };
 
     // Validate essential data before proceeding
-    if (finalLoanDetails.interestRate === null || finalLoanDetails.propertyTax === null || finalLoanDetails.propertyInsurance === null) {
+    if (interestRate === null || finalLoanDetails.propertyTax === null || finalLoanDetails.propertyInsurance === null) {
         toast.error("Missing essential rate/tax/insurance data. Cannot calculate results.");
         return;
     }
@@ -299,14 +327,14 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
               </div>
             </div>
             
-            {(formData.interestRate || formData.propertyTax || formData.propertyInsurance) && (
+            {(currentInterestRate || formData.propertyTax || formData.propertyInsurance) && (
               <div className="border rounded-lg p-4 space-y-3">
                 <h3 className="font-medium">Data Summary</h3>
                 
-                {formData.interestRate && (
+                {currentInterestRate && (
                   <div className="flex justify-between text-sm">
-                    <span>Base Interest Rate:</span>
-                    <span className="font-medium">{formatInterestRate(formData.interestRate)}</span>
+                    <span>Base Interest Rate ({formData.loanType === 'conventional' ? 'Conventional' : 'FHA'}):</span>
+                    <span className="font-medium">{formatInterestRate(currentInterestRate)}</span>
                   </div>
                 )}
                 
@@ -336,7 +364,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
               </div>
             )}
             
-            {!formData.interestRate && !formData.propertyTax && !formData.propertyInsurance && !isLoadingData && (
+            {!currentInterestRate && !formData.propertyTax && !formData.propertyInsurance && !isLoadingData && (
               <div className="text-center py-4">
                 <p className="mb-3 text-muted-foreground">No data fetched yet. Please fetch current rates and tax data.</p>
                 <Button 
@@ -362,7 +390,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
             </Button>
             <Button 
               type="submit" 
-              disabled={!formData.interestRate || !formData.propertyTax || !formData.propertyInsurance}
+              disabled={!currentInterestRate || !formData.propertyTax || !formData.propertyInsurance}
             >
               Continue
             </Button>

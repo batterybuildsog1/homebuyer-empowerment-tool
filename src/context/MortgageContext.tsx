@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 // Storage key for localStorage
@@ -52,6 +53,8 @@ export interface UserData {
     propertyTax: number | null;
     propertyInsurance: number | null;
     interestRate: number | null;
+    conventionalInterestRate: number | null; // Added field for conventional interest rate
+    fhaInterestRate: number | null; // Added field for FHA interest rate
     upfrontMIP: number | null;
     ongoingMIP: number | null;
   };
@@ -118,6 +121,8 @@ const defaultUserData: UserData = {
     propertyTax: null,
     propertyInsurance: null,
     interestRate: null,
+    conventionalInterestRate: null, // Added field for conventional interest rate
+    fhaInterestRate: null, // Added field for FHA interest rate
     upfrontMIP: null,
     ongoingMIP: null,
   },

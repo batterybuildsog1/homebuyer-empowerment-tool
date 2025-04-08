@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -118,6 +119,30 @@ export const getInterestRates = async (state: string): Promise<number | null> =>
   } catch (error) {
     console.error('Error parsing interest rate data:', error, 'Raw response:', rawResponse);
     toast.error("Error processing interest rate data.");
+    return null;
+  }
+};
+
+export const getFhaInterestRates = async (state: string): Promise<number | null> => {
+  let rawResponse: string | null = null;
+  try {
+    // Updated query to explicitly request only the JSON object for FHA loans
+    const query = `What is the current average 30-year fixed FHA mortgage interest rate in ${state}? Respond ONLY with a valid JSON object containing a single key "interestRate" and its numeric value (percentage). Example: {"interestRate": 6.25}`;
+
+    rawResponse = await fetchPerplexityData(query);
+    if (!rawResponse) {
+      // Return null if API fails, don't use fallback
+      console.log("Failed to fetch FHA interest rate data");
+      return null;
+    }
+    
+    // Extract JSON from potential markdown code block
+    const jsonString = rawResponse.replace(/```json\n?([\s\S]*?)\n?```/, '$1').trim();
+    const data = JSON.parse(jsonString); // Parse the extracted string
+    return data.interestRate;
+  } catch (error) {
+    console.error('Error parsing FHA interest rate data:', error, 'Raw response:', rawResponse);
+    toast.error("Error processing FHA interest rate data.");
     return null;
   }
 };
