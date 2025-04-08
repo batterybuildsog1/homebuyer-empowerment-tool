@@ -14,6 +14,7 @@ import { getFhaMipRates } from "@/utils/mortgageCalculations";
 import { Progress } from "@/components/ui/progress";
 
 interface LoanDetailsStepProps {
+  // No apiKey prop required anymore
 }
 
 interface FetchedData {
@@ -22,7 +23,6 @@ interface FetchedData {
   propertyInsurance: number;
 }
 
-// Remove apiKey from props
 const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const { userData, updateLoanDetails, setCurrentStep, setIsLoadingData, isLoadingData } = useMortgage();
 
@@ -43,7 +43,6 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
 
   // Modified to return fetched data or null
   const fetchExternalData = async (): Promise<FetchedData | null> => {
-    // Removed apiKey from checks as it's passed directly now
     if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       toast.error("Location information is incomplete. Please go back and complete it.");
       return null;
@@ -55,39 +54,32 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       setLoadingMessage("Fetching current interest rates...");
       setLoadingProgress(10);
       
-      // Get interest rate data
-      const interestRate = await getInterestRates(userData.location.state); // Removed apiKey argument
+      // Get interest rate data using the Edge Function
+      const interestRate = await getInterestRates(userData.location.state);
 
-      if (interestRate === null) { // Check for null explicitly
+      if (interestRate === null) {
         toast.error("Failed to fetch interest rate data. Using fallback or default.");
-        // Decide if we should proceed with fallback or stop? For now, let's try to proceed.
-        // Consider returning null here if fetching is critical and fallback isn't desired.
-        // return null;
       }
 
       setLoadingProgress(40);
       setLoadingMessage("Fetching property tax information...");
 
       // Get property tax data
-      const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city); // Removed apiKey argument
+      const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city);
 
-      if (propertyTaxRate === null) { // Check for null explicitly
+      if (propertyTaxRate === null) {
         toast.error("Failed to fetch property tax data. Using fallback or default.");
-        // return null;
       }
-      // REMOVED EXTRA BRACE
 
       setLoadingProgress(70);
       setLoadingMessage("Fetching insurance estimates...");
 
       // Get property insurance data
-      const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode); // Removed apiKey argument
+      const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode);
 
-      if (annualInsurance === null) { // Check for null explicitly
+      if (annualInsurance === null) {
         toast.error("Failed to fetch property insurance data. Using fallback or default.");
-        // return null;
       }
-      // REMOVED EXTRA BRACE
 
       setLoadingProgress(100);
       setLoadingMessage("Processing data...");
@@ -105,7 +97,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
         propertyInsurance: finalAnnualInsurance,
       }));
 
-      // If it's an FHA loan, calculate MIP (this part seems okay)
+      // If it's an FHA loan, calculate MIP
       if (formData.loanType === 'fha') {
         const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
           1000, // Placeholder loan amount, will be calculated based on actual home price later
@@ -192,7 +184,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -288,14 +280,14 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
                 className="py-4"
               />
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{formData.loanType === 'conventional' ? '20%' : '10%'} down</span>
-                <span>{formData.loanType === 'conventional' ? '3%' : '3.5%'} down</span>
+                <span>Down: {formData.loanType === 'conventional' ? '20%' : '10%'}</span>
+                <span>Down: {formData.loanType === 'conventional' ? '3%' : '3.5%'}</span>
               </div>
             </div>
             
             {(formData.interestRate || formData.propertyTax || formData.propertyInsurance) && (
               <div className="border rounded-lg p-4 space-y-3">
-                <h3 className="font-medium">Retrieved Data Summary</h3>
+                <h3 className="font-medium">Data Summary</h3>
                 
                 {formData.interestRate && (
                   <div className="flex justify-between text-sm">

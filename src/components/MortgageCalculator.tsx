@@ -38,16 +38,14 @@ const MortgageCalculator: React.FC = () => {
     setApiKey(key);
   };
 
-  // Render API key form if no API key is found
-  if (!apiKey) {
-    return <PerplexityApiForm onApiKeySet={handleApiKeySet} />;
-  }
+  // We no longer need to check for API key since we're using an Edge Function
+  // Remove the API key form condition
 
   // Map step components with their titles
   const steps = [
     { component: <LocationStep />, title: "Your Location" },
     { component: <FinancialStep />, title: "Financial Information" },
-    { component: <LoanDetailsStep apiKey={apiKey} />, title: "Loan Details" },
+    { component: <LoanDetailsStep />, title: "Loan Details" },
     { component: <ResultsStep />, title: "Results" },
     { component: <GoalSettingStep />, title: "Goal Setting" },
   ];
