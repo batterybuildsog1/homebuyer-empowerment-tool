@@ -126,8 +126,8 @@ export const getInterestRates = async (state: string): Promise<number | null> =>
 export const getFhaInterestRates = async (state: string): Promise<number | null> => {
   let rawResponse: string | null = null;
   try {
-    // Updated query to explicitly request only the JSON object for FHA loans
-    const query = `What is the current average 30-year fixed FHA mortgage interest rate in ${state}? Respond ONLY with a valid JSON object containing a single key "interestRate" and its numeric value (percentage). Example: {"interestRate": 6.25}`;
+    // Updated query to be more specific about FHA loans from Mortgage News Daily
+    const query = `What is the current average 30-year fixed FHA mortgage interest rate according to Mortgage News Daily? Make sure to return the exact FHA rate, not the conventional rate. Respond ONLY with a valid JSON object containing a single key "interestRate" and its numeric value (percentage). Example: {"interestRate": 6.23}`;
 
     rawResponse = await fetchPerplexityData(query);
     if (!rawResponse) {

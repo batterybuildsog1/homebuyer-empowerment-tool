@@ -53,8 +53,8 @@ export interface UserData {
     propertyTax: number | null;
     propertyInsurance: number | null;
     interestRate: number | null;
-    conventionalInterestRate: number | null; // Added field for conventional interest rate
-    fhaInterestRate: number | null; // Added field for FHA interest rate
+    conventionalInterestRate: number | null; // Conventional interest rate
+    fhaInterestRate: number | null; // FHA interest rate
     upfrontMIP: number | null;
     ongoingMIP: number | null;
   };
@@ -121,8 +121,8 @@ const defaultUserData: UserData = {
     propertyTax: null,
     propertyInsurance: null,
     interestRate: null,
-    conventionalInterestRate: null, // Added field for conventional interest rate
-    fhaInterestRate: null, // Added field for FHA interest rate
+    conventionalInterestRate: null,
+    fhaInterestRate: null,
     upfrontMIP: null,
     ongoingMIP: null,
   },

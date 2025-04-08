@@ -33,8 +33,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const [formData, setFormData] = useState({
     loanType: userData.loanDetails.loanType || 'conventional',
     downPayment: initialDownPayment, // Store down payment percentage instead of LTV
-    conventionalInterestRate: userData.loanDetails.interestRate || null,
-    fhaInterestRate: null, // Add separate field for FHA interest rate
+    conventionalInterestRate: userData.loanDetails.conventionalInterestRate || null,
+    fhaInterestRate: userData.loanDetails.fhaInterestRate || null, // Use separate field for FHA interest rate
     propertyTax: userData.loanDetails.propertyTax || null,
     propertyInsurance: userData.loanDetails.propertyInsurance || null,
     upfrontMIP: userData.loanDetails.upfrontMIP || null,
@@ -64,7 +64,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
     setHasAttemptedFetch(true);
     
     try {
-      setLoadingMessage("Fetching current interest rates...");
+      setLoadingMessage("Fetching conventional interest rates...");
       setLoadingProgress(10);
       
       // Get conventional interest rate data
@@ -106,6 +106,13 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
 
       setLoadingProgress(100);
       setLoadingMessage("Processing data...");
+
+      console.log("Fetched data:", {
+        conventionalRate: conventionalInterestRate,
+        fhaRate: fhaInterestRate,
+        propertyTax: propertyTaxRate,
+        insurance: annualInsurance
+      });
 
       // Update local form state immediately for display
       setFormData(prev => ({
@@ -298,8 +305,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
                 ) : (
                   <ul className="list-disc pl-5 text-muted-foreground space-y-1 pt-1">
                     <li>More flexible credit requirements (580+)</li>
-                    <li>Upfront mortgage insurance premium (MIP): {formData.upfrontMIP}%</li>
-                    <li>Annual MIP: {formData.ongoingMIP}% (for the life of the loan)</li>
+                    <li>Upfront mortgage insurance premium (MIP): {formData.upfrontMIP ? formData.upfrontMIP.toFixed(2) : "N/A"}%</li>
+                    <li>Annual MIP: {formData.ongoingMIP ? formData.ongoingMIP.toFixed(2) : "N/A"}% (for the life of the loan)</li>
                   </ul>
                 )}
               </div>
@@ -307,9 +314,9 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
             
             <div className="space-y-3">
               <div className="flex justify-between">
-                <Label htmlFor="downPayment">Down Payment: {formData.downPayment}%</Label>
+                <Label htmlFor="downPayment">Down Payment: {formData.downPayment.toFixed(1)}%</Label>
                 <span className="text-sm font-medium">
-                  LTV: {ltv}%
+                  LTV: {ltv.toFixed(1)}%
                 </span>
               </div>
               <Slider
@@ -327,14 +334,21 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
               </div>
             </div>
             
-            {(currentInterestRate || formData.propertyTax || formData.propertyInsurance) && (
+            {(formData.conventionalInterestRate || formData.fhaInterestRate || formData.propertyTax || formData.propertyInsurance) && (
               <div className="border rounded-lg p-4 space-y-3">
                 <h3 className="font-medium">Data Summary</h3>
                 
-                {currentInterestRate && (
+                {formData.loanType === 'conventional' && formData.conventionalInterestRate && (
                   <div className="flex justify-between text-sm">
-                    <span>Base Interest Rate ({formData.loanType === 'conventional' ? 'Conventional' : 'FHA'}):</span>
-                    <span className="font-medium">{formatInterestRate(currentInterestRate)}</span>
+                    <span>Base Interest Rate (Conventional):</span>
+                    <span className="font-medium">{formatInterestRate(formData.conventionalInterestRate)}</span>
+                  </div>
+                )}
+                
+                {formData.loanType === 'fha' && formData.fhaInterestRate && (
+                  <div className="flex justify-between text-sm">
+                    <span>Base Interest Rate (FHA):</span>
+                    <span className="font-medium">{formatInterestRate(formData.fhaInterestRate)}</span>
                   </div>
                 )}
                 
@@ -359,7 +373,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
                   className="w-full mt-2"
                   onClick={fetchExternalData}
                 >
-                  {hasAttemptedFetch ? "Retry Data Fetch" : "Fetch Data"}
+                  {hasAttemptedFetch ? "Refresh Data" : "Fetch Data"}
                 </Button>
               </div>
             )}
