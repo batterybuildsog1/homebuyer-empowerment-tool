@@ -55,13 +55,15 @@ export default {
 				},
 				// Finance-themed colors
 				finance: {
-					blue: '#0047AB',
-					lightBlue: '#6CB4EE',
-					navy: '#1A3A5F',
-					green: '#4CAF50',
-					red: '#FF5252',
-          cream: '#FAF9F6',
-          gold: '#FFD700'
+					blue: '#2563EB',       // Brighter blue
+					lightBlue: '#60A5FA',
+					navy: '#1E3A8A',
+					green: '#10B981',      // Emerald green
+					red: '#EF4444',
+					cream: '#FEFCE8',      // Softer cream
+					gold: '#F59E0B',       // Amber gold
+					teal: '#0D9488',       // Modern teal
+					slate: '#334155',      // Slate for text
 				},
 			},
 			borderRadius: {

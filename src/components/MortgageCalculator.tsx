@@ -53,8 +53,8 @@ const MortgageCalculator: React.FC = () => {
   ];
 
   return (
-    <div className="container py-8 space-y-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="container py-4 sm:py-6 md:py-8 px-4 sm:px-6 lg:px-8 space-y-4 md:space-y-6">
+      <div className="w-full max-w-full sm:max-w-3xl lg:max-w-5xl mx-auto">
         <div className="mb-8 text-center space-y-2">
           <Heading as="h1" size="3xl">Homebuyer Empowerment Tool</Heading>
           <p className="text-muted-foreground text-lg">
@@ -63,16 +63,16 @@ const MortgageCalculator: React.FC = () => {
         </div>
         
         <div className="pb-8">
-          <div className="flex items-center justify-center mb-8">
-            <ol className="flex items-center w-full max-w-3xl">
+          <div className="flex items-center justify-center mb-8 w-full">
+            <ol className="flex items-center justify-between w-full max-w-3xl mx-auto">
               {steps.map((step, index) => (
-                <li key={index} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                <li key={index} className="flex items-center flex-1 justify-center">
+                  <div className={`flex items-center justify-center w-12 h-12 text-base font-medium rounded-full shadow-md transform transition-all duration-300 ${
                     currentStep === index 
-                      ? "bg-primary text-primary-foreground" 
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/20" 
                       : currentStep > index 
                       ? "bg-primary/80 text-primary-foreground"
-                      : "bg-gray-200 text-muted-foreground"
+                      : "bg-gray-100 text-muted-foreground"
                   }`}>
                     <span>{index + 1}</span>
                   </div>

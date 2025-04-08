@@ -6,19 +6,26 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
 import { FileText, ArrowLeft, Loader2 } from "lucide-react";
-import { getInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
+// Import service functions AND fallbackData
+import { getInterestRates, getPropertyTaxRate, getPropertyInsurance, fallbackData } from "@/services/perplexityService";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getFhaMipRates } from "@/utils/mortgageCalculations";
 import { Progress } from "@/components/ui/progress";
 
 interface LoanDetailsStepProps {
-  apiKey: string;
 }
 
-const LoanDetailsStep: React.FC<LoanDetailsStepProps> = ({ apiKey }) => {
+interface FetchedData {
+  interestRate: number;
+  propertyTax: number;
+  propertyInsurance: number;
+}
+
+// Remove apiKey from props
+const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const { userData, updateLoanDetails, setCurrentStep, setIsLoadingData, isLoadingData } = useMortgage();
-  
+
   const [formData, setFormData] = useState({
     loanType: userData.loanDetails.loanType || 'conventional',
     ltv: userData.loanDetails.ltv || 80,
@@ -33,11 +40,13 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = ({ apiKey }) => {
   const [loadingMessage, setLoadingMessage] = useState("Initializing...");
   
   const downPaymentPercent = 100 - formData.ltv;
-  
-  const fetchExternalData = async () => {
-    if (!apiKey || !userData.location.state || !userData.location.city || !userData.location.zipCode) {
+
+  // Modified to return fetched data or null
+  const fetchExternalData = async (): Promise<FetchedData | null> => {
+    // Removed apiKey from checks as it's passed directly now
+    if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       toast.error("Location information is incomplete. Please go back and complete it.");
-      return false;
+      return null;
     }
     
     setIsLoadingData(true);
@@ -47,66 +56,80 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = ({ apiKey }) => {
       setLoadingProgress(10);
       
       // Get interest rate data
-      const interestRate = await getInterestRates(apiKey, userData.location.state);
-      
-      if (!interestRate) {
-        toast.error("Failed to fetch interest rate data. Please try again.");
-        return false;
+      const interestRate = await getInterestRates(userData.location.state); // Removed apiKey argument
+
+      if (interestRate === null) { // Check for null explicitly
+        toast.error("Failed to fetch interest rate data. Using fallback or default.");
+        // Decide if we should proceed with fallback or stop? For now, let's try to proceed.
+        // Consider returning null here if fetching is critical and fallback isn't desired.
+        // return null;
       }
-      
+
       setLoadingProgress(40);
       setLoadingMessage("Fetching property tax information...");
-      
+
       // Get property tax data
-      const propertyTaxRate = await getPropertyTaxRate(apiKey, userData.location.state, userData.location.county || userData.location.city);
-      
-      if (!propertyTaxRate) {
-        toast.error("Failed to fetch property tax data. Please try again.");
-        return false;
+      const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city); // Removed apiKey argument
+
+      if (propertyTaxRate === null) { // Check for null explicitly
+        toast.error("Failed to fetch property tax data. Using fallback or default.");
+        // return null;
       }
-      
+      // REMOVED EXTRA BRACE
+
       setLoadingProgress(70);
       setLoadingMessage("Fetching insurance estimates...");
-      
+
       // Get property insurance data
-      const annualInsurance = await getPropertyInsurance(apiKey, userData.location.state, userData.location.zipCode);
-      
-      if (!annualInsurance) {
-        toast.error("Failed to fetch property insurance data. Please try again.");
-        return false;
+      const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode); // Removed apiKey argument
+
+      if (annualInsurance === null) { // Check for null explicitly
+        toast.error("Failed to fetch property insurance data. Using fallback or default.");
+        // return null;
       }
-      
+      // REMOVED EXTRA BRACE
+
       setLoadingProgress(100);
       setLoadingMessage("Processing data...");
-      
-      // Update form data with fetched values
+
+      // Use fetched values directly, handle potential nulls with fallback
+      const finalInterestRate = interestRate ?? fallbackData.interestRates.default;
+      const finalPropertyTax = propertyTaxRate ?? fallbackData.propertyTaxRates.default;
+      const finalAnnualInsurance = annualInsurance ?? fallbackData.annualInsurance.default;
+
+      // Update local form state immediately for display
       setFormData(prev => ({
         ...prev,
-        interestRate,
-        propertyTax: propertyTaxRate,
-        propertyInsurance: annualInsurance,
+        interestRate: finalInterestRate,
+        propertyTax: finalPropertyTax,
+        propertyInsurance: finalAnnualInsurance,
       }));
-      
-      // If it's an FHA loan, calculate MIP
+
+      // If it's an FHA loan, calculate MIP (this part seems okay)
       if (formData.loanType === 'fha') {
         const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
           1000, // Placeholder loan amount, will be calculated based on actual home price later
           formData.ltv
         );
-        
         setFormData(prev => ({
           ...prev,
           upfrontMIP: upfrontMipPercent,
           ongoingMIP: annualMipPercent,
         }));
       }
-      
-      toast.success("Successfully fetched mortgage data!");
-      return true;
+
+      toast.success("Successfully processed mortgage data!");
+      // Return the fetched (or fallback) data
+      return {
+        interestRate: finalInterestRate,
+        propertyTax: finalPropertyTax,
+        propertyInsurance: finalAnnualInsurance,
+      };
+
     } catch (error) {
       console.error("Error fetching data:", error);
-      toast.error("An error occurred while fetching data. Please try again.");
-      return false;
+      toast.error("An error occurred while fetching data. Please check console and try again.");
+      return null; // Return null on error
     } finally {
       setIsLoadingData(false);
     }
@@ -136,16 +159,36 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = ({ apiKey }) => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // If data hasn't been fetched yet, fetch it first
+    let fetchedData: FetchedData | null = null;
+
+    // If data hasn't been fetched yet (or needs refresh), fetch it first
     if (!formData.interestRate || !formData.propertyTax || !formData.propertyInsurance) {
-      const success = await fetchExternalData();
-      if (!success) return;
+      fetchedData = await fetchExternalData();
+      if (fetchedData === null) {
+         toast.error("Failed to retrieve necessary data. Cannot proceed.");
+         return; // Stop if fetching failed critically
+      }
     }
-    
-    // Save form data
-    updateLoanDetails(formData);
-    setCurrentStep(3);
+
+    // Construct the final loan details object
+    const finalLoanDetails = {
+      ...formData, // Includes loanType, ltv, potentially MIP from state
+      // Ensure fetched data is included, either from the fetch call or existing state
+      interestRate: fetchedData?.interestRate ?? formData.interestRate,
+      propertyTax: fetchedData?.propertyTax ?? formData.propertyTax,
+      propertyInsurance: fetchedData?.propertyInsurance ?? formData.propertyInsurance,
+    };
+
+    // Validate essential data before proceeding
+    if (finalLoanDetails.interestRate === null || finalLoanDetails.propertyTax === null || finalLoanDetails.propertyInsurance === null) {
+        toast.error("Missing essential rate/tax/insurance data. Cannot calculate results.");
+        return;
+    }
+
+
+    // Save the complete, validated form data to context
+    updateLoanDetails(finalLoanDetails);
+    setCurrentStep(3); // Navigate to the next step (Results)
   };
 
   return (

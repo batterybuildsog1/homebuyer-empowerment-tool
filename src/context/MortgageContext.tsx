@@ -1,4 +1,27 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+
+// Storage key for localStorage
+const STORAGE_KEY = 'mortgage_calculator_data';
+
+// Save data to localStorage
+const saveToLocalStorage = (data: UserData) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+// Load data from localStorage
+const loadFromLocalStorage = (): UserData | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error('Error loading from localStorage:', error);
+    return null;
+  }
+};
 
 export interface UserData {
   location: {
@@ -114,9 +137,18 @@ const defaultUserData: UserData = {
 const MortgageContext = createContext<MortgageContextType | undefined>(undefined);
 
 export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [userData, setUserData] = useState<UserData>(defaultUserData);
+  // Load stored data on initialization or use default
+  const [userData, setUserData] = useState<UserData>(() => {
+    const savedData = loadFromLocalStorage();
+    return savedData || defaultUserData;
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Save data whenever it changes
+  useEffect(() => {
+    saveToLocalStorage(userData);
+  }, [userData]);
 
   const updateLocation = (location: Partial<UserData['location']>) => {
     setUserData((prev) => ({
@@ -169,8 +201,11 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const resetCalculator = () => {
-    setUserData(defaultUserData);
-    setCurrentStep(0);
+    if (window.confirm('Are you sure you want to reset all your data?')) {
+      setUserData(defaultUserData);
+      setCurrentStep(0);
+      localStorage.removeItem(STORAGE_KEY);
+    }
   };
 
   return (
