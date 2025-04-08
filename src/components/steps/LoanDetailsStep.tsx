@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
 import { FileText, ArrowLeft, Loader2 } from "lucide-react";
-// Import service functions AND fallbackData
-import { getInterestRates, getPropertyTaxRate, getPropertyInsurance, fallbackData } from "@/services/perplexityService";
+// Import service functions but NOT fallbackData
+import { getInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
 import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getFhaMipRates } from "@/utils/mortgageCalculations";
@@ -18,9 +18,9 @@ interface LoanDetailsStepProps {
 }
 
 interface FetchedData {
-  interestRate: number;
-  propertyTax: number;
-  propertyInsurance: number;
+  interestRate: number | null;
+  propertyTax: number | null;
+  propertyInsurance: number | null;
 }
 
 const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
@@ -41,11 +41,12 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("Initializing...");
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   
   // Calculate LTV from down payment
   const ltv = 100 - formData.downPayment;
 
-  // Modified to return fetched data or null
+  // Modified to handle API errors without fallback
   const fetchExternalData = async (): Promise<FetchedData | null> => {
     if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       toast.error("Location information is incomplete. Please go back and complete it.");
@@ -53,6 +54,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
     }
     
     setIsLoadingData(true);
+    setHasAttemptedFetch(true);
     
     try {
       setLoadingMessage("Fetching current interest rates...");
@@ -62,7 +64,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       const interestRate = await getInterestRates(userData.location.state);
 
       if (interestRate === null) {
-        toast.error("Failed to fetch interest rate data. Using fallback or default.");
+        toast.error("Failed to fetch interest rate data. Please try again or check your connection.");
       }
 
       setLoadingProgress(40);
@@ -72,7 +74,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city);
 
       if (propertyTaxRate === null) {
-        toast.error("Failed to fetch property tax data. Using fallback or default.");
+        toast.error("Failed to fetch property tax data. Please try again or check your connection.");
       }
 
       setLoadingProgress(70);
@@ -82,23 +84,19 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode);
 
       if (annualInsurance === null) {
-        toast.error("Failed to fetch property insurance data. Using fallback or default.");
+        toast.error("Failed to fetch property insurance data. Please try again or check your connection.");
       }
 
       setLoadingProgress(100);
       setLoadingMessage("Processing data...");
 
-      // Use fetched values directly, handle potential nulls with fallback
-      const finalInterestRate = interestRate ?? fallbackData.interestRates.default;
-      const finalPropertyTax = propertyTaxRate ?? fallbackData.propertyTaxRates.default;
-      const finalAnnualInsurance = annualInsurance ?? fallbackData.annualInsurance.default;
-
+      // Only use fetched values, no fallbacks
       // Update local form state immediately for display
       setFormData(prev => ({
         ...prev,
-        interestRate: finalInterestRate,
-        propertyTax: finalPropertyTax,
-        propertyInsurance: finalAnnualInsurance,
+        interestRate: interestRate,
+        propertyTax: propertyTaxRate,
+        propertyInsurance: annualInsurance,
       }));
 
       // If it's an FHA loan, calculate MIP
@@ -114,12 +112,18 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
         }));
       }
 
-      toast.success("Successfully processed mortgage data!");
-      // Return the fetched (or fallback) data
+      // Only show success if we got all data
+      if (interestRate !== null && propertyTaxRate !== null && annualInsurance !== null) {
+        toast.success("Successfully processed mortgage data!");
+      } else {
+        toast.warning("Some data could not be fetched. Please try again.");
+      }
+      
+      // Return the fetched data (which may include nulls)
       return {
-        interestRate: finalInterestRate,
-        propertyTax: finalPropertyTax,
-        propertyInsurance: finalAnnualInsurance,
+        interestRate,
+        propertyTax: propertyTaxRate,
+        propertyInsurance: annualInsurance,
       };
 
     } catch (error) {
@@ -185,6 +189,12 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
     // Save the complete, validated form data to context
     updateLoanDetails(finalLoanDetails);
     setCurrentStep(3); // Navigate to the next step (Results)
+  };
+
+  // Helper function to format interest rates with two decimal places
+  const formatInterestRate = (rate: number | null): string => {
+    if (rate === null) return "N/A";
+    return rate.toFixed(2) + "%";
   };
 
   return (
@@ -296,14 +306,14 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
                 {formData.interestRate && (
                   <div className="flex justify-between text-sm">
                     <span>Base Interest Rate:</span>
-                    <span className="font-medium">{formData.interestRate}%</span>
+                    <span className="font-medium">{formatInterestRate(formData.interestRate)}</span>
                   </div>
                 )}
                 
                 {formData.propertyTax && (
                   <div className="flex justify-between text-sm">
                     <span>Property Tax Rate:</span>
-                    <span className="font-medium">{formData.propertyTax}%</span>
+                    <span className="font-medium">{formData.propertyTax.toFixed(2)}%</span>
                   </div>
                 )}
                 
@@ -321,7 +331,21 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
                   className="w-full mt-2"
                   onClick={fetchExternalData}
                 >
-                  Refresh Data
+                  {hasAttemptedFetch ? "Retry Data Fetch" : "Fetch Data"}
+                </Button>
+              </div>
+            )}
+            
+            {!formData.interestRate && !formData.propertyTax && !formData.propertyInsurance && !isLoadingData && (
+              <div className="text-center py-4">
+                <p className="mb-3 text-muted-foreground">No data fetched yet. Please fetch current rates and tax data.</p>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={fetchExternalData}
+                >
+                  Fetch Current Data
                 </Button>
               </div>
             )}
@@ -336,8 +360,11 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
             >
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
-            <Button type="submit">
-              {!formData.interestRate ? "Fetch Data & Continue" : "Continue"}
+            <Button 
+              type="submit" 
+              disabled={!formData.interestRate || !formData.propertyTax || !formData.propertyInsurance}
+            >
+              Continue
             </Button>
           </CardFooter>
         </form>

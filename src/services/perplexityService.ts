@@ -1,8 +1,7 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Fallback data in case API fails - Export it
+// Keep fallbackData as a reference but avoid using it during testing
 export const fallbackData = {
   interestRates: {
     default: 6.75,
@@ -72,13 +71,13 @@ export const fetchPerplexityData = async (
 
     if (error) {
       console.error('Edge function error:', error);
-      toast.error(`API Error: ${error.message}. Using fallback data.`);
+      toast.error(`API Error: ${error.message}`);
       return null;
     }
 
     if (data.error) {
       console.error('Perplexity API error:', data.error);
-      toast.error(`Perplexity API Error: ${data.error}. Using fallback data.`);
+      toast.error(`Perplexity API Error: ${data.error}`);
       return null;
     }
 
@@ -90,9 +89,9 @@ export const fetchPerplexityData = async (
     if (timeoutId) clearTimeout(timeoutId);
     
     if (error instanceof Error && error.name === 'AbortError') {
-      toast.error("API request timed out. Using fallback data.");
+      toast.error("API request timed out.");
     } else {
-      toast.error("Network error fetching data. Using fallback data.");
+      toast.error("Network error fetching data.");
     }
     
     return null;
@@ -107,11 +106,9 @@ export const getInterestRates = async (state: string): Promise<number | null> =>
 
     rawResponse = await fetchPerplexityData(query);
     if (!rawResponse) {
-      // Use fallback data if API fails or key is missing
-      console.log("Using fallback interest rate data");
-      const fallbackRate = fallbackData.interestRates.states[state as keyof typeof fallbackData.interestRates.states] || 
-                        fallbackData.interestRates.default;
-      return fallbackRate;
+      // Return null if API fails, don't use fallback
+      console.log("Failed to fetch interest rate data");
+      return null;
     }
     
     // Extract JSON from potential markdown code block
@@ -120,8 +117,8 @@ export const getInterestRates = async (state: string): Promise<number | null> =>
     return data.interestRate;
   } catch (error) {
     console.error('Error parsing interest rate data:', error, 'Raw response:', rawResponse);
-    toast.error("Error processing interest rate data. Using fallback data.");
-    return fallbackData.interestRates.default;
+    toast.error("Error processing interest rate data.");
+    return null;
   }
 };
 
@@ -133,11 +130,9 @@ export const getPropertyTaxRate = async (state: string, county: string): Promise
 
     rawResponse = await fetchPerplexityData(query);
     if (!rawResponse) {
-      // Use fallback data if API fails or key is missing
-      console.log("Using fallback property tax data");
-      const fallbackRate = fallbackData.propertyTaxRates.states[state as keyof typeof fallbackData.propertyTaxRates.states] || 
-                        fallbackData.propertyTaxRates.default;
-      return fallbackRate;
+      // Return null if API fails, don't use fallback
+      console.log("Failed to fetch property tax data");
+      return null;
     }
     
     // Extract JSON from potential markdown code block
@@ -146,8 +141,8 @@ export const getPropertyTaxRate = async (state: string, county: string): Promise
     return data.propertyTaxRate;
   } catch (error) {
     console.error('Error parsing property tax data:', error, 'Raw response:', rawResponse);
-    toast.error("Error processing property tax data. Using fallback data.");
-    return fallbackData.propertyTaxRates.default;
+    toast.error("Error processing property tax data.");
+    return null;
   }
 };
 
@@ -159,11 +154,9 @@ export const getPropertyInsurance = async (state: string, zipCode: string): Prom
 
     rawResponse = await fetchPerplexityData(query);
     if (!rawResponse) {
-      // Use fallback data if API fails or key is missing
-      console.log("Using fallback insurance data");
-      const fallbackRate = fallbackData.annualInsurance.states[state as keyof typeof fallbackData.annualInsurance.states] || 
-                        fallbackData.annualInsurance.default;
-      return fallbackRate;
+      // Return null if API fails, don't use fallback
+      console.log("Failed to fetch insurance data");
+      return null;
     }
 
     // Extract JSON from potential markdown code block
@@ -172,7 +165,7 @@ export const getPropertyInsurance = async (state: string, zipCode: string): Prom
     return data.annualInsurance;
   } catch (error) {
     console.error('Error parsing insurance data:', error, 'Raw response:', rawResponse);
-    toast.error("Error processing insurance data. Using fallback data.");
-    return fallbackData.annualInsurance.default;
+    toast.error("Error processing insurance data.");
+    return null;
   }
 };
