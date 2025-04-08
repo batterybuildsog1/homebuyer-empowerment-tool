@@ -1,6 +1,4 @@
 
-import { Button } from "@/components/ui/button";
-
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
   conventionalInterestRate: number | null;
@@ -8,7 +6,7 @@ interface DataSummaryProps {
   propertyTax: number | null;
   propertyInsurance: number | null;
   hasAttemptedFetch: boolean;
-  onFetchData: () => Promise<void>;
+  onFetchData: () => Promise<any>; // Updated to accept any Promise return type
 }
 
 const DataSummary = ({
