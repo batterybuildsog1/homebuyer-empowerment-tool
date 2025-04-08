@@ -26,9 +26,12 @@ interface FetchedData {
 const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const { userData, updateLoanDetails, setCurrentStep, setIsLoadingData, isLoadingData } = useMortgage();
 
+  // Convert initial LTV to down payment percentage for initial state
+  const initialDownPayment = userData.loanDetails.ltv ? 100 - userData.loanDetails.ltv : 20;
+
   const [formData, setFormData] = useState({
     loanType: userData.loanDetails.loanType || 'conventional',
-    ltv: userData.loanDetails.ltv || 80,
+    downPayment: initialDownPayment, // Store down payment percentage instead of LTV
     interestRate: userData.loanDetails.interestRate || null,
     propertyTax: userData.loanDetails.propertyTax || null,
     propertyInsurance: userData.loanDetails.propertyInsurance || null,
@@ -39,7 +42,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState("Initializing...");
   
-  const downPaymentPercent = 100 - formData.ltv;
+  // Calculate LTV from down payment
+  const ltv = 100 - formData.downPayment;
 
   // Modified to return fetched data or null
   const fetchExternalData = async (): Promise<FetchedData | null> => {
@@ -101,7 +105,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
       if (formData.loanType === 'fha') {
         const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
           1000, // Placeholder loan amount, will be calculated based on actual home price later
-          formData.ltv
+          ltv // Use calculated LTV here
         );
         setFormData(prev => ({
           ...prev,
@@ -131,7 +135,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
     if (formData.loanType === 'fha') {
       const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
         1000, // Placeholder loan amount
-        formData.ltv
+        ltv // Use calculated LTV
       );
       
       setFormData(prev => ({
@@ -147,7 +151,7 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
         ongoingMIP: null,
       }));
     }
-  }, [formData.loanType, formData.ltv]);
+  }, [formData.loanType, ltv]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +168,8 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
 
     // Construct the final loan details object
     const finalLoanDetails = {
-      ...formData, // Includes loanType, ltv, potentially MIP from state
+      ...formData, // Includes loanType, downPayment, potentially MIP from state
+      ltv: ltv, // Add calculated LTV
       // Ensure fetched data is included, either from the fetch call or existing state
       interestRate: fetchedData?.interestRate ?? formData.interestRate,
       propertyTax: fetchedData?.propertyTax ?? formData.propertyTax,
@@ -176,7 +181,6 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
         toast.error("Missing essential rate/tax/insurance data. Cannot calculate results.");
         return;
     }
-
 
     // Save the complete, validated form data to context
     updateLoanDetails(finalLoanDetails);
@@ -265,23 +269,23 @@ const LoanDetailsStep: React.FC<LoanDetailsStepProps> = () => {
             
             <div className="space-y-3">
               <div className="flex justify-between">
-                <Label htmlFor="ltv">Down Payment: {downPaymentPercent}%</Label>
+                <Label htmlFor="downPayment">Down Payment: {formData.downPayment}%</Label>
                 <span className="text-sm font-medium">
-                  LTV: {formData.ltv}%
+                  LTV: {ltv}%
                 </span>
               </div>
               <Slider
-                id="ltv"
-                min={formData.loanType === 'conventional' ? 80 : 90}
-                max={formData.loanType === 'conventional' ? 97 : 96.5}
+                id="downPayment"
+                min={formData.loanType === 'conventional' ? 3 : 3.5}
+                max={formData.loanType === 'conventional' ? 20 : 10}
                 step={0.5}
-                value={[formData.ltv]}
-                onValueChange={(value) => setFormData({ ...formData, ltv: value[0] })}
+                value={[formData.downPayment]}
+                onValueChange={(value) => setFormData({ ...formData, downPayment: value[0] })}
                 className="py-4"
               />
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Down: {formData.loanType === 'conventional' ? '20%' : '10%'}</span>
-                <span>Down: {formData.loanType === 'conventional' ? '3%' : '3.5%'}</span>
+                <span>Min: {formData.loanType === 'conventional' ? '3%' : '3.5%'}</span>
+                <span>Max: {formData.loanType === 'conventional' ? '20%' : '10%'}</span>
               </div>
             </div>
             
