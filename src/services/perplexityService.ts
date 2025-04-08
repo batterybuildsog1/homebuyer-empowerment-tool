@@ -58,13 +58,14 @@ export const fetchPerplexityData = async (
   try {
     console.log(`Sending query to Perplexity API via Edge Function...`);
 
-    // Add timeout to the request
-    const controller = new AbortController();
-    timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    // Start a timeout
+    timeoutId = setTimeout(() => {
+      throw new Error("Request timed out");
+    }, 15000); // 15 second timeout
     
     const { data, error } = await supabase.functions.invoke('perplexity-api', {
       body: { query },
-      signal: controller.signal,
+      // Remove the signal parameter as it's not supported
     });
 
     clearTimeout(timeoutId);
