@@ -23,7 +23,7 @@ const DownPaymentSlider = ({
     
     // Only update if current value is outside the new loan type's valid range
     if ((loanType === 'conventional' && downPayment < 3) || 
-        (loanType === 'fha' && downPayment > 10) ||
+        (loanType === 'fha' && (downPayment < 3.5 || downPayment > 10)) ||
         (downPayment === 0)) {
       onDownPaymentChange(defaultValue);
     }
