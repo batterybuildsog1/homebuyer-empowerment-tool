@@ -29,7 +29,7 @@ const DataSummary = ({
   // Check if we have any data to display
   const hasData = conventionalInterestRate || fhaInterestRate || propertyTax || propertyInsurance;
   
-  // NEVER show the fetch button if we've already attempted a fetch or if all data is present
+  // Only show the fetch button if we've never attempted a fetch AND we're missing essential data
   const shouldShowFetchButton = !hasAttemptedFetch && 
     !(conventionalInterestRate !== null && 
       fhaInterestRate !== null && 
@@ -41,7 +41,7 @@ const DataSummary = ({
       <div className="text-center py-4">
         <p className="mb-3 text-muted-foreground">
           {hasAttemptedFetch 
-            ? "Data fetch initiated. Results will appear here when available."
+            ? "Data fetch attempted but no results were found. Please try again."
             : "No data fetched yet. Data will be automatically retrieved when you enter your annual income."
           }
         </p>

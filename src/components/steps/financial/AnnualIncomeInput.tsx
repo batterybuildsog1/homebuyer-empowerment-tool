@@ -5,6 +5,7 @@ import { DollarSign } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useState, useEffect, useRef } from "react";
 import { useLoanData } from "@/hooks/useLoanData";
+import { useMortgage } from "@/context/MortgageContext";
 
 interface AnnualIncomeInputProps {
   annualIncome: number;
@@ -21,6 +22,7 @@ const AnnualIncomeInput = ({
   const [fetchCalled, setFetchCalled] = useState<boolean>(false);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { fetchExternalData } = useLoanData();
+  const { updateLoanDetails } = useMortgage();
   
   // Update display value when annualIncome changes
   useEffect(() => {
@@ -47,7 +49,16 @@ const AnnualIncomeInput = ({
         console.log("Triggering background data fetch based on income entry");
         try {
           // Fetch data in the background without showing loading animation
-          await fetchExternalData(true); // Background fetch
+          const fetchedData = await fetchExternalData(true); // Background fetch
+          
+          // If we got data, update the loan details context directly
+          if (fetchedData && 
+              fetchedData.conventionalInterestRate !== null && 
+              fetchedData.fhaInterestRate !== null) {
+            console.log("Updating context with fetched data:", fetchedData);
+            updateLoanDetails(fetchedData);
+          }
+          
           setFetchCalled(true);
           
           // Store in localStorage to prevent fetching again in this session
@@ -65,7 +76,7 @@ const AnnualIncomeInput = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [annualIncome, fetchCalled, fetchExternalData]);
+  }, [annualIncome, fetchCalled, fetchExternalData, updateLoanDetails]);
 
   // Check localStorage on component mount to prevent repeated fetches
   useEffect(() => {
@@ -77,7 +88,22 @@ const AnnualIncomeInput = ({
         setFetchCalled(true);
       }
     }
-  }, []);
+    
+    // Check if we already have data in localStorage that needs to be loaded into context
+    const cachedData = localStorage.getItem("cached_loan_data");
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        if (parsedData.conventionalInterestRate !== null && 
+            parsedData.fhaInterestRate !== null) {
+          console.log("Loading cached loan data from AnnualIncomeInput:", parsedData);
+          updateLoanDetails(parsedData);
+        }
+      } catch (e) {
+        console.error("Error parsing cached loan data", e);
+      }
+    }
+  }, [updateLoanDetails]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Remove all non-numeric characters

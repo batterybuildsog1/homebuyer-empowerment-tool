@@ -24,13 +24,36 @@ const LoanDetailsStep: React.FC = () => {
     fetchExternalData
   } = useLoanData();
 
-  // Check if data was already fetched in the previous step
+  // Check for cached data on component mount
+  useEffect(() => {
+    // Check if we need to load data from localStorage
+    const cachedData = localStorage.getItem("cached_loan_data");
+    
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        
+        // If we have cached data but it's not in userData yet, update it
+        if (!userData.loanDetails.conventionalInterestRate && 
+            !userData.loanDetails.fhaInterestRate &&
+            parsedData.conventionalInterestRate && 
+            parsedData.fhaInterestRate) {
+          console.log("Loading cached loan data into context", parsedData);
+          updateLoanDetails(parsedData);
+        }
+      } catch (e) {
+        console.error("Error parsing cached loan data", e);
+      }
+    }
+  }, [updateLoanDetails, userData.loanDetails]);
+
+  // Pre-populate form with values from userData or cached values
   useEffect(() => {
     if (userData.loanDetails.conventionalInterestRate || userData.loanDetails.fhaInterestRate) {
       // Pre-populate formData with values from userData if they exist
       handleLoanTypeChange(userData.loanDetails.loanType || 'conventional');
     }
-  }, [userData.loanDetails]);
+  }, [userData.loanDetails, handleLoanTypeChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,6 +91,19 @@ const LoanDetailsStep: React.FC = () => {
     setCurrentStep(3); // Navigate to the next step (Results)
   };
 
+  // Determine if we should show previously cached data or current form data
+  const dataToDisplay = (formData.conventionalInterestRate || formData.fhaInterestRate || 
+    formData.propertyTax || formData.propertyInsurance) ? formData : userData.loanDetails;
+    
+  // Determine if button should be enabled - if we have the necessary data in either formData or userData
+  const hasNecessaryData = (formData.loanType === 'conventional' ? formData.conventionalInterestRate : formData.fhaInterestRate) !== null &&
+                          formData.propertyTax !== null && 
+                          formData.propertyInsurance !== null;
+                          
+  const hasUserData = (userData.loanDetails.loanType === 'conventional' ? userData.loanDetails.conventionalInterestRate : userData.loanDetails.fhaInterestRate) !== null &&
+                     userData.loanDetails.propertyTax !== null && 
+                     userData.loanDetails.propertyInsurance !== null;
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
@@ -104,28 +140,15 @@ const LoanDetailsStep: React.FC = () => {
               onDownPaymentChange={handleDownPaymentChange}
             />
             
-            {(formData.conventionalInterestRate || formData.fhaInterestRate || 
-              formData.propertyTax || formData.propertyInsurance) ? (
-              <DataSummary 
-                loanType={formData.loanType}
-                conventionalInterestRate={formData.conventionalInterestRate}
-                fhaInterestRate={formData.fhaInterestRate}
-                propertyTax={formData.propertyTax}
-                propertyInsurance={formData.propertyInsurance}
-                hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
-                onFetchData={fetchExternalData}
-              />
-            ) : (
-              <DataSummary 
-                loanType={formData.loanType}
-                conventionalInterestRate={userData.loanDetails.conventionalInterestRate}
-                fhaInterestRate={userData.loanDetails.fhaInterestRate}
-                propertyTax={userData.loanDetails.propertyTax}
-                propertyInsurance={userData.loanDetails.propertyInsurance}
-                hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
-                onFetchData={fetchExternalData}
-              />
-            )}
+            <DataSummary 
+              loanType={dataToDisplay.loanType}
+              conventionalInterestRate={dataToDisplay.conventionalInterestRate}
+              fhaInterestRate={dataToDisplay.fhaInterestRate}
+              propertyTax={dataToDisplay.propertyTax}
+              propertyInsurance={dataToDisplay.propertyInsurance}
+              hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
+              onFetchData={fetchExternalData}
+            />
           </CardContent>
           
           <CardFooter className="flex justify-between">
@@ -139,7 +162,7 @@ const LoanDetailsStep: React.FC = () => {
             </Button>
             <Button 
               type="submit" 
-              disabled={!currentInterestRate || !formData.propertyTax || !formData.propertyInsurance}
+              disabled={!hasNecessaryData && !hasUserData}
             >
               Continue
             </Button>
