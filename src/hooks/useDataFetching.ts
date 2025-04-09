@@ -1,18 +1,8 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { getInterestRates, getFhaInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
-import { getFhaMipRates } from "@/utils/mortgageCalculations";
+import { fetchAllMortgageData } from "@/services/perplexityService";
 import { useMortgage } from "@/context/MortgageContext";
-
-interface FetchedData {
-  conventionalInterestRate: number | null;
-  fhaInterestRate: number | null;
-  propertyTax: number | null;
-  propertyInsurance: number | null;
-  upfrontMIP?: number | null;
-  ongoingMIP?: number | null;
-}
 
 interface FetchProgressState {
   isLoading: boolean;
@@ -36,6 +26,7 @@ export const useDataFetching = () => {
     const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
     const cachedData = localStorage.getItem("cached_loan_data");
     
+    // Only use cached data if it's less than 1 hour old
     if (lastFetchTime && cachedData) {
       const oneHourAgo = Date.now() - (60 * 60 * 1000);
       if (parseInt(lastFetchTime) > oneHourAgo) {
@@ -58,14 +49,7 @@ export const useDataFetching = () => {
             }));
             
             // Update context
-            updateLoanDetails({
-              conventionalInterestRate: parsedData.conventionalInterestRate,
-              fhaInterestRate: parsedData.fhaInterestRate,
-              propertyTax: parsedData.propertyTax,
-              propertyInsurance: parsedData.propertyInsurance,
-              upfrontMIP: parsedData.upfrontMIP,
-              ongoingMIP: parsedData.ongoingMIP
-            });
+            updateLoanDetails(parsedData);
             
             return parsedData;
           }
@@ -75,6 +59,7 @@ export const useDataFetching = () => {
       }
     }
     
+    // Ensure we have location data before attempting fetch
     if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       if (!isBackgroundFetch) {
         toast.error("Location information is incomplete. Please go back and complete it.");
@@ -88,8 +73,8 @@ export const useDataFetching = () => {
       setFetchProgress(prev => ({ 
         ...prev, 
         isLoading: true, 
-        progress: 10,
-        message: "Fetching conventional interest rates...",
+        progress: 20,
+        message: "Fetching mortgage data...",
       }));
     }
     
@@ -100,73 +85,43 @@ export const useDataFetching = () => {
     }));
     
     try {
-      // Get conventional interest rate data
-      const conventionalInterestRate = await getInterestRates(userData.location.state);
+      // Consolidated fetch for all mortgage data
+      const result = await fetchAllMortgageData(
+        userData.location.state,
+        userData.location.county || userData.location.city,
+        userData.location.zipCode
+      );
 
-      if (conventionalInterestRate === null && !isBackgroundFetch) {
-        toast.error("Failed to fetch conventional interest rate data. Please try again.");
-      }
-
+      // Update progress
       if (!isBackgroundFetch) {
-        setFetchProgress(prev => ({ ...prev, progress: 25, message: "Fetching FHA interest rates..." }));
+        setFetchProgress(prev => ({ 
+          ...prev, 
+          progress: 80, 
+          message: "Processing data..." 
+        }));
       }
 
-      // Get FHA interest rate data
-      const fhaInterestRate = await getFhaInterestRates(userData.location.state);
-
-      if (fhaInterestRate === null && !isBackgroundFetch) {
-        toast.error("Failed to fetch FHA interest rate data. Please try again.");
-      }
-
-      if (!isBackgroundFetch) {
-        setFetchProgress(prev => ({ ...prev, progress: 40, message: "Fetching property tax information..." }));
-      }
-
-      // Get property tax data
-      const propertyTaxRate = await getPropertyTaxRate(userData.location.state, userData.location.county || userData.location.city);
-
-      if (propertyTaxRate === null && !isBackgroundFetch) {
-        toast.error("Failed to fetch property tax data. Please try again.");
-      }
-
-      if (!isBackgroundFetch) {
-        setFetchProgress(prev => ({ ...prev, progress: 70, message: "Fetching insurance estimates..." }));
-      }
-
-      // Get property insurance data
-      const annualInsurance = await getPropertyInsurance(userData.location.state, userData.location.zipCode);
-
-      if (annualInsurance === null && !isBackgroundFetch) {
-        toast.error("Failed to fetch property insurance data. Please try again.");
-      }
-
-      if (!isBackgroundFetch) {
-        setFetchProgress(prev => ({ ...prev, progress: 100, message: "Processing data..." }));
-      }
-
-      console.log("Fetched data:", {
-        conventionalRate: conventionalInterestRate,
-        fhaRate: fhaInterestRate,
-        propertyTax: propertyTaxRate,
-        insurance: annualInsurance
-      });
+      // Log the fetched data
+      console.log("Fetched mortgage data:", result);
 
       // Check if at least some data was fetched successfully
-      const anyDataReceived = conventionalInterestRate !== null || 
-                            fhaInterestRate !== null || 
-                            propertyTaxRate !== null || 
-                            annualInsurance !== null;
+      const anyDataReceived = result.conventionalRate !== null || 
+                            result.fhaRate !== null || 
+                            result.propertyTaxRate !== null || 
+                            result.annualInsurance !== null;
                             
       if (!anyDataReceived) {
         throw new Error("No data was successfully fetched");
       }
 
-      // Create a data object to store results
-      const fetchedData: FetchedData = {
-        conventionalInterestRate,
-        fhaInterestRate,
-        propertyTax: propertyTaxRate,
-        propertyInsurance: annualInsurance,
+      // Transform the result data to match the expected structure
+      const fetchedData = {
+        conventionalInterestRate: result.conventionalRate,
+        fhaInterestRate: result.fhaRate,
+        propertyTax: result.propertyTaxRate,
+        propertyInsurance: result.annualInsurance,
+        upfrontMIP: result.upfrontMIP || null,
+        ongoingMIP: result.ongoingMIP || null
       };
       
       // Cache the results in localStorage with a timestamp
@@ -178,14 +133,21 @@ export const useDataFetching = () => {
 
       // Only show success if all necessary data was fetched and this is not a background fetch
       if (!isBackgroundFetch) {
-        if (conventionalInterestRate !== null && fhaInterestRate !== null && 
-            propertyTaxRate !== null && annualInsurance !== null) {
+        if (result.conventionalRate !== null && result.fhaRate !== null && 
+            result.propertyTaxRate !== null && result.annualInsurance !== null) {
           toast.success("Successfully processed mortgage data!");
         } else if (anyDataReceived) {
           toast.warning("Some data could not be fetched. You may proceed, but results might be inaccurate.");
         } else {
           toast.error("Failed to fetch any data. Please check your location information and try again.");
         }
+        
+        // Complete the progress
+        setFetchProgress(prev => ({ 
+          ...prev, 
+          progress: 100, 
+          message: "Data processing complete" 
+        }));
       }
       
       // Return the fetched data

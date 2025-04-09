@@ -32,6 +32,21 @@ const FinancialStep: React.FC = () => {
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasFetchedData, setHasFetchedData] = useState(false);
+
+  // Effect to trigger data fetch when income is non-zero
+  useEffect(() => {
+    if (formData.annualIncome > 0 && !hasFetchedData && userData.location.state) {
+      console.log("Triggering background fetch due to income change:", formData.annualIncome);
+      // Use a short delay to prevent immediate fetching during typing
+      const timer = setTimeout(() => {
+        fetchExternalData(true); // Background fetch
+        setHasFetchedData(true);
+      }, 800);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [formData.annualIncome, hasFetchedData, fetchExternalData, userData.location.state]);
 
   const handleIncomeChange = (value: number) => {
     setFormData(prev => ({ ...prev, annualIncome: value }));
@@ -100,8 +115,8 @@ const FinancialStep: React.FC = () => {
       
       setIsSubmitting(true);
       
-      // Check if we need to fetch data - only if it hasn't been attempted yet
-      if (!fetchProgress.hasAttemptedFetch) {
+      // Only fetch data if we haven't already tried or if the background fetch didn't succeed
+      if (!fetchProgress.hasAttemptedFetch && !hasFetchedData) {
         try {
           const fetchedData = await fetchExternalData(false); // Regular fetch with UI feedback
           if (fetchedData) {
