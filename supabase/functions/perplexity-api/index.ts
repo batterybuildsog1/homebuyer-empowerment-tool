@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     // Get the query from the request body
-    const { query } = await req.json();
+    const { query, queryType } = await req.json();
     
     if (!query) {
       return new Response(
@@ -58,14 +58,31 @@ serve(async (req) => {
     }
 
     console.log(`Attempting Perplexity API request with model: ${MODEL_NAME}...`);
+    console.log(`Query type: ${queryType || 'unspecified'}`);
     console.log(`Query: ${query}`);
 
-    // Improved system message with clear JSON formatting requirements
-    const systemMessage = `You are a helpful assistant specializing in real estate and mortgage data. 
-Provide accurate, current data in JSON format only. No explanations or additional text. 
+    // Select the appropriate system message based on query type
+    let systemMessage = "";
+    
+    if (queryType === "mortgageRates") {
+      systemMessage = `You are a helpful assistant specializing in mortgage rate data from Mortgage News Daily. 
+Provide the most current, up-to-date mortgage rates in JSON format only. No explanations or additional text.
+Return ONLY valid JSON with numeric values. Never include percentages symbols (%) in your response.
+NEVER include comments, explanations, or non-JSON content in your response.
+If you include a JSON block with \`\`\` markers, ensure the JSON is properly formatted.`;
+    } else if (queryType === "propertyData") {
+      systemMessage = `You are a helpful assistant specializing in real estate tax and insurance data. 
+Provide accurate, current property tax rates and insurance premiums for specific locations in JSON format only. No explanations or additional text.
+Return ONLY valid JSON with numeric values. Never include percentages symbols (%) or dollar signs ($) in your response.
+NEVER include comments, explanations, or non-JSON content in your response.
+If you include a JSON block with \`\`\` markers, ensure the JSON is properly formatted.`;
+    } else {
+      systemMessage = `You are a helpful assistant specializing in real estate and mortgage data. 
+Provide accurate, current data in JSON format only. No explanations or additional text.
 When asked for mortgage rates or property data, return only valid JSON with numeric values.
 NEVER include comments, explanations, or non-JSON content in your response.
 If you include a JSON block with \`\`\` markers, ensure the JSON is properly formatted.`;
+    }
 
     // Request to Perplexity API with increased timeout for complex queries
     const controller = new AbortController();
@@ -105,7 +122,8 @@ If you include a JSON block with \`\`\` markers, ensure the JSON is properly for
         
         return new Response(
           JSON.stringify({ 
-            content: data.choices[0].message.content
+            content: data.choices[0].message.content,
+            queryType: queryType || 'general'
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
