@@ -14,7 +14,7 @@ import MitigatingFactorsSection from "./financial/MitigatingFactorsSection";
 
 const FinancialStep: React.FC = () => {
   const { userData, updateFinancials, setCurrentStep, updateLoanDetails } = useMortgage();
-  const { fetchExternalData } = useLoanData();
+  const { fetchExternalData, fetchProgress } = useLoanData();
   
   const [formData, setFormData] = useState({
     annualIncome: userData.financials.annualIncome || 0,
@@ -31,7 +31,7 @@ const FinancialStep: React.FC = () => {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isFetchingRates, setIsFetchingRates] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleIncomeChange = (value: number) => {
     setFormData(prev => ({ ...prev, annualIncome: value }));
@@ -98,26 +98,26 @@ const FinancialStep: React.FC = () => {
         mitigatingFactors: formData.mitigatingFactors,
       });
       
-      // Fetch interest rate and insurance data before proceeding
-      setIsFetchingRates(true);
-      toast.info("Fetching current interest rates and insurance data...");
+      setIsSubmitting(true);
       
-      try {
-        const fetchedData = await fetchExternalData();
-        if (fetchedData) {
-          updateLoanDetails(fetchedData);
-          toast.success("Financial information saved!");
-          setCurrentStep(2);
-        } else {
-          toast.error("Could not retrieve rate data. Please try again.");
+      // Check if we need to fetch data - only if it hasn't been attempted yet
+      if (!fetchProgress.hasAttemptedFetch) {
+        try {
+          const fetchedData = await fetchExternalData(false); // Regular fetch with UI feedback
+          if (fetchedData) {
+            updateLoanDetails(fetchedData);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          toast.error("There was a problem fetching rate data. Continuing without it.");
         }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("There was a problem fetching rate data. Continuing without it.");
-        setCurrentStep(2);
-      } finally {
-        setIsFetchingRates(false);
+      } else {
+        // Data has already been fetched or attempted in the background
+        toast.success("Financial information saved!");
       }
+      
+      setIsSubmitting(false);
+      setCurrentStep(2);
     }
   };
 
@@ -175,8 +175,8 @@ const FinancialStep: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
-          <Button type="submit" disabled={isFetchingRates}>
-            {isFetchingRates ? "Fetching Rates..." : "Continue"}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Processing..." : "Continue"}
           </Button>
         </CardFooter>
       </form>

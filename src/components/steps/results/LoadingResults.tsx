@@ -22,10 +22,10 @@ const LoadingResults: React.FC<LoadingResultsProps> = ({
       ) : (
         <div className="space-y-4">
           <p className="text-lg text-muted-foreground mb-4">
-            Ready to calculate your mortgage results
+            Ready to update your mortgage results
           </p>
           <Button onClick={onRecalculate} disabled={isCalculating}>
-            Calculate Results
+            Recalculate Results
           </Button>
         </div>
       )}

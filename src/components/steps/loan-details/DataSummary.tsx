@@ -28,14 +28,33 @@ const DataSummary = ({
 
   // Check if we have any data to display
   const hasData = conventionalInterestRate || fhaInterestRate || propertyTax || propertyInsurance;
+  
+  // Determine if we need to show the fetch button
+  // Don't show it if:
+  // 1. We have complete data (all values are non-null)
+  // 2. OR we've already attempted a fetch in the Financial step
+  const shouldShowFetchButton = !(
+    (conventionalInterestRate !== null && 
+     fhaInterestRate !== null && 
+     propertyTax !== null && 
+     propertyInsurance !== null) || 
+    hasAttemptedFetch
+  );
 
   if (!hasData) {
     return (
       <div className="text-center py-4">
-        <p className="mb-3 text-muted-foreground">No data fetched yet. Please fetch current rates and tax data.</p>
-        <Button type="button" variant="outline" size="sm" onClick={onFetchData}>
-          Fetch Current Data
-        </Button>
+        <p className="mb-3 text-muted-foreground">
+          {hasAttemptedFetch 
+            ? "Data fetch initiated. Results will appear here when available."
+            : "No data fetched yet. Data will be automatically retrieved."
+          }
+        </p>
+        {!hasAttemptedFetch && (
+          <Button type="button" variant="outline" size="sm" onClick={onFetchData}>
+            Fetch Current Data
+          </Button>
+        )}
       </div>
     );
   }
@@ -72,15 +91,17 @@ const DataSummary = ({
         </div>
       )}
       
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="w-full mt-2"
-        onClick={onFetchData}
-      >
-        {hasAttemptedFetch ? "Refresh Data" : "Fetch Data"}
-      </Button>
+      {shouldShowFetchButton && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full mt-2"
+          onClick={onFetchData}
+        >
+          {hasAttemptedFetch ? "Refresh Data" : "Fetch Data"}
+        </Button>
+      )}
     </div>
   );
 };

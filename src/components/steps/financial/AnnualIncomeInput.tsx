@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { DollarSign } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useState, useEffect } from "react";
+import { useLoanData } from "@/hooks/useLoanData";
 
 interface AnnualIncomeInputProps {
   annualIncome: number;
@@ -17,6 +18,8 @@ const AnnualIncomeInput = ({
   error 
 }: AnnualIncomeInputProps) => {
   const [displayValue, setDisplayValue] = useState<string>('');
+  const [hasFetched, setHasFetched] = useState<boolean>(false);
+  const { fetchExternalData } = useLoanData();
   
   // Update display value when annualIncome changes
   useEffect(() => {
@@ -28,6 +31,26 @@ const AnnualIncomeInput = ({
       setDisplayValue(annualIncome.toString());
     }
   }, [annualIncome]);
+
+  // Trigger data fetching when the user enters a valid income value
+  useEffect(() => {
+    const triggerFetch = async () => {
+      // Only trigger fetch when income is significant (over 20,000) and hasn't fetched yet
+      if (annualIncome >= 20000 && !hasFetched) {
+        console.log("Triggering background data fetch based on income entry");
+        try {
+          // Fetch data in the background without showing loading animation
+          await fetchExternalData(true); // New parameter to indicate background fetch
+          setHasFetched(true);
+        } catch (error) {
+          console.error("Background data fetch failed:", error);
+          // We don't show an error here as this is a background operation
+        }
+      }
+    };
+
+    triggerFetch();
+  }, [annualIncome, hasFetched, fetchExternalData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Remove all non-numeric characters
