@@ -105,10 +105,10 @@ export const useDataFetching = () => {
       console.log("Fetched mortgage data:", result);
 
       // Check if at least some data was fetched successfully
-      const anyDataReceived = result.conventionalRate !== null || 
-                            result.fhaRate !== null || 
-                            result.propertyTaxRate !== null || 
-                            result.annualInsurance !== null;
+      const anyDataReceived = result.conventionalInterestRate !== null || 
+                            result.fhaInterestRate !== null || 
+                            result.propertyTax !== null || 
+                            result.propertyInsurance !== null;
                             
       if (!anyDataReceived) {
         throw new Error("No data was successfully fetched");
@@ -116,10 +116,10 @@ export const useDataFetching = () => {
 
       // Transform the result data to match the expected structure
       const fetchedData = {
-        conventionalInterestRate: result.conventionalRate,
-        fhaInterestRate: result.fhaRate,
-        propertyTax: result.propertyTaxRate,
-        propertyInsurance: result.annualInsurance,
+        conventionalInterestRate: result.conventionalInterestRate,
+        fhaInterestRate: result.fhaInterestRate,
+        propertyTax: result.propertyTax,
+        propertyInsurance: result.propertyInsurance,
         upfrontMIP: result.upfrontMIP || null,
         ongoingMIP: result.ongoingMIP || null
       };
@@ -133,8 +133,8 @@ export const useDataFetching = () => {
 
       // Only show success if all necessary data was fetched and this is not a background fetch
       if (!isBackgroundFetch) {
-        if (result.conventionalRate !== null && result.fhaRate !== null && 
-            result.propertyTaxRate !== null && result.annualInsurance !== null) {
+        if (result.conventionalInterestRate !== null && result.fhaInterestRate !== null && 
+            result.propertyTax !== null && result.propertyInsurance !== null) {
           toast.success("Successfully processed mortgage data!");
         } else if (anyDataReceived) {
           toast.warning("Some data could not be fetched. You may proceed, but results might be inaccurate.");

@@ -35,26 +35,26 @@ const AnnualIncomeInput = ({
     }
   }, [annualIncome]);
 
-  // Only trigger data fetching once when income reaches threshold
+  // Effect to trigger data fetching when income is non-zero
   useEffect(() => {
     // Clear any existing timers to prevent multiple calls
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Only proceed if we haven't already fetched and income is sufficient
-    if (annualIncome >= 20000 && !fetchCalled) {
+    // Only proceed if we haven't already fetched and income is greater than zero
+    if (annualIncome > 0 && !fetchCalled) {
       // Set a debounce timer to prevent rapid API calls
       debounceTimerRef.current = setTimeout(async () => {
-        console.log("Triggering background data fetch based on income entry");
+        console.log("Triggering background data fetch based on income entry:", annualIncome);
         try {
           // Fetch data in the background without showing loading animation
           const fetchedData = await fetchExternalData(true); // Background fetch
           
           // If we got data, update the loan details context directly
           if (fetchedData && 
-              fetchedData.conventionalInterestRate !== null && 
-              fetchedData.fhaInterestRate !== null) {
+              (fetchedData.conventionalInterestRate !== null || 
+               fetchedData.fhaInterestRate !== null)) {
             console.log("Updating context with fetched data:", fetchedData);
             updateLoanDetails(fetchedData);
           }
@@ -67,7 +67,7 @@ const AnnualIncomeInput = ({
           console.error("Background data fetch failed:", error);
           // We don't show an error here as this is a background operation
         }
-      }, 1000); // 1 second debounce
+      }, 800); // 800ms debounce
     }
 
     // Cleanup function
@@ -94,7 +94,7 @@ const AnnualIncomeInput = ({
     if (cachedData) {
       try {
         const parsedData = JSON.parse(cachedData);
-        if (parsedData.conventionalInterestRate !== null && 
+        if (parsedData.conventionalInterestRate !== null || 
             parsedData.fhaInterestRate !== null) {
           console.log("Loading cached loan data from AnnualIncomeInput:", parsedData);
           updateLoanDetails(parsedData);

@@ -1,7 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
@@ -36,13 +37,18 @@ const DataSummary = ({
     (conventionalInterestRate !== null && propertyTax !== null && propertyInsurance !== null) : 
     (fhaInterestRate !== null && propertyTax !== null && propertyInsurance !== null);
   
-  // Only show the fetch button if we've never attempted a fetch OR we've attempted but don't have data
-  const shouldShowFetchButton = !hasRequiredData;
-
+  // Check what specific data is missing
+  const missingData = {
+    interestRate: loanType === 'conventional' ? conventionalInterestRate === null : fhaInterestRate === null,
+    propertyTax: propertyTax === null,
+    propertyInsurance: propertyInsurance === null
+  };
+  
   const handleFetchClick = async () => {
     try {
+      toast.info("Fetching current mortgage data...");
       const result = await onFetchData();
-      if (!result || (result.conventionalInterestRate === null && result.fhaInterestRate === null)) {
+      if (!result) {
         toast.error("Couldn't retrieve data. Please check your location information and try again.");
       }
     } catch (error) {
@@ -53,14 +59,14 @@ const DataSummary = ({
 
   if (!hasData) {
     return (
-      <div className="text-center py-4">
-        <p className="mb-3 text-muted-foreground">
-          {hasAttemptedFetch 
-            ? "Data fetch attempted but no results were found. Please check your location information and try again."
-            : "No data fetched yet. Data will be automatically retrieved when you enter your annual income."
-          }
-        </p>
-        {shouldShowFetchButton && (
+      <Card className="p-4 border border-amber-200 bg-amber-50">
+        <div className="text-center py-4">
+          <p className="mb-3 text-amber-800">
+            {hasAttemptedFetch 
+              ? "Data fetch attempted but no results were found. Please check your location information and try again."
+              : "No data fetched yet. Data will be automatically retrieved when you enter your location and income."
+            }
+          </p>
           <Button 
             type="button" 
             variant="outline" 
@@ -68,11 +74,11 @@ const DataSummary = ({
             onClick={handleFetchClick}
             className="flex items-center gap-1"
           >
-            {hasAttemptedFetch ? <AlertCircle className="h-4 w-4" /> : null}
+            {hasAttemptedFetch ? <RefreshCw className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
             {hasAttemptedFetch ? "Retry Fetch Data" : "Fetch Current Data"}
           </Button>
-        )}
-      </div>
+        </div>
+      </Card>
     );
   }
 
@@ -80,33 +86,45 @@ const DataSummary = ({
     <div className="border rounded-lg p-4 space-y-3">
       <h3 className="font-medium">Data Summary</h3>
       
-      {loanType === 'conventional' && conventionalInterestRate !== null && (
-        <div className="flex justify-between text-sm">
-          <span>Base Interest Rate (Conventional):</span>
-          <span className="font-medium">{formatInterestRate(conventionalInterestRate)}</span>
+      <div className="space-y-2 divide-y">
+        <div className="pb-2">
+          <h4 className="text-sm font-medium mb-1">Interest Rates</h4>
+          <div className="grid grid-cols-2 gap-1">
+            <div className="flex justify-between text-sm">
+              <span>Conventional:</span>
+              <span className={conventionalInterestRate === null ? "text-amber-500" : "font-medium"}>
+                {formatInterestRate(conventionalInterestRate)}
+              </span>
+            </div>
+            
+            <div className="flex justify-between text-sm">
+              <span>FHA:</span>
+              <span className={fhaInterestRate === null ? "text-amber-500" : "font-medium"}>
+                {formatInterestRate(fhaInterestRate)}
+              </span>
+            </div>
+          </div>
         </div>
-      )}
-      
-      {loanType === 'fha' && fhaInterestRate !== null && (
-        <div className="flex justify-between text-sm">
-          <span>Base Interest Rate (FHA):</span>
-          <span className="font-medium">{formatInterestRate(fhaInterestRate)}</span>
+        
+        <div className="py-2">
+          <h4 className="text-sm font-medium mb-1">Property Data</h4>
+          <div className="space-y-1">
+            <div className="flex justify-between text-sm">
+              <span>Property Tax Rate:</span>
+              <span className={propertyTax === null ? "text-amber-500" : "font-medium"}>
+                {propertyTax === null ? "N/A" : `${propertyTax.toFixed(2)}%`}
+              </span>
+            </div>
+            
+            <div className="flex justify-between text-sm">
+              <span>Annual Insurance:</span>
+              <span className={propertyInsurance === null ? "text-amber-500" : "font-medium"}>
+                {propertyInsurance === null ? "N/A" : `$${propertyInsurance?.toLocaleString()}`}
+              </span>
+            </div>
+          </div>
         </div>
-      )}
-      
-      {propertyTax !== null && (
-        <div className="flex justify-between text-sm">
-          <span>Property Tax Rate:</span>
-          <span className="font-medium">{propertyTax.toFixed(2)}%</span>
-        </div>
-      )}
-      
-      {propertyInsurance !== null && (
-        <div className="flex justify-between text-sm">
-          <span>Annual Insurance Estimate:</span>
-          <span className="font-medium">${propertyInsurance?.toLocaleString()}</span>
-        </div>
-      )}
+      </div>
       
       {!hasRequiredData && (
         <div className="pt-2">
@@ -117,9 +135,15 @@ const DataSummary = ({
             className="w-full flex items-center justify-center gap-1"
             onClick={handleFetchClick}
           >
-            {hasAttemptedFetch ? <AlertCircle className="h-4 w-4" /> : null}
-            {hasAttemptedFetch ? "Retry Data Fetch" : "Fetch Missing Data"}
+            <RefreshCw className="h-4 w-4" />
+            Fetch Missing Data
           </Button>
+          <p className="text-xs text-amber-600 mt-2 text-center">
+            {missingData.interestRate && `Missing ${loanType} interest rate. `}
+            {missingData.propertyTax && "Missing property tax rate. "}
+            {missingData.propertyInsurance && "Missing insurance data. "}
+            These are required to calculate accurate results.
+          </p>
         </div>
       )}
     </div>

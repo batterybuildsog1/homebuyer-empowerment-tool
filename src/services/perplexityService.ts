@@ -55,6 +55,8 @@ export interface MortgageDataResponse {
   fhaInterestRate: number | null;
   propertyTax: number | null;
   propertyInsurance: number | null;
+  upfrontMIP?: number | null;
+  ongoingMIP?: number | null;
 }
 
 export const fetchPerplexityData = async (
