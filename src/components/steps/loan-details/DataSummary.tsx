@@ -1,4 +1,6 @@
 
+import { Button } from "@/components/ui/button";
+
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
   conventionalInterestRate: number | null;
