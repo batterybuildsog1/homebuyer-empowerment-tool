@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMortgage } from "@/context/MortgageContext";
@@ -16,8 +16,9 @@ const ResultsStep: React.FC = () => {
   const [currentTab, setCurrentTab] = useState("primary");
   const [validationError, setValidationError] = useState<string | null>(null);
   
-  // This function will be called when the component mounts and when dependent data changes
-  const runCalculations = async () => {
+  // Memoized calculation function to avoid recreating on every render
+  const runCalculations = useCallback(async () => {
+    console.log("Running mortgage calculations...");
     setIsCalculating(true);
     
     try {
@@ -26,6 +27,7 @@ const ResultsStep: React.FC = () => {
       
       if (validationError) {
         setValidationError(validationError);
+        console.log("Validation failed:", validationError);
         setIsCalculating(false);
         return;
       }
@@ -37,9 +39,12 @@ const ResultsStep: React.FC = () => {
       
       if (!results) {
         toast.error("Calculation failed. Please check your inputs.");
+        console.error("Calculation returned null results");
         setIsCalculating(false);
         return;
       }
+      
+      console.log("Calculation completed successfully:", results);
       
       // Update results in context
       updateResults(results);
@@ -51,7 +56,7 @@ const ResultsStep: React.FC = () => {
     } finally {
       setIsCalculating(false);
     }
-  };
+  }, [userData, updateResults]);
   
   // Run calculations when dependent data changes
   useEffect(() => {
@@ -60,6 +65,7 @@ const ResultsStep: React.FC = () => {
       !userData.results.monthlyPayment;
       
     if (shouldRecalculate) {
+      console.log("Triggering calculation due to missing results or data changes");
       runCalculations();
     }
   // The key dependencies that should trigger a recalculation
@@ -70,7 +76,8 @@ const ResultsStep: React.FC = () => {
     userData.loanDetails.ltv,
     userData.loanDetails.loanType,
     userData.loanDetails.interestRate,
-    userData.loanDetails.propertyTax
+    userData.loanDetails.propertyTax,
+    runCalculations
   ]);
   
   const goToPreviousStep = () => {
