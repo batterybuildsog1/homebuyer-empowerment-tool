@@ -373,7 +373,7 @@ const ResultsStep: React.FC = () => {
                     </div>
                   </div>
                   
-                  {/* New Financial Analysis Section */}
+                  {/* Financial Analysis Section */}
                   <div className="financial-card">
                     <h3 className="text-lg font-medium mb-3 flex items-center">
                       <Calculator className="h-5 w-5 mr-2" />

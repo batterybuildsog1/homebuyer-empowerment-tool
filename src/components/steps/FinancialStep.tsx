@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import BuyingPowerChart from "./financial/BuyingPowerChart";
+import { useLoanData } from "@/hooks/useLoanData";
 
 const mitigatingFactorsOptions = [
   { 
@@ -53,7 +55,8 @@ const debtCategories = [
 ];
 
 const FinancialStep: React.FC = () => {
-  const { userData, updateFinancials, setCurrentStep } = useMortgage();
+  const { userData, updateFinancials, setCurrentStep, updateLoanDetails } = useMortgage();
+  const { fetchExternalData } = useLoanData();
   
   const [formData, setFormData] = useState({
     annualIncome: userData.financials.annualIncome || 0,
@@ -66,12 +69,12 @@ const FinancialStep: React.FC = () => {
       otherDebt: 0
     },
     ficoScore: userData.financials.ficoScore || 680,
-    downPaymentPercent: userData.financials.downPaymentPercent || 20,
     mitigatingFactors: userData.financials.mitigatingFactors || [],
   });
   
   const [isDebtsOpen, setIsDebtsOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isFetchingRates, setIsFetchingRates] = useState(false);
 
   const calculateTotalMonthlyDebt = () => {
     return Object.values(formData.debtItems).reduce((sum, value) => sum + (Number(value) || 0), 0);
@@ -99,10 +102,6 @@ const FinancialStep: React.FC = () => {
       newErrors.annualIncome = "Annual income must be greater than 0";
     }
     
-    if (formData.downPaymentPercent < 0 || formData.downPaymentPercent > 100) {
-      newErrors.downPaymentPercent = "Down payment percentage must be between 0 and 100";
-    }
-    
     if (formData.ficoScore < 300 || formData.ficoScore > 850) {
       newErrors.ficoScore = "FICO score must be between 300 and 850";
     }
@@ -111,21 +110,40 @@ const FinancialStep: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Convert downPaymentPercent to an actual dollar amount in the context later
+      // Update financials in context
       updateFinancials({
         annualIncome: formData.annualIncome,
         monthlyDebts: formData.monthlyDebts,
         debtItems: formData.debtItems,
         ficoScore: formData.ficoScore,
-        downPaymentPercent: formData.downPaymentPercent,
+        downPaymentPercent: 20, // Default value, will be modified in loan details
         downPayment: 0, // This will be calculated based on home price
         mitigatingFactors: formData.mitigatingFactors,
       });
-      toast.success("Financial information saved!");
-      setCurrentStep(2);
+      
+      // Fetch interest rate and insurance data before proceeding
+      setIsFetchingRates(true);
+      toast.info("Fetching current interest rates and insurance data...");
+      
+      try {
+        const fetchedData = await fetchExternalData();
+        if (fetchedData) {
+          updateLoanDetails(fetchedData);
+          toast.success("Financial information saved!");
+          setCurrentStep(2);
+        } else {
+          toast.error("Could not retrieve rate data. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("There was a problem fetching rate data. Continuing without it.");
+        setCurrentStep(2);
+      } finally {
+        setIsFetchingRates(false);
+      }
     }
   };
 
@@ -223,27 +241,7 @@ const FinancialStep: React.FC = () => {
             </p>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="downPaymentPercent">Down Payment Percentage</Label>
-            <div className="flex gap-4 items-center">
-              <Slider
-                id="downPaymentPercent"
-                min={0}
-                max={100}
-                step={1}
-                value={[formData.downPaymentPercent]}
-                onValueChange={(value) => setFormData({ ...formData, downPaymentPercent: value[0] })}
-                className="flex-grow"
-              />
-              <div className="w-16 text-center font-medium">
-                {formData.downPaymentPercent}%
-              </div>
-            </div>
-            {errors.downPaymentPercent && <p className="text-sm text-destructive">{errors.downPaymentPercent}</p>}
-            <p className="text-sm text-muted-foreground">
-              Typical down payments range from 3% to 20% of the purchase price.
-            </p>
-          </div>
+          {/* Removed down payment percentage from this step */}
           
           <div className="space-y-4">
             <div className="space-y-1">
@@ -315,6 +313,16 @@ const FinancialStep: React.FC = () => {
               </p>
             </div>
           </TooltipProvider>
+          
+          {/* Add the buying power visualization */}
+          <div className="mt-6">
+            <BuyingPowerChart 
+              annualIncome={formData.annualIncome}
+              ficoScore={formData.ficoScore}
+              debtItems={formData.debtItems}
+              mitigatingFactors={formData.mitigatingFactors}
+            />
+          </div>
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button 
@@ -325,7 +333,9 @@ const FinancialStep: React.FC = () => {
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </Button>
-          <Button type="submit">Continue</Button>
+          <Button type="submit" disabled={isFetchingRates}>
+            {isFetchingRates ? "Fetching Rates..." : "Continue"}
+          </Button>
         </CardFooter>
       </form>
     </Card>

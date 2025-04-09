@@ -9,6 +9,28 @@ import ResultsStep from "./steps/ResultsStep";
 import GoalSettingStep from "./steps/GoalSettingStep";
 import { Heading } from "./ui/Heading";
 
+// Custom CSS for financial styling
+const customStyles = `
+  .text-finance-blue {
+    color: #1E40AF;
+  }
+  .text-finance-navy {
+    color: #0F172A;
+  }
+  .text-finance-green {
+    color: #059669;
+  }
+  .financial-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  .dark .financial-card {
+    background-color: hsl(222.2, 26%, 11%);
+  }
+`;
+
 const MortgageCalculator: React.FC = () => {
   const { currentStep, setCurrentStep, userData } = useMortgage();
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -19,6 +41,15 @@ const MortgageCalculator: React.FC = () => {
     if (storedApiKey) {
       setApiKey(storedApiKey);
     }
+    
+    // Add custom styles to the document
+    const styleElement = document.createElement('style');
+    styleElement.textContent = customStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
   }, []);
 
   // Validate step progression
@@ -37,9 +68,6 @@ const MortgageCalculator: React.FC = () => {
   const handleApiKeySet = (key: string) => {
     setApiKey(key);
   };
-
-  // We no longer need to check for API key since we're using an Edge Function
-  // Remove the API key form condition
 
   // Map step components with their titles
   const steps = [

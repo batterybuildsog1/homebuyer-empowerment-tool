@@ -68,6 +68,13 @@ export interface UserData {
       maxHomePrice: number;
       monthlyPayment: number;
     }[];
+    financialDetails?: {
+      maxDTI: number;
+      monthlyIncome: number;
+      maxMonthlyDebtPayment: number;
+      availableForMortgage: number;
+      adjustedRate: number;
+    };
   };
   goals: {
     targetFICO: number | null;

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,7 +12,7 @@ import DataSummary from "./loan-details/DataSummary";
 import LoadingIndicator from "./loan-details/LoadingIndicator";
 
 const LoanDetailsStep: React.FC = () => {
-  const { updateLoanDetails, setCurrentStep } = useMortgage();
+  const { userData, updateLoanDetails, setCurrentStep } = useMortgage();
   
   const {
     formData,
@@ -23,6 +23,14 @@ const LoanDetailsStep: React.FC = () => {
     handleDownPaymentChange,
     fetchExternalData
   } = useLoanData();
+
+  // Check if data was already fetched in the previous step
+  useEffect(() => {
+    if (userData.loanDetails.conventionalInterestRate || userData.loanDetails.fhaInterestRate) {
+      // Pre-populate formData with values from userData if they exist
+      handleLoanTypeChange(userData.loanDetails.loanType || 'conventional');
+    }
+  }, [userData.loanDetails]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,10 +118,10 @@ const LoanDetailsStep: React.FC = () => {
             ) : (
               <DataSummary 
                 loanType={formData.loanType}
-                conventionalInterestRate={null}
-                fhaInterestRate={null}
-                propertyTax={null}
-                propertyInsurance={null}
+                conventionalInterestRate={userData.loanDetails.conventionalInterestRate}
+                fhaInterestRate={userData.loanDetails.fhaInterestRate}
+                propertyTax={userData.loanDetails.propertyTax}
+                propertyInsurance={userData.loanDetails.propertyInsurance}
                 hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
                 onFetchData={fetchExternalData}
               />
