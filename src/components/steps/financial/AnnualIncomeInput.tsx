@@ -2,6 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { DollarSign } from "lucide-react";
+import { formatCurrency } from "@/utils/formatters";
 
 interface AnnualIncomeInputProps {
   annualIncome: number;
@@ -23,13 +24,17 @@ const AnnualIncomeInput = ({
           id="annualIncome"
           type="number"
           className="pl-10"
-          value={annualIncome}
+          value={annualIncome || ''}
           onChange={(e) => onIncomeChange(parseFloat(e.target.value) || 0)}
           placeholder="75000"
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <p className="text-sm text-muted-foreground">Enter your gross annual income before taxes.</p>
+      <p className="text-sm text-muted-foreground">
+        Enter your gross annual income before taxes. {annualIncome > 0 && (
+          <span className="font-medium">{formatCurrency(annualIncome / 12, 0)}/month</span>
+        )}
+      </p>
     </div>
   );
 };

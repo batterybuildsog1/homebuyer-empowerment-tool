@@ -5,7 +5,8 @@
  * @param fractionDigits The number of fraction digits to include
  * @returns A formatted currency string
  */
-export const formatCurrency = (value: number, fractionDigits = 0): string => {
+export const formatCurrency = (value: number | null, fractionDigits = 0): string => {
+  if (value === null) return "N/A";
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -23,6 +24,20 @@ export const formatCurrency = (value: number, fractionDigits = 0): string => {
 export const formatPercentage = (value: number, fractionDigits = 2): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'percent',
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(value);
+};
+
+/**
+ * Formats a number with commas
+ * @param value The number to format
+ * @param fractionDigits The number of fraction digits to include
+ * @returns A formatted number string
+ */
+export const formatNumber = (value: number | null, fractionDigits = 0): string => {
+  if (value === null) return "N/A";
+  return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value);
