@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
 import { getInterestRates, getFhaInterestRates, getPropertyTaxRate, getPropertyInsurance } from "@/services/perplexityService";
@@ -24,7 +24,7 @@ interface FetchProgressState {
 }
 
 export const useLoanData = () => {
-  const { userData, setIsLoadingData, isLoadingData } = useMortgage();
+  const { userData, setIsLoadingData, isLoadingData, updateLoanDetails } = useMortgage();
   
   // Convert initial LTV to down payment percentage for initial state
   const initialDownPayment = userData.loanDetails.ltv ? 100 - userData.loanDetails.ltv : 20;
@@ -46,6 +46,42 @@ export const useLoanData = () => {
     message: "Initializing...",
     hasAttemptedFetch: false,
   });
+
+  // Initialize from localStorage on mount
+  useEffect(() => {
+    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
+    const cachedData = localStorage.getItem("cached_loan_data");
+    
+    if (lastFetchTime && cachedData) {
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      if (parseInt(lastFetchTime) > oneHourAgo) {
+        // If we have cached data less than an hour old, use it
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setFormData(prev => ({
+            ...prev,
+            conventionalInterestRate: parsedData.conventionalInterestRate,
+            fhaInterestRate: parsedData.fhaInterestRate,
+            propertyTax: parsedData.propertyTax,
+            propertyInsurance: parsedData.propertyInsurance,
+          }));
+          
+          // Mark that we've already fetched data
+          setFetchProgress(prev => ({
+            ...prev,
+            hasAttemptedFetch: true
+          }));
+          
+          // Update context with cached data
+          updateLoanDetails(parsedData);
+          
+          console.log("Using cached loan data", parsedData);
+        } catch (e) {
+          console.error("Error parsing cached loan data", e);
+        }
+      }
+    }
+  }, [updateLoanDetails]);
   
   // Calculate LTV from down payment
   const ltv = 100 - formData.downPayment;
@@ -99,7 +135,34 @@ export const useLoanData = () => {
     }
   };
 
-  const fetchExternalData = async (isBackgroundFetch = false) => {
+  const fetchExternalData = useCallback(async (isBackgroundFetch = false) => {
+    // Check for recent fetch in localStorage
+    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
+    if (lastFetchTime) {
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      if (parseInt(lastFetchTime) > oneHourAgo) {
+        console.log("Skipping fetch - already fetched within the last hour");
+        
+        // Mark that we've attempted a fetch
+        setFetchProgress(prev => ({
+          ...prev,
+          hasAttemptedFetch: true
+        }));
+        
+        // Try to use cached data
+        const cachedData = localStorage.getItem("cached_loan_data");
+        if (cachedData) {
+          try {
+            return JSON.parse(cachedData);
+          } catch (e) {
+            console.error("Error parsing cached data", e);
+          }
+        }
+        
+        return null;
+      }
+    }
+    
     if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
       if (!isBackgroundFetch) {
         toast.error("Location information is incomplete. Please go back and complete it.");
@@ -176,6 +239,18 @@ export const useLoanData = () => {
         insurance: annualInsurance
       });
 
+      // Create a data object to store results
+      const fetchedData = {
+        conventionalInterestRate,
+        fhaInterestRate,
+        propertyTax: propertyTaxRate,
+        propertyInsurance: annualInsurance,
+      };
+      
+      // Cache the results in localStorage with a timestamp
+      localStorage.setItem("data_fetch_timestamp", Date.now().toString());
+      localStorage.setItem("cached_loan_data", JSON.stringify(fetchedData));
+
       // Update local form state immediately for display
       setFormData(prev => ({
         ...prev,
@@ -209,12 +284,7 @@ export const useLoanData = () => {
       }
       
       // Return the fetched data (which may include nulls)
-      return {
-        conventionalInterestRate,
-        fhaInterestRate,
-        propertyTax: propertyTaxRate,
-        propertyInsurance: annualInsurance,
-      };
+      return fetchedData;
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -229,7 +299,7 @@ export const useLoanData = () => {
         setFetchProgress(prev => ({ ...prev, isLoading: false }));
       }
     }
-  };
+  }, [userData.location, formData.loanType, ltv, setIsLoadingData, updateLoanDetails]);
 
   return {
     formData,

@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { DollarSign } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLoanData } from "@/hooks/useLoanData";
 
 interface AnnualIncomeInputProps {
@@ -18,7 +18,8 @@ const AnnualIncomeInput = ({
   error 
 }: AnnualIncomeInputProps) => {
   const [displayValue, setDisplayValue] = useState<string>('');
-  const [hasFetched, setHasFetched] = useState<boolean>(false);
+  const [fetchCalled, setFetchCalled] = useState<boolean>(false);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { fetchExternalData } = useLoanData();
   
   // Update display value when annualIncome changes
@@ -32,25 +33,51 @@ const AnnualIncomeInput = ({
     }
   }, [annualIncome]);
 
-  // Trigger data fetching when the user enters a valid income value
+  // Only trigger data fetching once when income reaches threshold
   useEffect(() => {
-    const triggerFetch = async () => {
-      // Only trigger fetch when income is significant (over 20,000) and hasn't fetched yet
-      if (annualIncome >= 20000 && !hasFetched) {
+    // Clear any existing timers to prevent multiple calls
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Only proceed if we haven't already fetched and income is sufficient
+    if (annualIncome >= 20000 && !fetchCalled) {
+      // Set a debounce timer to prevent rapid API calls
+      debounceTimerRef.current = setTimeout(async () => {
         console.log("Triggering background data fetch based on income entry");
         try {
           // Fetch data in the background without showing loading animation
-          await fetchExternalData(true); // New parameter to indicate background fetch
-          setHasFetched(true);
+          await fetchExternalData(true); // Background fetch
+          setFetchCalled(true);
+          
+          // Store in localStorage to prevent fetching again in this session
+          localStorage.setItem("data_fetch_timestamp", Date.now().toString());
         } catch (error) {
           console.error("Background data fetch failed:", error);
           // We don't show an error here as this is a background operation
         }
+      }, 1000); // 1 second debounce
+    }
+
+    // Cleanup function
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
     };
+  }, [annualIncome, fetchCalled, fetchExternalData]);
 
-    triggerFetch();
-  }, [annualIncome, hasFetched, fetchExternalData]);
+  // Check localStorage on component mount to prevent repeated fetches
+  useEffect(() => {
+    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
+    if (lastFetchTime) {
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      if (parseInt(lastFetchTime) > oneHourAgo) {
+        // If we fetched less than an hour ago, don't fetch again
+        setFetchCalled(true);
+      }
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Remove all non-numeric characters

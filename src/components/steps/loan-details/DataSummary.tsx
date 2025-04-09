@@ -8,7 +8,7 @@ interface DataSummaryProps {
   propertyTax: number | null;
   propertyInsurance: number | null;
   hasAttemptedFetch: boolean;
-  onFetchData: () => Promise<any>; // Updated to accept any Promise return type
+  onFetchData: () => Promise<any>; 
 }
 
 const DataSummary = ({
@@ -29,17 +29,12 @@ const DataSummary = ({
   // Check if we have any data to display
   const hasData = conventionalInterestRate || fhaInterestRate || propertyTax || propertyInsurance;
   
-  // Determine if we need to show the fetch button
-  // Don't show it if:
-  // 1. We have complete data (all values are non-null)
-  // 2. OR we've already attempted a fetch in the Financial step
-  const shouldShowFetchButton = !(
-    (conventionalInterestRate !== null && 
-     fhaInterestRate !== null && 
-     propertyTax !== null && 
-     propertyInsurance !== null) || 
-    hasAttemptedFetch
-  );
+  // NEVER show the fetch button if we've already attempted a fetch or if all data is present
+  const shouldShowFetchButton = !hasAttemptedFetch && 
+    !(conventionalInterestRate !== null && 
+      fhaInterestRate !== null && 
+      propertyTax !== null && 
+      propertyInsurance !== null);
 
   if (!hasData) {
     return (
@@ -47,10 +42,10 @@ const DataSummary = ({
         <p className="mb-3 text-muted-foreground">
           {hasAttemptedFetch 
             ? "Data fetch initiated. Results will appear here when available."
-            : "No data fetched yet. Data will be automatically retrieved."
+            : "No data fetched yet. Data will be automatically retrieved when you enter your annual income."
           }
         </p>
-        {!hasAttemptedFetch && (
+        {shouldShowFetchButton && (
           <Button type="button" variant="outline" size="sm" onClick={onFetchData}>
             Fetch Current Data
           </Button>
