@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
-import { FileText, ArrowLeft } from "lucide-react";
+import { FileText, ArrowLeft, RefreshCw } from "lucide-react";
 import { useLoanData } from "@/hooks/useLoanData";
 import LoanTypeSelector from "./loan-details/LoanTypeSelector";
 import DownPaymentSlider from "./loan-details/DownPaymentSlider";
@@ -13,6 +13,7 @@ import LoadingIndicator from "./loan-details/LoadingIndicator";
 
 const LoanDetailsStep: React.FC = () => {
   const { userData, updateLoanDetails, setCurrentStep } = useMortgage();
+  const [isDataReady, setIsDataReady] = useState(false);
   
   const {
     formData,
@@ -24,6 +25,31 @@ const LoanDetailsStep: React.FC = () => {
     fetchExternalData
   } = useLoanData();
 
+  // Check for required data on component mount and form changes
+  useEffect(() => {
+    checkDataReadiness();
+  }, [formData, userData.loanDetails]); 
+
+  // Function to check if we have all necessary data to proceed
+  const checkDataReadiness = () => {
+    const loanType = formData.loanType;
+    
+    // Check if we have the required interest rate based on loan type
+    const hasInterestRate = loanType === 'conventional' 
+      ? formData.conventionalInterestRate !== null 
+      : formData.fhaInterestRate !== null;
+    
+    // Check for other required data
+    const hasPropertyTax = formData.propertyTax !== null;
+    const hasPropertyInsurance = formData.propertyInsurance !== null;
+    
+    // All required data must be present
+    const ready = hasInterestRate && hasPropertyTax && hasPropertyInsurance;
+    setIsDataReady(ready);
+    
+    return ready;
+  };
+
   // Check for cached data on component mount
   useEffect(() => {
     // Check if we need to load data from localStorage
@@ -33,11 +59,16 @@ const LoanDetailsStep: React.FC = () => {
       try {
         const parsedData = JSON.parse(cachedData);
         
+        // Check if we have valid data in the cache
+        const hasValidData = parsedData.conventionalInterestRate !== null || 
+                            parsedData.fhaInterestRate !== null || 
+                            parsedData.propertyTax !== null || 
+                            parsedData.propertyInsurance !== null;
+        
         // If we have cached data but it's not in userData yet, update it
-        if (!userData.loanDetails.conventionalInterestRate && 
-            !userData.loanDetails.fhaInterestRate &&
-            parsedData.conventionalInterestRate && 
-            parsedData.fhaInterestRate) {
+        if (hasValidData && 
+            !userData.loanDetails.conventionalInterestRate && 
+            !userData.loanDetails.fhaInterestRate) {
           console.log("Loading cached loan data into context", parsedData);
           updateLoanDetails(parsedData);
         }
@@ -47,24 +78,26 @@ const LoanDetailsStep: React.FC = () => {
     }
   }, [updateLoanDetails, userData.loanDetails]);
 
-  // Pre-populate form with values from userData or cached values
+  // Pre-populate form with values from userData
   useEffect(() => {
-    if (userData.loanDetails.conventionalInterestRate || userData.loanDetails.fhaInterestRate) {
-      // Pre-populate formData with values from userData if they exist
-      handleLoanTypeChange(userData.loanDetails.loanType || 'conventional');
+    // If loan type is set in userData, use it
+    if (userData.loanDetails.loanType) {
+      handleLoanTypeChange(userData.loanDetails.loanType);
     }
-  }, [userData.loanDetails, handleLoanTypeChange]);
+  }, [userData.loanDetails.loanType, handleLoanTypeChange]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If any required data hasn't been fetched yet (or needs refresh), fetch it first
-    if (!formData.conventionalInterestRate || !formData.fhaInterestRate || 
-        !formData.propertyTax || !formData.propertyInsurance) {
+    // Check if we have the necessary data
+    if (!checkDataReadiness()) {
+      // Try to fetch data if missing
+      toast.info("Fetching missing data before proceeding...");
       const fetchedData = await fetchExternalData();
-      if (fetchedData === null) {
+      
+      if (fetchedData === null || !checkDataReadiness()) {
          toast.error("Failed to retrieve necessary data. Cannot proceed.");
-         return; // Stop if fetching failed critically
+         return;
       }
     }
 
@@ -92,17 +125,13 @@ const LoanDetailsStep: React.FC = () => {
   };
 
   // Determine if we should show previously cached data or current form data
-  const dataToDisplay = (formData.conventionalInterestRate || formData.fhaInterestRate || 
-    formData.propertyTax || formData.propertyInsurance) ? formData : userData.loanDetails;
-    
-  // Determine if button should be enabled - if we have the necessary data in either formData or userData
-  const hasNecessaryData = (formData.loanType === 'conventional' ? formData.conventionalInterestRate : formData.fhaInterestRate) !== null &&
-                          formData.propertyTax !== null && 
-                          formData.propertyInsurance !== null;
-                          
-  const hasUserData = (userData.loanDetails.loanType === 'conventional' ? userData.loanDetails.conventionalInterestRate : userData.loanDetails.fhaInterestRate) !== null &&
-                     userData.loanDetails.propertyTax !== null && 
-                     userData.loanDetails.propertyInsurance !== null;
+  const dataToDisplay = {
+    loanType: formData.loanType,
+    conventionalInterestRate: formData.conventionalInterestRate,
+    fhaInterestRate: formData.fhaInterestRate,
+    propertyTax: formData.propertyTax,
+    propertyInsurance: formData.propertyInsurance
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -149,6 +178,13 @@ const LoanDetailsStep: React.FC = () => {
               hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
               onFetchData={fetchExternalData}
             />
+            
+            {!isDataReady && !fetchProgress.isLoading && (
+              <div className="text-center text-amber-500 flex items-center justify-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <p>Waiting for data. Please ensure you've entered your location and income.</p>
+              </div>
+            )}
           </CardContent>
           
           <CardFooter className="flex justify-between">
@@ -162,7 +198,7 @@ const LoanDetailsStep: React.FC = () => {
             </Button>
             <Button 
               type="submit" 
-              disabled={!hasNecessaryData && !hasUserData}
+              disabled={!isDataReady}
             >
               Continue
             </Button>

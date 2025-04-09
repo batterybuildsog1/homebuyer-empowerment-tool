@@ -26,12 +26,18 @@ interface FetchProgressState {
 export const useLoanData = () => {
   const { userData, setIsLoadingData, isLoadingData, updateLoanDetails } = useMortgage();
   
-  // Convert initial LTV to down payment percentage for initial state
-  const initialDownPayment = userData.loanDetails.ltv ? 100 - userData.loanDetails.ltv : 20;
+  // Set appropriate initial values based on loan type
+  const getInitialDownPayment = () => {
+    if (userData.loanDetails.ltv) {
+      return 100 - userData.loanDetails.ltv;
+    }
+    
+    return userData.loanDetails.loanType === 'conventional' ? 20 : 3.5;
+  };
 
   const [formData, setFormData] = useState<LoanDataState>({
     loanType: userData.loanDetails.loanType || 'conventional',
-    downPayment: initialDownPayment,
+    downPayment: getInitialDownPayment(),
     conventionalInterestRate: userData.loanDetails.conventionalInterestRate || null,
     fhaInterestRate: userData.loanDetails.fhaInterestRate || null,
     propertyTax: userData.loanDetails.propertyTax || null,
@@ -53,11 +59,18 @@ export const useLoanData = () => {
     const cachedData = localStorage.getItem("cached_loan_data");
     
     if (lastFetchTime && cachedData) {
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      if (parseInt(lastFetchTime) > oneHourAgo) {
-        // If we have cached data less than an hour old, use it
-        try {
-          const parsedData = JSON.parse(cachedData);
+      try {
+        const parsedData = JSON.parse(cachedData);
+        
+        // Only use cached data if it's valid (not all null values)
+        const hasValidData = parsedData.conventionalInterestRate !== null || 
+                              parsedData.fhaInterestRate !== null || 
+                              parsedData.propertyTax !== null || 
+                              parsedData.propertyInsurance !== null;
+        
+        if (hasValidData) {
+          console.log("Using cached loan data", parsedData);
+          
           setFormData(prev => ({
             ...prev,
             conventionalInterestRate: parsedData.conventionalInterestRate,
@@ -73,12 +86,15 @@ export const useLoanData = () => {
           }));
           
           // Update context with cached data
-          updateLoanDetails(parsedData);
-          
-          console.log("Using cached loan data", parsedData);
-        } catch (e) {
-          console.error("Error parsing cached loan data", e);
+          updateLoanDetails({
+            conventionalInterestRate: parsedData.conventionalInterestRate,
+            fhaInterestRate: parsedData.fhaInterestRate,
+            propertyTax: parsedData.propertyTax, 
+            propertyInsurance: parsedData.propertyInsurance
+          });
         }
+      } catch (e) {
+        console.error("Error parsing cached loan data", e);
       }
     }
   }, [updateLoanDetails]);
@@ -92,38 +108,77 @@ export const useLoanData = () => {
     : formData.fhaInterestRate;
 
   const handleLoanTypeChange = (loanType: 'conventional' | 'fha') => {
-    setFormData(prev => ({ ...prev, loanType }));
+    // If switching loan types, set appropriate default down payment
+    let newDownPayment = formData.downPayment;
+    
+    // If current down payment is outside the valid range for the new loan type,
+    // set it to a default value for that loan type
+    if (loanType === 'conventional' && (formData.downPayment < 3 || formData.downPayment > 20)) {
+      newDownPayment = 20;
+    } else if (loanType === 'fha' && (formData.downPayment < 3.5 || formData.downPayment > 10)) {
+      newDownPayment = 3.5;
+    }
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      loanType,
+      downPayment: newDownPayment 
+    }));
     
     // Update MIP rates when loan type changes
     if (loanType === 'fha') {
+      const newLtv = 100 - newDownPayment;
       const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
         1000, // Placeholder loan amount
-        ltv
+        newLtv
       );
       
       setFormData(prev => ({
         ...prev,
         loanType,
+        downPayment: newDownPayment,
         upfrontMIP: upfrontMipPercent,
         ongoingMIP: annualMipPercent,
       }));
+      
+      // Also update context with new values
+      updateLoanDetails({
+        loanType,
+        ltv: newLtv,
+        upfrontMIP: upfrontMipPercent,
+        ongoingMIP: annualMipPercent
+      });
     } else {
       // For conventional loans, clear MIP values
       setFormData(prev => ({
         ...prev,
         loanType,
+        downPayment: newDownPayment,
         upfrontMIP: null,
         ongoingMIP: null,
       }));
+      
+      // Update context
+      updateLoanDetails({
+        loanType,
+        ltv: 100 - newDownPayment,
+        upfrontMIP: null,
+        ongoingMIP: null
+      });
     }
   };
 
   const handleDownPaymentChange = (downPayment: number) => {
     setFormData(prev => ({ ...prev, downPayment }));
     
+    // Calculate new LTV
+    const newLtv = 100 - downPayment;
+    
+    // Update context with new LTV
+    updateLoanDetails({ ltv: newLtv });
+    
     // If FHA loan, recalculate MIP rates based on new LTV
     if (formData.loanType === 'fha') {
-      const newLtv = 100 - downPayment;
       const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(1000, newLtv);
       
       setFormData(prev => ({
@@ -132,34 +187,63 @@ export const useLoanData = () => {
         upfrontMIP: upfrontMipPercent,
         ongoingMIP: annualMipPercent,
       }));
+      
+      // Update context with new MIP rates
+      updateLoanDetails({
+        upfrontMIP: upfrontMipPercent,
+        ongoingMIP: annualMipPercent
+      });
     }
   };
 
   const fetchExternalData = useCallback(async (isBackgroundFetch = false) => {
     // Check for recent fetch in localStorage
     const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
-    if (lastFetchTime) {
+    const cachedData = localStorage.getItem("cached_loan_data");
+    
+    if (lastFetchTime && cachedData) {
       const oneHourAgo = Date.now() - (60 * 60 * 1000);
       if (parseInt(lastFetchTime) > oneHourAgo) {
-        console.log("Skipping fetch - already fetched within the last hour");
-        
-        // Mark that we've attempted a fetch
-        setFetchProgress(prev => ({
-          ...prev,
-          hasAttemptedFetch: true
-        }));
-        
-        // Try to use cached data
-        const cachedData = localStorage.getItem("cached_loan_data");
-        if (cachedData) {
-          try {
-            return JSON.parse(cachedData);
-          } catch (e) {
-            console.error("Error parsing cached data", e);
+        try {
+          const parsedData = JSON.parse(cachedData);
+          
+          // Only use cached data if it's valid (not all null values)
+          const hasValidData = parsedData.conventionalInterestRate !== null || 
+                               parsedData.fhaInterestRate !== null || 
+                               parsedData.propertyTax !== null || 
+                               parsedData.propertyInsurance !== null;
+          
+          if (hasValidData) {
+            console.log("Using cached loan data within the last hour", parsedData);
+            
+            // Update local state
+            setFormData(prev => ({
+              ...prev,
+              conventionalInterestRate: parsedData.conventionalInterestRate,
+              fhaInterestRate: parsedData.fhaInterestRate,
+              propertyTax: parsedData.propertyTax,
+              propertyInsurance: parsedData.propertyInsurance,
+            }));
+            
+            // Mark that we've attempted a fetch
+            setFetchProgress(prev => ({
+              ...prev,
+              hasAttemptedFetch: true
+            }));
+            
+            // Update context
+            updateLoanDetails({
+              conventionalInterestRate: parsedData.conventionalInterestRate,
+              fhaInterestRate: parsedData.fhaInterestRate,
+              propertyTax: parsedData.propertyTax,
+              propertyInsurance: parsedData.propertyInsurance,
+            });
+            
+            return parsedData;
           }
+        } catch (e) {
+          console.error("Error parsing cached data", e);
         }
-        
-        return null;
       }
     }
     
@@ -239,6 +323,16 @@ export const useLoanData = () => {
         insurance: annualInsurance
       });
 
+      // Check if at least some data was fetched successfully
+      const anyDataReceived = conventionalInterestRate !== null || 
+                             fhaInterestRate !== null || 
+                             propertyTaxRate !== null || 
+                             annualInsurance !== null;
+                             
+      if (!anyDataReceived) {
+        throw new Error("No data was successfully fetched");
+      }
+
       // Create a data object to store results
       const fetchedData = {
         conventionalInterestRate,
@@ -254,8 +348,8 @@ export const useLoanData = () => {
       // Update local form state immediately for display
       setFormData(prev => ({
         ...prev,
-        conventionalInterestRate: conventionalInterestRate,
-        fhaInterestRate: fhaInterestRate,
+        conventionalInterestRate,
+        fhaInterestRate,
         propertyTax: propertyTaxRate,
         propertyInsurance: annualInsurance,
       }));
@@ -271,25 +365,34 @@ export const useLoanData = () => {
           upfrontMIP: upfrontMipPercent,
           ongoingMIP: annualMipPercent,
         }));
+        
+        // Update these in the context too
+        fetchedData.upfrontMIP = upfrontMipPercent;
+        fetchedData.ongoingMIP = annualMipPercent;
       }
+      
+      // Update the context with all the fetched data
+      updateLoanDetails(fetchedData);
 
-      // Only show success if we got all necessary data and this is not a background fetch
+      // Only show success if all necessary data was fetched and this is not a background fetch
       if (!isBackgroundFetch) {
         if (conventionalInterestRate !== null && fhaInterestRate !== null && 
             propertyTaxRate !== null && annualInsurance !== null) {
           toast.success("Successfully processed mortgage data!");
+        } else if (anyDataReceived) {
+          toast.warning("Some data could not be fetched. You may proceed, but results might be inaccurate.");
         } else {
-          toast.warning("Some data could not be fetched. Please try again.");
+          toast.error("Failed to fetch any data. Please check your location information and try again.");
         }
       }
       
-      // Return the fetched data (which may include nulls)
+      // Return the fetched data
       return fetchedData;
 
     } catch (error) {
       console.error("Error fetching data:", error);
       if (!isBackgroundFetch) {
-        toast.error("An error occurred while fetching data. Please check console and try again.");
+        toast.error("An error occurred while fetching data. Please check your location information and try again.");
       }
       return null; // Return null on error
     } finally {

@@ -1,6 +1,7 @@
 
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { useEffect } from "react";
 
 interface DownPaymentSliderProps {
   downPayment: number;
@@ -15,6 +16,19 @@ const DownPaymentSlider = ({
   ltv, 
   onDownPaymentChange 
 }: DownPaymentSliderProps) => {
+  // Set default down payment when loan type changes
+  useEffect(() => {
+    // Set a sensible default for each loan type
+    const defaultValue = loanType === 'conventional' ? 20 : 3.5;
+    
+    // Only update if current value is outside the new loan type's valid range
+    if ((loanType === 'conventional' && downPayment < 3) || 
+        (loanType === 'fha' && downPayment > 10) ||
+        (downPayment === 0)) {
+      onDownPaymentChange(defaultValue);
+    }
+  }, [loanType, downPayment, onDownPaymentChange]);
+
   return (
     <div className="space-y-3">
       <div className="flex justify-between">
