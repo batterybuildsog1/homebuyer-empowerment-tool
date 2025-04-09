@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMortgage } from "@/context/MortgageContext";
-import { Home, ArrowLeft, TrendingUp, ArrowRightCircle, AlertTriangle } from "lucide-react";
+import { Home, ArrowLeft, TrendingUp, ArrowRightCircle, AlertTriangle, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { 
   calculateAdjustedRate, 
@@ -70,6 +71,11 @@ const ResultsStep: React.FC = () => {
         financials.mitigatingFactors
       );
       
+      // Calculate monthly income and available debt service
+      const monthlyIncome = financials.annualIncome / 12;
+      const maxMonthlyDebtPayment = monthlyIncome * (maxDTI / 100);
+      const availableForMortgage = maxMonthlyDebtPayment - financials.monthlyDebts;
+      
       // Calculate the adjusted interest rate based on FICO and LTV
       const adjustedRate = calculateAdjustedRate(
         loanDetails.interestRate,
@@ -113,6 +119,15 @@ const ResultsStep: React.FC = () => {
         loanDetails.propertyInsurance || 1200, // Annual insurance
         pmiRate // PMI/MIP rate
       );
+      
+      // Store the new financial details
+      const financialDetails = {
+        maxDTI,
+        monthlyIncome,
+        maxMonthlyDebtPayment,
+        availableForMortgage,
+        adjustedRate
+      };
       
       // Generate alternative scenarios
       const scenarios = [];
@@ -277,6 +292,7 @@ const ResultsStep: React.FC = () => {
         maxHomePrice: maxPurchasePrice,
         monthlyPayment: monthlyPayment,
         scenarios: scenarios,
+        financialDetails: financialDetails, // Add the new financial details
       });
       
       toast.success("Mortgage calculation completed!");
@@ -354,6 +370,55 @@ const ResultsStep: React.FC = () => {
                       <p className="text-3xl font-bold text-finance-navy">
                         {formatCurrency(userData.results.monthlyPayment)}
                       </p>
+                    </div>
+                  </div>
+                  
+                  {/* New Financial Analysis Section */}
+                  <div className="financial-card">
+                    <h3 className="text-lg font-medium mb-3 flex items-center">
+                      <Calculator className="h-5 w-5 mr-2" />
+                      Financial Breakdown
+                    </h3>
+                    
+                    <div className="space-y-2 text-sm">
+                      {userData.results.financialDetails && (
+                        <>
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Maximum DTI Used:</span>
+                            <span className="font-medium">{userData.results.financialDetails.maxDTI}%</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Monthly Income:</span>
+                            <span className="font-medium">{formatCurrency(userData.results.financialDetails.monthlyIncome)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Maximum Monthly Debt Payment:</span>
+                            <span className="font-medium">{formatCurrency(userData.results.financialDetails.maxMonthlyDebtPayment)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Current Monthly Debts:</span>
+                            <span className="font-medium">{formatCurrency(userData.financials.monthlyDebts)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b bg-slate-50 dark:bg-slate-900">
+                            <span className="font-medium">Available for Mortgage Payment:</span>
+                            <span className="font-medium text-finance-green">{formatCurrency(userData.results.financialDetails.availableForMortgage)}</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Adjusted Interest Rate:</span>
+                            <span className="font-medium">{userData.results.financialDetails.adjustedRate.toFixed(3)}%</span>
+                          </div>
+                          
+                          <div className="flex justify-between py-1 border-b">
+                            <span>Maximum Loan Amount:</span>
+                            <span className="font-medium">{formatCurrency(userData.results.maxHomePrice ? userData.results.maxHomePrice * (userData.loanDetails.ltv / 100) : 0)}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   
