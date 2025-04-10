@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ const FinancialStepForm = () => {
         updatedSelectedFactors.housingPaymentIncrease = newFactors.includes(id) ? '<10%' : 'none';
       }
       
+      // Track the factor selection/deselection event
       trackEvent(
         newFactors.includes(id) ? AnalyticsEvents.FACTOR_SELECTED : AnalyticsEvents.FACTOR_DESELECTED,
         { 
