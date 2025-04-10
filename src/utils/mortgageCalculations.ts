@@ -28,7 +28,7 @@ const DTI_LIMITS = {
 };
 
 // Detailed compensating factors mapping with DTI adjustment weights
-const compensatingFactors: Record<string, Record<string, number>> = {
+export const compensatingFactors: Record<string, Record<string, number>> = {
   cashReserves: {
     "none": 0,                  // No adjustment
     "3-6 months": 2,           // Moderate cushion: +2% DTI
@@ -173,7 +173,7 @@ export const calculateMaxDTI = (
   ficoScore: number,
   ltv: number,
   loanType: 'conventional' | 'fha',
-  selectedFactors: Record<string, string> = {}
+  selectedFactors: Record<string, string> | string[] = {}
 ): number => {
   let baseDTI = loanType === 'fha' ? 43 : 36; // Base DTI: 43% for FHA, 36% for conventional
 

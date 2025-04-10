@@ -15,7 +15,8 @@ export interface UserData {
     ficoScore: number;
     downPayment: number;
     downPaymentPercent: number;
-    mitigatingFactors: string[];
+    mitigatingFactors: string[]; // Legacy field for backward compatibility
+    selectedFactors: Record<string, string>; // New field for detailed compensating factors
     debtItems: {
       carLoan: number;
       studentLoan: number;

@@ -5,7 +5,8 @@ import {
   calculateAdjustedRate, 
   calculateMaxDTI, 
   calculateMaxPurchasePrice,
-  calculateMonthlyPayment
+  calculateMonthlyPayment,
+  compensatingFactors
 } from "./mortgageCalculations";
 import { calculateAlternativeScenarios } from "./scenarioCalculator";
 
@@ -19,15 +20,24 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   
   const { financials, loanDetails } = userData;
   
+  // Create safe selectedFactors with defaults to prevent errors
+  // First check if we have new selectedFactors, otherwise use empty object
+  const userSelectedFactors = financials.selectedFactors || {};
+  
+  // Create a safe version with defaults for any missing factors
+  const safeSelectedFactors = Object.keys(compensatingFactors).reduce((acc, factor) => {
+    acc[factor] = userSelectedFactors[factor] || "none";
+    return acc;
+  }, {} as Record<string, string>);
+  
   // Calculate the max DTI based on FICO score, LTV, and selected factors
   // Support both new selectedFactors and legacy mitigatingFactors
-  const selectedFactors = financials.selectedFactors || {};
   const maxDTI = calculateMaxDTI(
     financials.ficoScore,
     loanDetails.ltv,
     loanDetails.loanType,
     // If we have new-style selectedFactors, use those, otherwise use legacy mitigatingFactors
-    Object.keys(selectedFactors).length > 0 ? selectedFactors : financials.mitigatingFactors
+    Object.keys(userSelectedFactors).length > 0 ? safeSelectedFactors : financials.mitigatingFactors
   );
   console.log("Calculated maxDTI:", maxDTI);
   

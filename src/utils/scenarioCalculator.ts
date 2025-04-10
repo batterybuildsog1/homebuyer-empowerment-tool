@@ -1,4 +1,3 @@
-
 import { UserData } from "@/context/MortgageContext";
 import { MortgageResults } from "./mortgageResultsCalculator";
 import { 
@@ -8,7 +7,8 @@ import {
   calculateMonthlyPayment,
   getNextFicoBand,
   getLowerLtvOption,
-  getFhaMipRates
+  getFhaMipRates,
+  compensatingFactors
 } from "./mortgageCalculations";
 
 /**
@@ -26,6 +26,18 @@ export function calculateAlternativeScenarios(
   const { financials, loanDetails } = userData;
   const scenarios = [];
   
+  // Create safe selectedFactors with defaults
+  const userSelectedFactors = financials.selectedFactors || {};
+  const safeSelectedFactors = Object.keys(compensatingFactors).reduce((acc, factor) => {
+    acc[factor] = userSelectedFactors[factor] || "none";
+    return acc;
+  }, {} as Record<string, string>);
+  
+  // Determine which factors to use (new or legacy)
+  const factorsToUse = Object.keys(userSelectedFactors).length > 0 
+    ? safeSelectedFactors 
+    : financials.mitigatingFactors;
+  
   // Scenario 1: Switch loan type
   const alternativeLoanType = loanDetails.loanType === 'conventional' ? 'fha' : 'conventional';
   
@@ -34,7 +46,7 @@ export function calculateAlternativeScenarios(
     financials.ficoScore,
     loanDetails.ltv,
     alternativeLoanType,
-    financials.mitigatingFactors
+    factorsToUse
   );
   
   const altRate = calculateAdjustedRate(
