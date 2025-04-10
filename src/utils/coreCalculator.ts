@@ -19,12 +19,15 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   
   const { financials, loanDetails } = userData;
   
-  // Calculate the max DTI based on FICO score, LTV, and mitigating factors
+  // Calculate the max DTI based on FICO score, LTV, and selected factors
+  // Support both new selectedFactors and legacy mitigatingFactors
+  const selectedFactors = financials.selectedFactors || {};
   const maxDTI = calculateMaxDTI(
     financials.ficoScore,
     loanDetails.ltv,
     loanDetails.loanType,
-    financials.mitigatingFactors
+    // If we have new-style selectedFactors, use those, otherwise use legacy mitigatingFactors
+    Object.keys(selectedFactors).length > 0 ? selectedFactors : financials.mitigatingFactors
   );
   console.log("Calculated maxDTI:", maxDTI);
   
