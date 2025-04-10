@@ -2,12 +2,14 @@
 import { UserData } from "@/context/MortgageContext";
 import { MortgageResults } from "./mortgageResultsCalculator";
 import { 
-  calculateAdjustedRate, 
   calculateMaxDTI, 
+  compensatingFactors 
+} from "./mortgage/dtiCalculations";
+import {
   calculateMaxPurchasePrice,
-  calculateMonthlyPayment,
-  compensatingFactors
-} from "./mortgageCalculations";
+  calculateMonthlyPayment
+} from "./mortgage/loanCalculations";
+import { calculateAdjustedRate } from "./mortgage/rateAdjustments";
 import { calculateAlternativeScenarios } from "./scenarioCalculator";
 
 /**
