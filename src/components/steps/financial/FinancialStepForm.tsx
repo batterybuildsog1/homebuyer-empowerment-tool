@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,15 @@ const FinancialStepForm = () => {
     },
     ficoScore: userData.financials.ficoScore || 680,
     mitigatingFactors: userData.financials.mitigatingFactors || [],
+    // Initialize with existing selectedFactors or defaults
+    selectedFactors: userData.financials.selectedFactors || {
+      cashReserves: "none",
+      residualIncome: "none",
+      housingPaymentIncrease: "none",
+      employmentHistory: "none",
+      creditUtilization: "none",
+      downPayment: "none",
+    },
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,13 +67,27 @@ const FinancialStepForm = () => {
 
   const handleMitigatingFactorChange = (id: string) => {
     setFormData(prev => {
+      // Update legacy mitigatingFactors array for backward compatibility
       const newFactors = prev.mitigatingFactors.includes(id)
         ? prev.mitigatingFactors.filter(factor => factor !== id)
         : [...prev.mitigatingFactors, id];
       
+      // Update the selectedFactors with appropriate values based on the factor
+      const updatedSelectedFactors = { ...prev.selectedFactors };
+      
+      // Map the factor ID to the appropriate selectedFactors key and value
+      if (id === 'reserves') {
+        updatedSelectedFactors.cashReserves = newFactors.includes(id) ? '3-6 months' : 'none';
+      } else if (id === 'residualIncome') {
+        updatedSelectedFactors.residualIncome = newFactors.includes(id) ? '20-30%' : 'none'; 
+      } else if (id === 'minimalDebt') {
+        updatedSelectedFactors.housingPaymentIncrease = newFactors.includes(id) ? '<10%' : 'none';
+      }
+      
       return {
         ...prev,
         mitigatingFactors: newFactors,
+        selectedFactors: updatedSelectedFactors
       };
     });
   };
@@ -86,7 +110,7 @@ const FinancialStepForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Update financials in context
+      // Update financials in context with both legacy and new format data
       updateFinancials({
         annualIncome: formData.annualIncome,
         monthlyDebts: formData.monthlyDebts,
@@ -94,7 +118,8 @@ const FinancialStepForm = () => {
         ficoScore: formData.ficoScore,
         downPaymentPercent: 20, // Default value, will be modified in loan details
         downPayment: 0, // This will be calculated based on home price
-        mitigatingFactors: formData.mitigatingFactors,
+        mitigatingFactors: formData.mitigatingFactors, // Keep legacy format for compatibility
+        selectedFactors: formData.selectedFactors, // Add new format
       });
       
       setIsSubmitting(true);

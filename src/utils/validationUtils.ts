@@ -1,5 +1,6 @@
 
 import { UserData } from "@/context/MortgageContext";
+import { compensatingFactors } from "./mortgageCalculations";
 
 /**
  * Validates if mortgage calculation can be performed
@@ -28,6 +29,23 @@ export const validateMortgageData = (userData: UserData): string | null => {
   if (!loanDetails.propertyTax || loanDetails.propertyTax <= 0) {
     console.log("Property tax validation failed");
     return "Property tax information is missing. Please complete Step 3.";
+  }
+  
+  // Validate selectedFactors if present, but don't block calculations
+  if (financials.selectedFactors) {
+    const selectedFactors = financials.selectedFactors;
+    const requiredFactors = Object.keys(compensatingFactors);
+    
+    for (const factor of requiredFactors) {
+      if (!(factor in selectedFactors)) {
+        console.log(`Missing compensating factor: ${factor}, defaulting to "none"`);
+        // We'll let the calculator handle this with defaults
+      } else if (selectedFactors[factor] && 
+                 !compensatingFactors[factor][selectedFactors[factor]]) {
+        console.log(`Invalid option for factor ${factor}: ${selectedFactors[factor]}`);
+        // Log the issue but don't block calculation - it will use defaults
+      }
+    }
   }
   
   console.log("Mortgage data validation passed");
