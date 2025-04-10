@@ -336,6 +336,38 @@ export const calculateMaxPurchasePrice = (
   return Math.floor(maxHomePrice);
 };
 
+export const calculateMaxLoanAmount = (
+  annualIncome: number,
+  monthlyDebts: number,
+  dti: number,
+  interestRate: number,
+  loanType: 'conventional' | 'fha' = 'conventional',
+  termYears: number = 30
+): number => {
+  // Monthly income
+  const monthlyIncome = annualIncome / 12;
+  
+  // Maximum monthly payment based on DTI
+  const maxMonthlyPayment = (monthlyIncome * (dti / 100)) - monthlyDebts;
+  
+  if (maxMonthlyPayment <= 0) return 0;
+  
+  // Convert annual interest rate to monthly and decimal
+  const monthlyRate = interestRate / 100 / 12;
+  const termMonths = termYears * 12; // 30-year mortgage
+  
+  // Use the formula: P = PMT * [(1 - (1 + r)^-n) / r]
+  // Where P is principal (loan amount), PMT is monthly payment, r is monthly rate, n is term in months
+  let loanAmount;
+  if (monthlyRate === 0) {
+    loanAmount = maxMonthlyPayment * termMonths;
+  } else {
+    loanAmount = maxMonthlyPayment * ((1 - Math.pow(1 + monthlyRate, -termMonths)) / monthlyRate);
+  }
+  
+  return Math.floor(loanAmount);
+};
+
 export const getFhaMipRates = (
   loanAmount: number,
   ltv: number,

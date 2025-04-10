@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, CreditCard, GraduationCap, Car, Briefcase, Box, TrendingDown } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
-import { calculateMaxDTI } from '@/utils/mortgageCalculations';
+import { calculateMaxDTI, calculateMaxLoanAmount } from '@/utils/mortgageCalculations';
 import { Progress } from '@/components/ui/progress';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -35,37 +35,6 @@ const BorrowingPowerChart = ({ annualIncome, ficoScore, debtItems, selectedFacto
   const defaultLoanType = userData.loanDetails.loanType || 'conventional';
   const defaultLTV = 80; // Assuming 80% LTV for calculations on this page
 
-  // Helper function to calculate maximum loan amount
-  const calculateMaxLoanAmount = (
-    annualIncome: number,
-    monthlyDebt: number,
-    dti: number,
-    interestRate: number
-  ): number => {
-    // Monthly income
-    const monthlyIncome = annualIncome / 12;
-    
-    // Maximum monthly payment based on DTI
-    const maxMonthlyPayment = (monthlyIncome * (dti / 100)) - monthlyDebt;
-    
-    if (maxMonthlyPayment <= 0) return 0;
-    
-    // Convert annual interest rate to monthly and decimal
-    const monthlyRate = interestRate / 100 / 12;
-    const termMonths = 30 * 12; // 30-year mortgage
-    
-    // Use the formula: P = PMT * [(1 - (1 + r)^-n) / r]
-    // Where P is principal (loan amount), PMT is monthly payment, r is monthly rate, n is term in months
-    let loanAmount;
-    if (monthlyRate === 0) {
-      loanAmount = maxMonthlyPayment * termMonths;
-    } else {
-      loanAmount = maxMonthlyPayment * ((1 - Math.pow(1 + monthlyRate, -termMonths)) / monthlyRate);
-    }
-    
-    return Math.floor(loanAmount);
-  };
-
   useEffect(() => {
     if (annualIncome <= 0) return;
 
@@ -91,7 +60,8 @@ const BorrowingPowerChart = ({ annualIncome, ficoScore, debtItems, selectedFacto
       annualIncome,
       0, // No debts
       calculatedMaxDTI,
-      defaultInterestRate
+      defaultInterestRate,
+      defaultLoanType
     );
     
     setMaxLoanAmount(maxLoan);
@@ -154,7 +124,8 @@ const BorrowingPowerChart = ({ annualIncome, ficoScore, debtItems, selectedFacto
       annualIncome,
       totalDebt,
       calculatedMaxDTI,
-      defaultInterestRate
+      defaultInterestRate,
+      defaultLoanType
     );
     
     setAdjustedLoanAmount(adjustedLoan);
@@ -231,7 +202,8 @@ const BorrowingPowerChart = ({ annualIncome, ficoScore, debtItems, selectedFacto
                   annualIncome,
                   debt.amount,
                   maxDTI,
-                  defaultInterestRate
+                  defaultInterestRate,
+                  defaultLoanType
                 );
                 
                 const borrowingPowerReduction = loanAmountWithoutDebt - loanAmountWithDebt;
