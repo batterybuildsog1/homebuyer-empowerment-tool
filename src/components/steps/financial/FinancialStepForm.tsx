@@ -18,7 +18,7 @@ const FinancialStepForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleMitigatingFactorChange,
+    handleFactorOptionChange,
     handleSubmit
   } = useFinancialForm();
 
@@ -42,8 +42,8 @@ const FinancialStepForm = () => {
       />
       
       <MitigatingFactorsSection
-        selectedFactors={formData.mitigatingFactors}
-        onFactorChange={handleMitigatingFactorChange}
+        selectedFactors={formData.selectedFactors}
+        onFactorChange={handleFactorOptionChange}
       />
       
       <div className="mt-6">

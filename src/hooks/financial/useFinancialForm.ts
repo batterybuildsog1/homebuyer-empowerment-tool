@@ -18,14 +18,7 @@ export interface FinancialFormData {
   };
   ficoScore: number;
   mitigatingFactors: string[];
-  selectedFactors: {
-    cashReserves: string;
-    residualIncome: string;
-    housingPaymentIncrease: string;
-    employmentHistory: string;
-    creditUtilization: string;
-    downPayment: string;
-  };
+  selectedFactors: Record<string, string>;
 }
 
 export const useFinancialForm = () => {
@@ -46,14 +39,7 @@ export const useFinancialForm = () => {
     },
     ficoScore: userData.financials.ficoScore || 680,
     mitigatingFactors: userData.financials.mitigatingFactors || [],
-    selectedFactors: userData.financials.selectedFactors || {
-      cashReserves: "none",
-      residualIncome: "none",
-      housingPaymentIncrease: "none",
-      employmentHistory: "none",
-      creditUtilization: "none",
-      downPayment: "none",
-    },
+    selectedFactors: userData.financials.selectedFactors || {}
   });
   
   // Form validation and submission state
@@ -91,16 +77,6 @@ export const useFinancialForm = () => {
         ? prev.mitigatingFactors.filter(factor => factor !== id)
         : [...prev.mitigatingFactors, id];
       
-      const updatedSelectedFactors = { ...prev.selectedFactors };
-      
-      if (id === 'reserves') {
-        updatedSelectedFactors.cashReserves = newFactors.includes(id) ? '3-6 months' : 'none';
-      } else if (id === 'residualIncome') {
-        updatedSelectedFactors.residualIncome = newFactors.includes(id) ? '20-30%' : 'none'; 
-      } else if (id === 'minimalDebt') {
-        updatedSelectedFactors.housingPaymentIncrease = newFactors.includes(id) ? '<10%' : 'none';
-      }
-      
       // Track the factor selection/deselection event
       trackEvent(
         newFactors.includes(id) ? AnalyticsEvents.FACTOR_SELECTED : AnalyticsEvents.FACTOR_DESELECTED,
@@ -112,8 +88,25 @@ export const useFinancialForm = () => {
       
       return {
         ...prev,
-        mitigatingFactors: newFactors,
-        selectedFactors: updatedSelectedFactors
+        mitigatingFactors: newFactors
+      };
+    });
+  };
+
+  // New handler for dropdown-based factor selection
+  const handleFactorOptionChange = (id: string, value: string) => {
+    setFormData(prev => {
+      const updatedFactors = { ...prev.selectedFactors, [id]: value };
+      
+      // Track the factor option selection event
+      trackEvent(AnalyticsEvents.FACTOR_OPTION_SELECTED, {
+        factorId: id,
+        optionValue: value
+      });
+      
+      return {
+        ...prev,
+        selectedFactors: updatedFactors
       };
     });
   };
@@ -191,6 +184,7 @@ export const useFinancialForm = () => {
     handleDebtItemChange,
     handleFicoScoreChange,
     handleMitigatingFactorChange,
+    handleFactorOptionChange,
     handleSubmit,
     validateForm
   };
