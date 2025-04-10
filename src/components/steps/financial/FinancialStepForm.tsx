@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useMortgage } from "@/context/MortgageContext";
-import { useLoanData } from "@/hooks/useLoanData";
+import { useDataFetching } from "@/hooks/data/useDataFetching";
 import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
@@ -13,7 +12,7 @@ import BuyingPowerChart from "./BuyingPowerChart";
 
 const FinancialStepForm = () => {
   const { userData, updateFinancials, setCurrentStep, updateLoanDetails } = useMortgage();
-  const { fetchExternalData, fetchProgress } = useLoanData();
+  const { fetchExternalData, fetchProgress } = useDataFetching();
   
   const [formData, setFormData] = useState({
     annualIncome: userData.financials.annualIncome || 0,
@@ -121,8 +120,6 @@ const FinancialStepForm = () => {
     }
   };
 
-  // Effect to trigger data fetch when income is non-zero has been moved to AnnualIncomeInput component
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <AnnualIncomeInput 
@@ -147,7 +144,6 @@ const FinancialStepForm = () => {
         onFactorChange={handleMitigatingFactorChange}
       />
       
-      {/* Add the buying power visualization */}
       <div className="mt-6">
         <BuyingPowerChart 
           annualIncome={formData.annualIncome}

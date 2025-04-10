@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
+import { useLoanDataCache } from "@/hooks/data/useLoanDataCache";
 
 interface DataFetchingManagerProps {
   checkDataReadiness: () => boolean;
@@ -13,6 +14,7 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
   cachedDataExists
 }) => {
   const { userData, updateLoanDetails } = useMortgage();
+  const { checkCachedData } = useLoanDataCache();
 
   // Check for cached data on component mount
   useEffect(() => {

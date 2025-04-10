@@ -1,13 +1,23 @@
 
-import { useDataFetching } from "./useDataFetching";
-import { useLoanDataCache } from "./useLoanDataCache";
-import { useLoanSettings } from "./useLoanSettings";
+import { useDataFetching } from "./data/useDataFetching";
+import { useLoanDataCache } from "./data/useLoanDataCache";
+import { useLoanSettings } from "./loan/useLoanSettings";
 
+/**
+ * Main hook that orchestrates loan data functionality
+ * This hook composes all the necessary loan-related hooks
+ */
 export const useLoanData = () => {
   // Import all necessary hooks
   const { fetchProgress, fetchExternalData } = useDataFetching();
   const { checkCachedData } = useLoanDataCache();
-  const { formData, ltv, currentInterestRate, handleLoanTypeChange, handleDownPaymentChange } = useLoanSettings();
+  const { 
+    formData, 
+    ltv, 
+    currentInterestRate, 
+    handleLoanTypeChange, 
+    handleDownPaymentChange 
+  } = useLoanSettings();
 
   return {
     formData,
