@@ -71,7 +71,7 @@ export const compensatingFactors: Record<string, Record<string, number>> = {
  * @param ficoScore User's credit score
  * @returns Selected option key
  */
-const getCreditHistoryOption = (ficoScore: number): string => {
+export const getCreditHistoryOption = (ficoScore: number): string => {
   if (ficoScore >= 760) return "760+";
   if (ficoScore >= 720) return "720-759";
   return "none";
@@ -231,23 +231,30 @@ export const calculateMaxDTI = (
     return Math.min(baseDTI + dtiIncrease, 57);
   }
 
-  // For conventional loans, continue using the old logic for now
-  const dtiLimits = DTI_LIMITS[loanType];
-  let maxDTI = dtiLimits.default;
-
-  if (loanType === 'conventional') {
-    if (ficoScore >= 720) maxDTI = dtiLimits.strongFactors.highFICO;
-    // Use any previously selected compensating factors for backward compatibility
-    if (selectedFactors.cashReserves && selectedFactors.cashReserves !== "none") {
-      maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
-    }
-    if (ltv <= 75) {
-      const conventionalFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.conventional.strongFactors;
-      maxDTI = Math.max(maxDTI, conventionalFactors.lowLTV);
+  // For conventional loans, apply the new compensating factors logic
+  let dtiIncrease = 0;
+  
+  // Automatically set creditHistory based on FICO score
+  const creditHistoryOption = getCreditHistoryOption(ficoScore);
+  const factorsToEvaluate = { ...selectedFactors, creditHistory: creditHistoryOption };
+  
+  // Calculate total DTI increase from selected factors
+  for (const [factor, option] of Object.entries(factorsToEvaluate)) {
+    if (compensatingFactors[factor] && compensatingFactors[factor][option] !== undefined) {
+      dtiIncrease += compensatingFactors[factor][option];
     }
   }
   
-  return maxDTI;
+  // LTV-based adjustment for conventional loans
+  let ltvAdjustment = 0;
+  if (ltv <= 75) {
+    ltvAdjustment = 3; // Additional +3% DTI for low LTV
+  } else if (ltv <= 80) {
+    ltvAdjustment = 2; // Additional +2% DTI for moderate LTV
+  }
+  
+  // Return DTI, capped at 50% for conventional loans
+  return Math.min(baseDTI + dtiIncrease + ltvAdjustment, 50);
 };
 
 export const calculateMonthlyPayment = (

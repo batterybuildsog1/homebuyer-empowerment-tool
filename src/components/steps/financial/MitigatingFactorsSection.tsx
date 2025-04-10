@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useMortgage } from "@/context/MortgageContext";
+import { getCreditHistoryOption } from "@/utils/mortgageCalculations";
 
 const factorOptions = [
   {
@@ -95,13 +96,6 @@ const factorOptions = [
     description: "Your credit score determines this factor automatically, reflecting your creditworthiness."
   },
 ];
-
-// Helper function to determine credit history option based on FICO score
-const getCreditHistoryOption = (ficoScore: number): string => {
-  if (ficoScore >= 760) return "760+";
-  if (ficoScore >= 720) return "720-759";
-  return "none";
-};
 
 interface MitigatingFactorsSectionProps {
   selectedFactors: Record<string, string>;

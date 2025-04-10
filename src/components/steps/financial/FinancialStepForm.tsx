@@ -5,7 +5,7 @@ import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
 import MitigatingFactorsSection from "./MitigatingFactorsSection";
-import BuyingPowerChart from "./BuyingPowerChart";
+import BorrowingPowerChart from "./BorrowingPowerChart";
 import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
@@ -47,13 +47,11 @@ const FinancialStepForm = () => {
       />
       
       <div className="mt-6">
-        <BuyingPowerChart 
+        <BorrowingPowerChart 
           annualIncome={formData.annualIncome}
           ficoScore={formData.ficoScore}
           debtItems={formData.debtItems}
-          mitigatingFactors={Object.entries(formData.selectedFactors)
-            .filter(([_, value]) => value !== "none")
-            .map(([key]) => key)}
+          selectedFactors={formData.selectedFactors}
         />
       </div>
 
