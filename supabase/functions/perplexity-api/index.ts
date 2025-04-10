@@ -34,8 +34,7 @@ serve(async (req) => {
       console.error("Perplexity API key not found in environment variables");
       return new Response(
         JSON.stringify({ 
-          error: "API Key not configured",
-          useFallback: true 
+          error: "API Key not configured on the server",
         }),
         { 
           status: 500,
@@ -138,8 +137,7 @@ If you include a JSON block with \`\`\` markers, ensure the JSON is properly for
         
         return new Response(
           JSON.stringify({ 
-            error: `Perplexity API Error (${response.status})`,
-            useFallback: true 
+            error: `Perplexity API Error (${response.status})`
           }),
           { 
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -159,8 +157,7 @@ If you include a JSON block with \`\`\` markers, ensure the JSON is properly for
     
     return new Response(
       JSON.stringify({ 
-        error: isTimeout ? "Request timed out" : error.message,
-        useFallback: true 
+        error: isTimeout ? "Request timed out" : error.message
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" },

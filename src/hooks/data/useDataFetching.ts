@@ -94,6 +94,10 @@ export const useDataFetching = () => {
         userData.location.zipCode
       );
 
+      if (!result) {
+        throw new Error("Failed to fetch data from API");
+      }
+
       // Update progress
       if (!isBackgroundFetch) {
         setFetchProgress(prev => ({ 
@@ -158,7 +162,7 @@ export const useDataFetching = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       if (!isBackgroundFetch) {
-        toast.error("An error occurred while fetching data. Please check your location information and try again.");
+        toast.error("An error occurred while fetching data from the Perplexity API. Please try again later.");
       }
       return null; // Return null on error
     } finally {

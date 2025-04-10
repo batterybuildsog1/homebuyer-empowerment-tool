@@ -1,55 +1,6 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Keep fallbackData as a reference but avoid using it during testing
-export const fallbackData = {
-  interestRates: {
-    default: 6.75,
-    states: {
-      "CA": 6.8,
-      "NY": 6.85,
-      "TX": 6.7,
-      "FL": 6.65,
-      "IL": 6.73,
-      "PA": 6.78,
-      "OH": 6.69,
-      "GA": 6.72,
-      "NC": 6.67,
-      "MI": 6.71
-    }
-  },
-  propertyTaxRates: {
-    default: 1.07,
-    states: {
-      "CA": 0.76,
-      "NY": 1.72,
-      "TX": 1.8,
-      "FL": 0.89,
-      "IL": 2.27,
-      "PA": 1.58,
-      "OH": 1.62,
-      "GA": 0.92,
-      "NC": 0.84,
-      "MI": 1.54
-    }
-  },
-  annualInsurance: {
-    default: 1200,
-    states: {
-      "CA": 1450,
-      "NY": 1350,
-      "TX": 1850,
-      "FL": 1950,
-      "IL": 1150,
-      "PA": 1050,
-      "OH": 950,
-      "GA": 1250,
-      "NC": 1150,
-      "MI": 1050
-    }
-  }
-};
-
 export interface MortgageDataResponse {
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
@@ -179,7 +130,7 @@ export const fetchMortgageRates = async (): Promise<{
     
     if (timeoutId) clearTimeout(timeoutId);
     
-    toast.error("Error fetching mortgage rates. Using fallback values.");
+    toast.error("Error fetching mortgage rates.");
     return { conventionalInterestRate: null, fhaInterestRate: null };
   }
 };
@@ -264,7 +215,7 @@ export const fetchPropertyData = async (
     
     if (timeoutId) clearTimeout(timeoutId);
     
-    toast.error("Error fetching property data. Using fallback values.");
+    toast.error("Error fetching property data.");
     return { propertyTax: null, propertyInsurance: null };
   }
 };
@@ -319,11 +270,7 @@ export const fetchAllMortgageData = async (
   }
 };
 
-/**
- * Helper function to validate a numeric value from the API
- * @param value The value to validate
- * @returns The validated number or null if invalid
- */
+// Keep the helper function for validating numeric values
 function validateNumericValue(value: any): number | null {
   // Check if it's a number
   if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
@@ -344,7 +291,7 @@ function validateNumericValue(value: any): number | null {
   return null;
 }
 
-// Keeping the following functions for backward compatibility
+// Keeping these functions for backward compatibility, but without fallbacks
 export const getInterestRates = async (state: string): Promise<number | null> => {
   try {
     const ratesData = await fetchMortgageRates();
