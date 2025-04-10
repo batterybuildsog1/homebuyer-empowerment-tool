@@ -28,6 +28,56 @@ const DTI_LIMITS = {
   }
 };
 
+// Detailed compensating factors mapping with DTI adjustment weights
+const compensatingFactors: Record<string, Record<string, number>> = {
+  cashReserves: {
+    "none": 0,                  // No adjustment
+    "3-6 months": 2,           // Moderate cushion: +2% DTI
+    "6+ months": 4,            // Strong cushion: +4% DTI
+  },
+  residualIncome: {
+    "none": 0,                  // No adjustment
+    "20-30%": 2,               // Decent buffer: +2% DTI
+    "30%+": 4,                 // Significant buffer: +4% DTI
+  },
+  creditHistory: {
+    "none": 0,                  // Default for FICO < 720 (no adjustment)
+    "720-759": 2,              // Good credit: +2% DTI
+    "760+": 3,                 // Elite credit: +3% DTI
+  },
+  housingPaymentIncrease: {
+    "none": 0,                  // No adjustment
+    "<10%": 3,                 // Minimal increase: +3% DTI
+    "10-20%": 2,               // Moderate increase: +2% DTI
+  },
+  employmentHistory: {
+    "none": 0,                  // No adjustment
+    "3-5 years": 1,            // Stable: +1% DTI
+    "5+ years": 2,             // Very stable: +2% DTI
+  },
+  creditUtilization: {
+    "none": 0,                  // No adjustment
+    "<30%": 1,                 // Low utilization: +1% DTI
+    "<10%": 2,                 // Very low utilization: +2% DTI
+  },
+  downPayment: {
+    "none": 0,                  // No adjustment
+    "10-15%": 1,               // Moderate down payment: +1% DTI
+    "15%+": 2,                 // Large down payment: +2% DTI
+  },
+};
+
+/**
+ * Determines the credit history option based on FICO score
+ * @param ficoScore User's credit score
+ * @returns Selected option key
+ */
+const getCreditHistoryOption = (ficoScore: number): string => {
+  if (ficoScore >= 760) return "760+";
+  if (ficoScore >= 720) return "720-759";
+  return "none";
+};
+
 // Base rates adjustment based on FICO score
 const FICO_RATE_ADJUSTMENTS = {
   "conventional": {
