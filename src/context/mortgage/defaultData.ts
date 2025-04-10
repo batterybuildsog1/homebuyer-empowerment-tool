@@ -18,6 +18,14 @@ export const defaultUserData: UserData = {
     downPayment: 0,
     downPaymentPercent: 20,
     mitigatingFactors: [],
+    selectedFactors: {
+      cashReserves: "none",
+      residualIncome: "none",
+      housingPaymentIncrease: "none",
+      employmentHistory: "none",
+      creditUtilization: "none",
+      downPayment: "none",
+    },
     debtItems: {
       carLoan: 0,
       studentLoan: 0,
