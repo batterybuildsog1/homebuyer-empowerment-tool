@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useMortgage } from "@/context/MortgageContext";
 import { useDataFetching } from "@/hooks/data/useDataFetching";
+import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
@@ -14,6 +14,7 @@ import BuyingPowerChart from "./BuyingPowerChart";
 const FinancialStepForm = () => {
   const { userData, updateFinancials, setCurrentStep, updateLoanDetails } = useMortgage();
   const { fetchExternalData, fetchProgress } = useDataFetching();
+  const { trackEvent } = useAnalytics();
   
   const [formData, setFormData] = useState({
     annualIncome: userData.financials.annualIncome || 0,
@@ -27,7 +28,6 @@ const FinancialStepForm = () => {
     },
     ficoScore: userData.financials.ficoScore || 680,
     mitigatingFactors: userData.financials.mitigatingFactors || [],
-    // Initialize with existing selectedFactors or defaults
     selectedFactors: userData.financials.selectedFactors || {
       cashReserves: "none",
       residualIncome: "none",
@@ -67,15 +67,12 @@ const FinancialStepForm = () => {
 
   const handleMitigatingFactorChange = (id: string) => {
     setFormData(prev => {
-      // Update legacy mitigatingFactors array for backward compatibility
       const newFactors = prev.mitigatingFactors.includes(id)
         ? prev.mitigatingFactors.filter(factor => factor !== id)
         : [...prev.mitigatingFactors, id];
       
-      // Update the selectedFactors with appropriate values based on the factor
       const updatedSelectedFactors = { ...prev.selectedFactors };
       
-      // Map the factor ID to the appropriate selectedFactors key and value
       if (id === 'reserves') {
         updatedSelectedFactors.cashReserves = newFactors.includes(id) ? '3-6 months' : 'none';
       } else if (id === 'residualIncome') {
@@ -83,6 +80,14 @@ const FinancialStepForm = () => {
       } else if (id === 'minimalDebt') {
         updatedSelectedFactors.housingPaymentIncrease = newFactors.includes(id) ? '<10%' : 'none';
       }
+      
+      trackEvent(
+        newFactors.includes(id) ? AnalyticsEvents.FACTOR_SELECTED : AnalyticsEvents.FACTOR_DESELECTED,
+        { 
+          factorId: id,
+          factorValue: newFactors.includes(id) ? 'enabled' : 'disabled',
+        }
+      );
       
       return {
         ...prev,
@@ -110,35 +115,45 @@ const FinancialStepForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Update financials in context with both legacy and new format data
       updateFinancials({
         annualIncome: formData.annualIncome,
         monthlyDebts: formData.monthlyDebts,
         debtItems: formData.debtItems,
         ficoScore: formData.ficoScore,
-        downPaymentPercent: 20, // Default value, will be modified in loan details
-        downPayment: 0, // This will be calculated based on home price
-        mitigatingFactors: formData.mitigatingFactors, // Keep legacy format for compatibility
-        selectedFactors: formData.selectedFactors, // Add new format
+        downPaymentPercent: 20,
+        downPayment: 0,
+        mitigatingFactors: formData.mitigatingFactors,
+        selectedFactors: formData.selectedFactors,
       });
       
       setIsSubmitting(true);
       
-      // Only fetch data if we haven't already tried or if the background fetch didn't succeed
       if (!fetchProgress.hasAttemptedFetch && !hasFetchedData) {
         try {
-          const fetchedData = await fetchExternalData(false); // Regular fetch with UI feedback
+          const fetchedData = await fetchExternalData(false);
           if (fetchedData) {
             updateLoanDetails(fetchedData);
           }
         } catch (error) {
           console.error("Error fetching data:", error);
           toast.error("There was a problem fetching rate data. Continuing without it.");
+          
+          trackEvent(AnalyticsEvents.FORM_ERROR, {
+            step: 'financial',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
         }
       } else {
-        // Data has already been fetched or attempted in the background
         toast.success("Financial information saved!");
       }
+      
+      trackEvent(AnalyticsEvents.FINANCIAL_STEP_SUBMITTED, {
+        annualIncome: formData.annualIncome,
+        monthlyDebts: formData.monthlyDebts,
+        ficoScore: formData.ficoScore,
+        selectedFactors: formData.selectedFactors,
+        mitigatingFactorsCount: formData.mitigatingFactors.length,
+      });
       
       setIsSubmitting(false);
       setCurrentStep(2);
