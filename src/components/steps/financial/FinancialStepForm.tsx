@@ -51,7 +51,9 @@ const FinancialStepForm = () => {
           annualIncome={formData.annualIncome}
           ficoScore={formData.ficoScore}
           debtItems={formData.debtItems}
-          mitigatingFactors={formData.mitigatingFactors}
+          mitigatingFactors={Object.entries(formData.selectedFactors)
+            .filter(([_, value]) => value !== "none")
+            .map(([key]) => key)}
         />
       </div>
 

@@ -99,7 +99,7 @@ export const useFinancialForm = () => {
       const updatedFactors = { ...prev.selectedFactors, [id]: value };
       
       // Track the factor option selection event
-      trackEvent(AnalyticsEvents.FACTOR_OPTION_SELECTED, {
+      trackEvent(AnalyticsEvents.FACTOR_SELECTED, {
         factorId: id,
         optionValue: value
       });
