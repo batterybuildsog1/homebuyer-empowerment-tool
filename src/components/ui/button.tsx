@@ -10,7 +10,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-finance-purple text-white shadow-sm hover:bg-finance-purple/90",
+        default: "bg-gradient-to-r from-primary-500 to-finance-purple text-white shadow-sm hover:from-primary-600 hover:to-finance-purple/90 active:scale-[0.98]",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
