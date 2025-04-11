@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -73,7 +72,11 @@ const FinancialGoalsPage = () => {
       <header className="mb-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Link to="/dashboard">
-            <Button variant="ghost" size="sm" className="rounded-full">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="rounded-full hover:bg-accent/30 active:scale-95 transition-all duration-200"
+            >
               <ArrowLeftIcon className="h-4 w-4" />
             </Button>
           </Link>
@@ -81,7 +84,10 @@ const FinancialGoalsPage = () => {
         </div>
         
         {!showForm && (
-          <Button onClick={() => setShowForm(true)}>
+          <Button 
+            onClick={() => setShowForm(true)}
+            className="hover:bg-primary/90 active:scale-95 transition-all duration-200"
+          >
             <PlusIcon className="h-4 w-4 mr-1" /> Add Goal
           </Button>
         )}
@@ -168,7 +174,6 @@ const FinancialGoalsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
                     <span>${((goal.progress / 100) * goal.target).toLocaleString()} saved</span>
@@ -177,7 +182,6 @@ const FinancialGoalsPage = () => {
                   <Progress value={goal.progress} className="h-2" />
                 </div>
                 
-                {/* Goal Details */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Target Date</span>
@@ -217,19 +221,19 @@ const FinancialGoalsPage = () => {
         )}
       </main>
 
-      <footer className="mt-8 py-4">
-        <nav className="grid grid-cols-4 gap-2">
+      <footer className="mt-8 py-4 sticky bottom-0 left-0 right-0 z-10">
+        <nav className="grid grid-cols-4 gap-2 shadow-md rounded-md border-t bg-card">
           <Link to="/dashboard">
-            <Button variant="ghost" className="w-full">Dashboard</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Dashboard</Button>
           </Link>
           <Link to="/mortgage-planning">
-            <Button variant="ghost" className="w-full">Mortgage</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Mortgage</Button>
           </Link>
           <Link to="/financial-goals">
-            <Button variant="ghost" className="w-full">Goals</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Goals</Button>
           </Link>
           <Link to="/">
-            <Button variant="ghost" className="w-full">Home</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Home</Button>
           </Link>
         </nav>
       </footer>

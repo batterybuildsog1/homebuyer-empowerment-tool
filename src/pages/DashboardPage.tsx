@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -79,7 +78,7 @@ const DashboardPage = () => {
             variant="outline" 
             onClick={handleRefresh}
             disabled={loading}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 hover:bg-accent/30 active:scale-95 transition-all duration-200"
           >
             <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline-block">{loading ? 'Refreshing...' : 'Refresh'}</span>
@@ -88,7 +87,6 @@ const DashboardPage = () => {
       </header>
       
       <main className="grid gap-6 md:gap-8">
-        {/* Financial Overview Cards */}
         <FinancialSummary 
           income={income} 
           expenses={expenses} 
@@ -96,10 +94,8 @@ const DashboardPage = () => {
           debt={debt} 
         />
         
-        {/* Expense Breakdown Section */}
         <ExpenseChart categorizedExpenses={expenses.categorizedExpenses} />
 
-        {/* Financial Goals Preview */}
         <Collapsible 
           open={isDetailsOpen} 
           onOpenChange={setIsDetailsOpen}
@@ -152,16 +148,16 @@ const DashboardPage = () => {
       <footer className="mt-8 py-4 sticky bottom-0 left-0 right-0 z-10">
         <nav className="grid grid-cols-4 gap-2 shadow-md rounded-md border-t bg-card">
           <Link to="/dashboard">
-            <Button variant="ghost" className="w-full transition-colors duration-300">Dashboard</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Dashboard</Button>
           </Link>
           <Link to="/mortgage-planning">
-            <Button variant="ghost" className="w-full transition-colors duration-300">Mortgage</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Mortgage</Button>
           </Link>
           <Link to="/financial-goals">
-            <Button variant="ghost" className="w-full transition-colors duration-300">Goals</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Goals</Button>
           </Link>
           <Link to="/">
-            <Button variant="ghost" className="w-full transition-colors duration-300">Home</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Home</Button>
           </Link>
         </nav>
       </footer>
