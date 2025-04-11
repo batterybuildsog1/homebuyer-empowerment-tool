@@ -2,57 +2,34 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Heading } from "@/components/ui/Heading";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Calculator, DollarSign, Home } from "lucide-react";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { formatCurrency } from "@/utils/formatters";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, DollarSign, Home, TrendingUp, Users } from "lucide-react";
 
 const HeroPage = () => {
   const [email, setEmail] = useState("");
-  const [income, setIncome] = useState("");
-  
-  // Calculate buying power with different DTI ratios
-  const calculateBuyingPower = (annualIncome: number, dtiRatio: number) => {
-    if (!annualIncome) return 0;
-    
-    const monthlyIncome = annualIncome / 12;
-    // Assuming average interest rate of 6.5%, 30-year term, $0 debts for simplicity
-    const maxMonthlyPayment = monthlyIncome * (dtiRatio / 100);
-    
-    // Simplified calculation (rough estimate)
-    const maxHomePrice = maxMonthlyPayment * 180; // Multiplier that approximates mortgage calculation
-    
-    return Math.round(maxHomePrice);
-  };
-  
-  const annualIncome = parseInt(income) || 100000; // Default to 100k if empty
-  const standardBuyingPower = calculateBuyingPower(annualIncome, 43);
-  const enhancedBuyingPower = calculateBuyingPower(annualIncome, 52);
-  const buyingPowerIncrease = enhancedBuyingPower - standardBuyingPower;
-  const percentageIncrease = Math.round((buyingPowerIncrease / standardBuyingPower) * 100);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-zinc-900">
-      {/* Minimal Header */}
-      <header className="w-full p-5 md:p-8 flex justify-between items-center border-b border-zinc-100">
-        <div className="flex items-center gap-2">
-          <Home className="h-6 w-6 text-[#8b76e0]" />
-          <span className="font-medium text-lg">Moneybucket.ai</span>
+    <div className="min-h-screen flex flex-col bg-[#1A1F2C] text-white">
+      {/* Navigation */}
+      <header className="w-full p-4 md:p-6 flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <Home className="h-8 w-8 text-[#9b87f5]" />
+          <span className="font-bold text-xl">Moneybucket.ai</span>
         </div>
-        <div className="hidden md:flex items-center gap-6">
-          <Link to="/dashboard" className="hover:text-[#8b76e0] transition-colors text-sm">Dashboard</Link>
-          <Link to="/mortgage-planning" className="hover:text-[#8b76e0] transition-colors text-sm">Mortgage</Link>
-          <Button asChild variant="outline" size="sm" className="h-9">
+        <nav className="hidden md:flex items-center space-x-8">
+          <Link to="/" className="hover:text-[#9b87f5] transition-colors">Home</Link>
+          <Link to="/mortgage-planning" className="hover:text-[#9b87f5] transition-colors">Mortgage</Link>
+          <Link to="/financial-goals" className="hover:text-[#9b87f5] transition-colors">Goals</Link>
+          <Link to="/dashboard" className="hover:text-[#9b87f5] transition-colors">Dashboard</Link>
+        </nav>
+        <div className="flex items-center space-x-4">
+          <Button asChild variant="outline" className="hidden md:flex">
             <Link to="/dashboard">Login</Link>
           </Button>
-          <Button asChild size="sm" className="bg-[#8b76e0] hover:bg-[#7a66cf] h-9">
+          <Button asChild>
             <Link to="/dashboard">Get Started</Link>
-          </Button>
-        </div>
-        <div className="md:hidden">
-          <Button asChild size="sm" className="bg-[#8b76e0] hover:bg-[#7a66cf]">
-            <Link to="/dashboard">Start</Link>
           </Button>
         </div>
       </header>
@@ -60,172 +37,99 @@ const HeroPage = () => {
       {/* Hero Section */}
       <main className="flex-1 flex flex-col md:flex-row">
         {/* Left Content */}
-        <div className="flex-1 p-8 md:p-16 flex flex-col justify-center max-w-xl mx-auto md:mx-0">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-            <span className="text-[#8b76e0]">Buy the house</span> they said you couldn't.
-          </h1>
+        <div className="flex-1 p-6 md:p-12 flex flex-col justify-center max-w-2xl mx-auto md:mx-0">
+          <Heading as="h1" size="3xl" className="mb-4 leading-tight">
+            <span className="text-[#9b87f5]">Buy the house,</span> they said you couldn't.
+          </Heading>
           
-          <p className="text-zinc-600 mb-8 md:text-lg">
-            Our financial tool helps you achieve homeownership, even when others say it's impossible.
+          <p className="text-lg text-gray-300 mb-8 max-w-xl">
+            Our financial planning tool helps you achieve homeownership, 
+            even when others say it's impossible. Start your journey today.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-3 mb-10">
-            <div className="relative flex-1">
-              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+          <div className="flex flex-col sm:flex-row gap-4 mb-8">
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
               <Input 
                 type="email"
                 placeholder="Enter your email"
-                className="pl-10 border-zinc-200 w-full"
+                className="pl-10 bg-white/10 border-white/20 text-white w-full"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <Button className="bg-[#8b76e0] hover:bg-[#7a66cf] flex items-center gap-2 py-2">
-              Calculate Buying Power
+            <Button size="lg" className="bg-[#9b87f5] hover:bg-[#8b5cf6] flex items-center gap-2">
+              Calculate Your Buying Power
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <Card className="p-4 bg-zinc-50 border-zinc-100 hover:shadow-md transition-shadow flex items-center gap-3">
-              <div className="bg-[#8b76e0]/10 p-2 rounded-full">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 10L12 15L17 10" stroke="#8b76e0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="font-medium">Lower DTI ratio</div>
+          <div className="flex flex-wrap gap-4 md:gap-6">
+            <Card className="bg-white/5 border-white/10 w-full sm:w-auto">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="bg-[#9b87f5]/20 p-2 rounded-full">
+                  <TrendingUp className="h-5 w-5 text-[#9b87f5]" />
+                </div>
+                <div>
+                  <div className="font-semibold">Boost your buying power</div>
+                  <div className="text-sm text-gray-400">Maximize your mortgage approval</div>
+                </div>
+              </CardContent>
             </Card>
             
-            <Card className="p-4 bg-zinc-50 border-zinc-100 hover:shadow-md transition-shadow flex items-center gap-3">
-              <div className="bg-[#8b76e0]/10 p-2 rounded-full">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M16 5L8 12L16 19" stroke="#8b76e0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="font-medium">Higher approval</div>
+            <Card className="bg-white/5 border-white/10 w-full sm:w-auto">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="bg-[#9b87f5]/20 p-2 rounded-full">
+                  <Users className="h-5 w-5 text-[#9b87f5]" />
+                </div>
+                <div>
+                  <div className="font-semibold">5,000+ success stories</div>
+                  <div className="text-sm text-gray-400">People who found their dream home</div>
+                </div>
+              </CardContent>
             </Card>
           </div>
         </div>
         
         {/* Right Image */}
         <div className="hidden md:block flex-1 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-white to-transparent z-10 opacity-80"></div>
-          <AspectRatio ratio={16/9} className="h-full">
-            <img 
-              src="/lovable-uploads/568b51fd-afc4-4ca5-9554-5f21d204b036.png" 
-              alt="Modern home exterior" 
-              className="w-full h-full object-cover"
-            />
-          </AspectRatio>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1F2C] to-transparent z-10"></div>
+          <img 
+            src="/lovable-uploads/568b51fd-afc4-4ca5-9554-5f21d204b036.png" 
+            alt="Modern home exterior" 
+            className="w-full h-full object-cover"
+          />
         </div>
       </main>
 
-      {/* Buying Power Calculator Section */}
-      <section className="py-12 px-8 md:px-16 bg-white border-t border-zinc-100">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
-            {/* Left side - Input */}
-            <div className="w-full md:w-1/2 space-y-6">
-              <h2 className="text-2xl md:text-3xl font-bold">
-                Discover your <span className="text-[#8b76e0]">true buying power</span>
-              </h2>
-              
-              <p className="text-zinc-600">
-                See how our mortgage solutions can increase your home purchasing power.
+      {/* Bottom Section */}
+      <footer className="bg-black/30 py-8 px-6 md:px-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <Heading as="h3" size="sm" className="mb-4">Moneybucket.ai</Heading>
+              <p className="text-gray-400 text-sm">
+                Your financial planning companion for achieving homeownership
               </p>
-              
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-zinc-700">
-                  Your annual income
-                </label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400" />
-                  <Input 
-                    type="text"
-                    placeholder="100,000"
-                    className="pl-10 border-zinc-200"
-                    value={income}
-                    onChange={(e) => {
-                      // Only allow numbers
-                      const value = e.target.value.replace(/\D/g, '');
-                      setIncome(value);
-                    }}
-                  />
-                </div>
-                
-                <Button className="w-full bg-[#8b76e0] hover:bg-[#7a66cf]">
-                  Calculate
-                </Button>
-              </div>
             </div>
-            
-            {/* Right side - Results */}
-            <div className="w-full md:w-1/2 space-y-6">
-              <Card className="p-6 border-2 border-[#8b76e0]/20 bg-gradient-to-br from-white to-[#8b76e0]/5">
-                <div className="flex items-center gap-3 mb-4">
-                  <Calculator className="h-6 w-6 text-[#8b76e0]" />
-                  <h3 className="text-xl font-semibold">Your Buying Power</h3>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="text-sm text-zinc-500">Standard Lender</div>
-                    <div className="text-2xl font-bold">{formatCurrency(standardBuyingPower)}</div>
-                  </div>
-                  
-                  <div className="relative h-2 bg-zinc-100 rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full bg-zinc-300 rounded-full" style={{ width: "100%" }}></div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="text-sm text-zinc-500 flex items-center">
-                      <span className="font-semibold text-[#8b76e0]">Moneybucket.ai</span>
-                      <span className="ml-2 bg-[#8b76e0]/10 text-[#8b76e0] text-xs px-2 py-0.5 rounded-full">
-                        +{percentageIncrease}%
-                      </span>
-                    </div>
-                    <div className="text-3xl font-bold text-[#8b76e0]">{formatCurrency(enhancedBuyingPower)}</div>
-                  </div>
-                  
-                  <div className="relative h-2 bg-zinc-100 rounded-full overflow-hidden">
-                    <div className="absolute top-0 left-0 h-full bg-[#8b76e0] rounded-full" style={{ width: "100%" }}></div>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-zinc-100">
-                    <div className="text-zinc-600 text-sm">
-                      That's an additional <span className="font-semibold text-[#8b76e0]">{formatCurrency(buyingPowerIncrease)}</span> in home buying power!
-                    </div>
-                  </div>
-                </div>
-              </Card>
-              
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/mortgage-planning">
-                  Get your personalized mortgage plan
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div>
+              <Heading as="h3" size="sm" className="mb-4">Quick Links</Heading>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link to="/mortgage-planning" className="hover:text-[#9b87f5]">Mortgage Calculator</Link></li>
+                <li><Link to="/financial-goals" className="hover:text-[#9b87f5]">Financial Goals</Link></li>
+                <li><Link to="/dashboard" className="hover:text-[#9b87f5]">Dashboard</Link></li>
+              </ul>
+            </div>
+            <div>
+              <Heading as="h3" size="sm" className="mb-4">Contact</Heading>
+              <p className="text-gray-400 text-sm">
+                support@moneybucket.ai<br />
+                (555) 123-4567
+              </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Minimal Footer */}
-      <footer className="py-8 px-8 md:px-16 border-t border-zinc-100">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Home className="h-5 w-5 text-[#8b76e0]" />
-            <span className="font-medium">Moneybucket.ai</span>
-          </div>
-          
-          <div className="flex gap-8 text-sm text-zinc-500">
-            <Link to="/mortgage-planning" className="hover:text-[#8b76e0]">Mortgage</Link>
-            <Link to="/dashboard" className="hover:text-[#8b76e0]">Dashboard</Link>
-            <a href="#" className="hover:text-[#8b76e0]">Privacy</a>
-          </div>
-          
-          <div className="text-sm text-zinc-400">
-            © {new Date().getFullYear()} Moneybucket.ai
+          <div className="mt-8 pt-4 border-t border-gray-800 text-center text-gray-500 text-sm">
+            © {new Date().getFullYear()} Moneybucket.ai. All rights reserved.
           </div>
         </div>
       </footer>
