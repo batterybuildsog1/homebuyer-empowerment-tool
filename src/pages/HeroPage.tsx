@@ -39,7 +39,7 @@ const HeroPage = () => {
         {/* Left Content */}
         <div className="flex-1 p-6 md:p-12 flex flex-col justify-center max-w-2xl mx-auto md:mx-0">
           <Heading as="h1" size="3xl" className="mb-4 leading-tight">
-            Buy the house, <span className="text-[#9b87f5]">they said you couldn't.</span>
+            <span className="text-[#9b87f5]">Buy the house,</span> they said you couldn't.
           </Heading>
           
           <p className="text-lg text-gray-300 mb-8 max-w-xl">
