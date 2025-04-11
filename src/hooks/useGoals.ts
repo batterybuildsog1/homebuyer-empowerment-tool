@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 // Define types for goals
 interface Goal {
@@ -58,10 +58,10 @@ export function useGoals() {
     }
   }, []);
 
-  // Effect to fetch goals on component mount
-  if (goals.length === 0 && !loading && !error) {
+  // Properly use useEffect for initial loading
+  useEffect(() => {
     fetchGoals();
-  }
+  }, [fetchGoals]);
 
   // Add a new goal
   const addGoal = useCallback((goal: Omit<Goal, 'id'>) => {

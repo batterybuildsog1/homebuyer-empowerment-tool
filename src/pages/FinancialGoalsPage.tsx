@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,32 +7,77 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/use-toast";
 import { 
   ArrowLeftIcon, 
   PlusIcon, 
   CalendarIcon, 
   DollarSignIcon,
   TargetIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  AlertCircleIcon
 } from "lucide-react";
 import { useGoals } from "@/hooks/useGoals";
 
 const FinancialGoalsPage = () => {
-  const { goals, addGoal, updateProgress, loading, error } = useGoals();
+  const { goals, addGoal, updateProgress, loading, error, fetchGoals } = useGoals();
   const [newGoal, setNewGoal] = useState({ title: "", target: "", deadline: "" });
   const [showForm, setShowForm] = useState(false);
 
   const handleAddGoal = () => {
-    if (newGoal.title && newGoal.target && newGoal.deadline) {
-      addGoal({
-        title: newGoal.title,
-        target: parseFloat(newGoal.target),
-        deadline: newGoal.deadline,
-        progress: 0,
+    // Validate inputs
+    if (!newGoal.title.trim()) {
+      toast({
+        title: "Missing title",
+        description: "Please enter a title for your goal",
+        variant: "destructive"
       });
-      setNewGoal({ title: "", target: "", deadline: "" });
-      setShowForm(false);
+      return;
     }
+
+    if (!newGoal.target || isNaN(parseFloat(newGoal.target)) || parseFloat(newGoal.target) <= 0) {
+      toast({
+        title: "Invalid target amount",
+        description: "Please enter a valid target amount greater than zero",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!newGoal.deadline) {
+      toast({
+        title: "Missing deadline",
+        description: "Please select a target date",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // All validations passed
+    addGoal({
+      title: newGoal.title,
+      target: parseFloat(newGoal.target),
+      deadline: newGoal.deadline,
+      progress: 0,
+    });
+    
+    // Reset form and hide it
+    setNewGoal({ title: "", target: "", deadline: "" });
+    setShowForm(false);
+    
+    // Show success message
+    toast({
+      title: "Goal created",
+      description: "Your financial goal has been added successfully",
+    });
+  };
+
+  const handleProgressUpdate = (goalId: string, newProgress: number) => {
+    updateProgress(goalId, newProgress);
+    toast({
+      title: "Progress updated",
+      description: `Goal progress updated to ${newProgress}%`,
+    });
   };
 
   if (loading) {
@@ -61,8 +107,14 @@ const FinancialGoalsPage = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-red-500 mb-4">Unable to load your goals</p>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
+        <div className="text-center mb-6">
+          <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-500 mb-4">Unable to load your goals</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {error.message || "An unknown error occurred"}
+          </p>
+        </div>
+        <Button onClick={() => fetchGoals()}>Try Again</Button>
       </div>
     );
   }
@@ -207,12 +259,12 @@ const FinancialGoalsPage = () => {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline" className="text-xs" 
-                  onClick={() => updateProgress(goal.id, Math.max(0, goal.progress - 10))}>
+                  onClick={() => handleProgressUpdate(goal.id, Math.max(0, goal.progress - 10))}>
                   Decrease Progress
                 </Button>
                 <Button variant="outline" 
                   className="text-xs text-green-500 hover:text-green-700"
-                  onClick={() => updateProgress(goal.id, Math.min(100, goal.progress + 10))}>
+                  onClick={() => handleProgressUpdate(goal.id, Math.min(100, goal.progress + 10))}>
                   <CheckCircleIcon className="h-3 w-3 mr-1" /> Update Progress
                 </Button>
               </CardFooter>
