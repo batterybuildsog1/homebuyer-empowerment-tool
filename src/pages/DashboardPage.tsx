@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,13 +66,35 @@ const DashboardPage = () => {
     );
   }
 
+  // Format the lastUpdated date if it exists and is a valid Date
+  const formattedLastUpdated = () => {
+    if (!expenses.lastUpdated) return 'Not updated yet';
+    
+    // Check if lastUpdated is a Date object or can be converted to one
+    try {
+      const date = expenses.lastUpdated instanceof Date 
+        ? expenses.lastUpdated 
+        : new Date(expenses.lastUpdated);
+        
+      // Verify it's a valid date before using toLocaleTimeString
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
+      return date.toLocaleTimeString();
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return 'Date format error';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-6 lg:p-8">
       <header className="mb-6 flex justify-between items-center">
         <h1 className="text-2xl font-semibold">Financial Dashboard</h1>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden md:inline-block">
-            {expenses.lastUpdated ? `Last updated: ${expenses.lastUpdated.toLocaleTimeString()}` : 'Not updated yet'}
+            Last updated: {formattedLastUpdated()}
           </span>
           <Button 
             size="sm" 

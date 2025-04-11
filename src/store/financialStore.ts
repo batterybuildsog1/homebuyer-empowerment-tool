@@ -194,7 +194,7 @@ const useFinancialStore = create<FinancialState>()(
             transactions,
             categorizedExpenses: categorized,
             totalExpenses: total,
-            lastUpdated: new Date(),
+            lastUpdated: new Date(), // Ensure this is always a Date object
           },
         }));
       },
@@ -222,11 +222,11 @@ const useFinancialStore = create<FinancialState>()(
     {
       name: 'financial-store',
       partialize: (state) => ({
-        // Don't persist these properties
         expenses: {
           categorizedExpenses: state.expenses.categorizedExpenses,
           totalExpenses: state.expenses.totalExpenses,
-          lastUpdated: state.expenses.lastUpdated,
+          // Convert Date to string for storage, will be parsed back to Date when hydrating
+          lastUpdated: state.expenses.lastUpdated ? state.expenses.lastUpdated.toISOString() : null,
         },
         income: state.income,
         savings: state.savings,
@@ -234,6 +234,13 @@ const useFinancialStore = create<FinancialState>()(
         goals: state.goals,
         // Don't store transactions in localStorage for privacy
       }),
+      // Add onRehydrateStorage to parse dates back to Date objects
+      onRehydrateStorage: () => (state) => {
+        // Parse lastUpdated string back to Date object if it exists
+        if (state && state.expenses && state.expenses.lastUpdated) {
+          state.expenses.lastUpdated = new Date(state.expenses.lastUpdated);
+        }
+      }
     }
   )
 );
