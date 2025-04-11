@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
+import HeroPage from "./pages/HeroPage";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DashboardPage from "./pages/DashboardPage";
@@ -45,7 +46,8 @@ const App = () => (
         <BrowserRouter>
           <AnalyticsRouteObserver />
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<HeroPage />} />
+            <Route path="/home" element={<Index />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/financial-goals" element={<FinancialGoalsPage />} />
             <Route path="/mortgage-planning" element={<MortgagePlanningPage />} />
