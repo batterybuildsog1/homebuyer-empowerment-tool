@@ -10,7 +10,7 @@ interface Goal {
   progress: number;
 }
 
-// Initial mock goals
+// Initial mock goals - more realistic data
 const mockGoals: Goal[] = [
   {
     id: '1',
@@ -87,12 +87,18 @@ export function useGoals() {
     );
   }, []);
 
+  // Delete a goal
+  const deleteGoal = useCallback((goalId: string) => {
+    setGoals(currentGoals => currentGoals.filter(goal => goal.id !== goalId));
+  }, []);
+
   return { 
     goals, 
     loading, 
     error, 
-    addGoal, 
+    addGoal,
     updateProgress,
+    deleteGoal,
     fetchGoals 
   };
 }

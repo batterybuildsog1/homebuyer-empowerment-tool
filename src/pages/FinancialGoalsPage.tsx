@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { 
   ArrowLeftIcon, 
   PlusIcon, 
@@ -18,6 +18,7 @@ import {
   AlertCircleIcon
 } from "lucide-react";
 import { useGoals } from "@/hooks/useGoals";
+import { Heading } from "@/components/ui/Heading";
 
 const FinancialGoalsPage = () => {
   const { goals, addGoal, updateProgress, loading, error, fetchGoals } = useGoals();
@@ -27,28 +28,22 @@ const FinancialGoalsPage = () => {
   const handleAddGoal = () => {
     // Validate inputs
     if (!newGoal.title.trim()) {
-      toast({
-        title: "Missing title",
-        description: "Please enter a title for your goal",
-        variant: "destructive"
+      toast("Missing title", {
+        description: "Please enter a title for your goal"
       });
       return;
     }
 
     if (!newGoal.target || isNaN(parseFloat(newGoal.target)) || parseFloat(newGoal.target) <= 0) {
-      toast({
-        title: "Invalid target amount",
-        description: "Please enter a valid target amount greater than zero",
-        variant: "destructive"
+      toast("Invalid target amount", {
+        description: "Please enter a valid target amount greater than zero"
       });
       return;
     }
 
     if (!newGoal.deadline) {
-      toast({
-        title: "Missing deadline",
-        description: "Please select a target date",
-        variant: "destructive"
+      toast("Missing deadline", {
+        description: "Please select a target date"
       });
       return;
     }
@@ -66,39 +61,43 @@ const FinancialGoalsPage = () => {
     setShowForm(false);
     
     // Show success message
-    toast({
-      title: "Goal created",
-      description: "Your financial goal has been added successfully",
+    toast("Goal created", {
+      description: "Your financial goal has been added successfully"
     });
   };
 
   const handleProgressUpdate = (goalId: string, newProgress: number) => {
     updateProgress(goalId, newProgress);
-    toast({
-      title: "Progress updated",
-      description: `Goal progress updated to ${newProgress}%`,
+    toast("Progress updated", {
+      description: `Goal progress updated to ${newProgress}%`
     });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen p-4">
-        <div className="flex items-center gap-2 mb-6">
-          <h1 className="text-2xl font-semibold">Financial Goals</h1>
-        </div>
-        <div className="grid gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-5/6 mb-2" />
-                <Skeleton className="h-4 w-4/6" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="min-h-screen bg-background p-6 lg:p-8 animate-fade-in">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-2 mb-8">
+            <Heading as="h1" size="2xl" className="text-foreground">Financial Goals</Heading>
+          </div>
+          <div className="grid gap-6">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="overflow-hidden border border-border">
+                <CardHeader className="pb-0">
+                  <Skeleton className="h-7 w-3/4" />
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-4 w-full mb-4" />
+                  <Skeleton className="h-4 w-5/6 mb-4" />
+                  <Skeleton className="h-4 w-4/6 mb-4" />
+                  <Skeleton className="h-3 w-full mt-6 rounded-full" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-28 rounded-md" />
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -106,189 +105,230 @@ const FinancialGoalsPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="text-center mb-6">
-          <AlertCircleIcon className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-500 mb-4">Unable to load your goals</p>
-          <p className="text-sm text-muted-foreground mb-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 animate-fade-in">
+        <div className="max-w-md mx-auto text-center">
+          <AlertCircleIcon className="h-16 w-16 text-destructive mx-auto mb-6" />
+          <Heading as="h1" size="xl" className="mb-3">Unable to load your goals</Heading>
+          <p className="text-muted-foreground mb-8">
             {error.message || "An unknown error occurred"}
           </p>
+          <Button onClick={() => fetchGoals()} size="lg" className="font-medium">
+            Try Again
+          </Button>
         </div>
-        <Button onClick={() => fetchGoals()}>Try Again</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
-      <header className="mb-6 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Link to="/dashboard">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="rounded-full hover:bg-accent/30 active:scale-95 transition-all duration-200"
-            >
-              <ArrowLeftIcon className="h-4 w-4" />
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-semibold">Financial Goals</h1>
-        </div>
-        
-        {!showForm && (
-          <Button 
-            onClick={() => setShowForm(true)}
-            className="hover:bg-primary/90 active:scale-95 transition-all duration-200"
-          >
-            <PlusIcon className="h-4 w-4 mr-1" /> Add Goal
-          </Button>
-        )}
-      </header>
+    <div className="min-h-screen bg-background text-foreground animate-fade-in">
+      <div className="max-w-6xl mx-auto p-6 lg:p-8">
+        <header className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Link to="/dashboard">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full hover:bg-accent/30 active:scale-95 transition-all duration-200"
+                >
+                  <ArrowLeftIcon className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Heading as="h1" size="2xl">Financial Goals</Heading>
+            </div>
+            
+            {!showForm && (
+              <Button 
+                onClick={() => setShowForm(true)}
+                className="hover:bg-finance-purple/90 active:scale-95 transition-all duration-200 flex items-center gap-2"
+              >
+                <PlusIcon className="h-4 w-4" />
+                <span>Add Goal</span>
+              </Button>
+            )}
+          </div>
+        </header>
 
-      {showForm && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TargetIcon className="h-5 w-5" />
-              New Financial Goal
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Goal Title</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., Down Payment for House"
-                  value={newGoal.title}
-                  onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="target">Target Amount ($)</Label>
-                <div className="relative">
-                  <DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+        {showForm && (
+          <Card className="mb-8 border border-border shadow-sm overflow-hidden">
+            <CardHeader className="bg-card pb-0">
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <TargetIcon className="h-5 w-5 text-finance-purple" />
+                New Financial Goal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-medium">Goal Title</Label>
                   <Input
-                    id="target"
-                    type="number"
-                    placeholder="50000"
-                    className="pl-10"
-                    value={newGoal.target}
-                    onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
+                    id="title"
+                    placeholder="e.g., Down Payment for House"
+                    value={newGoal.title}
+                    onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })}
+                    className="focus-visible:ring-finance-purple/30 focus-visible:border-finance-purple"
                   />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="target" className="text-sm font-medium">Target Amount ($)</Label>
+                  <div className="relative">
+                    <DollarSignIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="target"
+                      type="number"
+                      placeholder="50000"
+                      className="pl-10 focus-visible:ring-finance-purple/30 focus-visible:border-finance-purple"
+                      value={newGoal.target}
+                      onChange={(e) => setNewGoal({ ...newGoal, target: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
               
-              <div>
-                <Label htmlFor="deadline">Target Date</Label>
+              <div className="space-y-2">
+                <Label htmlFor="deadline" className="text-sm font-medium">Target Date</Label>
                 <div className="relative">
-                  <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="deadline"
                     type="date"
-                    className="pl-10"
+                    className="pl-10 focus-visible:ring-finance-purple/30 focus-visible:border-finance-purple"
                     value={newGoal.deadline}
                     onChange={(e) => setNewGoal({ ...newGoal, deadline: e.target.value })}
                   />
                 </div>
               </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={() => setShowForm(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddGoal}>
-              Create Goal
-            </Button>
-          </CardFooter>
-        </Card>
-      )}
-
-      <main className="grid gap-4">
-        {goals.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">You haven't set any financial goals yet.</p>
-            <Button onClick={() => setShowForm(true)}>
-              <PlusIcon className="h-4 w-4 mr-1" /> Add Your First Goal
-            </Button>
-          </div>
-        ) : (
-          goals.map((goal) => (
-            <Card key={goal.id}>
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span>{goal.title}</span>
-                  <span className="text-sm font-normal text-gray-500">
-                    Target: ${goal.target.toLocaleString()}
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>${((goal.progress / 100) * goal.target).toLocaleString()} saved</span>
-                    <span>{goal.progress}%</span>
-                  </div>
-                  <Progress value={goal.progress} className="h-2" />
-                </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Target Date</span>
-                    <span className="font-medium">
-                      {new Date(goal.deadline).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Remaining</span>
-                    <span className="font-medium">
-                      ${(goal.target * (1 - goal.progress / 100)).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Monthly Savings Need</span>
-                    <span className="font-medium">
-                      ${Math.ceil(goal.target * (1 - goal.progress / 100) / 
-                        (Math.max(1, Math.floor((new Date(goal.deadline).getTime() - new Date().getTime()) / 
-                        (1000 * 60 * 60 * 24 * 30)))))}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button variant="outline" className="text-xs" 
-                  onClick={() => handleProgressUpdate(goal.id, Math.max(0, goal.progress - 10))}>
-                  Decrease Progress
-                </Button>
-                <Button variant="outline" 
-                  className="text-xs text-green-500 hover:text-green-700"
-                  onClick={() => handleProgressUpdate(goal.id, Math.min(100, goal.progress + 10))}>
-                  <CheckCircleIcon className="h-3 w-3 mr-1" /> Update Progress
-                </Button>
-              </CardFooter>
-            </Card>
-          ))
+            </CardContent>
+            <CardFooter className="flex gap-3 justify-end border-t bg-card/50 px-6 py-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowForm(false)}
+                className="transition-all duration-200"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddGoal}
+                className="bg-finance-purple hover:bg-finance-purple/90 transition-all duration-200"
+              >
+                Create Goal
+              </Button>
+            </CardFooter>
+          </Card>
         )}
-      </main>
 
-      <footer className="mt-8 py-4 sticky bottom-0 left-0 right-0 z-10">
-        <nav className="grid grid-cols-4 gap-2 shadow-md rounded-md border-t bg-card">
-          <Link to="/dashboard">
-            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Dashboard</Button>
-          </Link>
-          <Link to="/mortgage-planning">
-            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Mortgage</Button>
-          </Link>
-          <Link to="/financial-goals">
-            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Goals</Button>
-          </Link>
-          <Link to="/">
-            <Button variant="ghost" className="w-full transition-colors duration-300 hover:bg-primary/10 active:scale-95">Home</Button>
-          </Link>
-        </nav>
-      </footer>
+        <main className="space-y-6">
+          {goals.length === 0 ? (
+            <div className="text-center py-16 bg-background-secondary/30 border border-dashed border-border rounded-lg">
+              <TargetIcon className="h-12 w-12 text-muted-foreground/60 mx-auto mb-4" />
+              <Heading as="h3" size="lg" className="mb-2">No goals yet</Heading>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Setting clear financial goals helps you track progress and stay motivated on your journey to financial success.
+              </p>
+              <Button 
+                onClick={() => setShowForm(true)}
+                className="bg-finance-purple hover:bg-finance-purple/90 transition-all duration-200"
+              >
+                <PlusIcon className="h-4 w-4 mr-2" /> Create Your First Goal
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {goals.map((goal) => (
+                <Card key={goal.id} className="overflow-hidden border border-border shadow-sm transition-all duration-200 hover:shadow-md">
+                  <CardHeader className="pb-0">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                      <CardTitle className="text-xl">{goal.title}</CardTitle>
+                      <div className="text-sm font-medium px-3 py-1 bg-finance-purple/10 text-finance-purple rounded-full">
+                        Target: ${goal.target.toLocaleString()}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="mb-6">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">${((goal.progress / 100) * goal.target).toLocaleString()} saved</span>
+                        <span className="font-medium">{goal.progress}%</span>
+                      </div>
+                      <Progress 
+                        value={goal.progress} 
+                        className="h-2.5 bg-secondary" 
+                      />
+                    </div>
+                    
+                    <div className="grid gap-3 sm:grid-cols-3 text-sm">
+                      <div className="p-3 bg-background-secondary/40 rounded-md">
+                        <div className="text-muted-foreground mb-1">Target Date</div>
+                        <div className="font-medium">
+                          {new Date(goal.deadline).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-background-secondary/40 rounded-md">
+                        <div className="text-muted-foreground mb-1">Remaining</div>
+                        <div className="font-medium">
+                          ${(goal.target * (1 - goal.progress / 100)).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-background-secondary/40 rounded-md">
+                        <div className="text-muted-foreground mb-1">Monthly Need</div>
+                        <div className="font-medium">
+                          ${Math.ceil(goal.target * (1 - goal.progress / 100) / 
+                            (Math.max(1, Math.floor((new Date(goal.deadline).getTime() - new Date().getTime()) / 
+                            (1000 * 60 * 60 * 24 * 30)))))}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="border-t bg-card/50 px-6 py-4 flex justify-between">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleProgressUpdate(goal.id, Math.max(0, goal.progress - 10))}
+                      className="text-sm transition-all duration-200"
+                    >
+                      Decrease Progress
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      className="text-finance-green hover:text-finance-green/80 transition-all duration-200"
+                      onClick={() => handleProgressUpdate(goal.id, Math.min(100, goal.progress + 10))}
+                    >
+                      <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5" /> Update Progress
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </main>
+
+        <footer className="mt-12 py-6">
+          <nav className="max-w-xl mx-auto flex items-center justify-between px-4 py-3 shadow-sm rounded-xl border border-border bg-card">
+            <Link to="/dashboard">
+              <Button variant="ghost" className="transition-colors duration-300 hover:text-finance-purple">Dashboard</Button>
+            </Link>
+            <Link to="/mortgage-planning">
+              <Button variant="ghost" className="transition-colors duration-300 hover:text-finance-purple">Mortgage</Button>
+            </Link>
+            <Link to="/financial-goals" className="relative">
+              <Button variant="ghost" className="font-medium text-finance-purple">
+                Goals
+                <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1/2 h-0.5 bg-finance-purple rounded-full"></span>
+              </Button>
+            </Link>
+            <Link to="/">
+              <Button variant="ghost" className="transition-colors duration-300 hover:text-finance-purple">Home</Button>
+            </Link>
+          </nav>
+        </footer>
+      </div>
     </div>
   );
 };
