@@ -103,7 +103,7 @@ const HeroPage = () => {
       </main>
 
       {/* Bottom Section - Simplified and more minimal */}
-      <footer className="bg-gray-50 py-6 px-6 md:px-12 border-t border-gray-100">
+      <footer className="bg-gray-50 py-4 px-6 border-t border-gray-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-wrap justify-between gap-8">
             <div className="flex items-center space-x-6">
