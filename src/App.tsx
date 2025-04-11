@@ -8,6 +8,8 @@ import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import DashboardPage from "./pages/DashboardPage";
+import FinancialGoalsPage from "./pages/FinancialGoalsPage";
 
 // Ensure analytics is loaded
 import "@/services/analytics/analyticsConfig";
@@ -43,6 +45,8 @@ const App = () => (
           <AnalyticsRouteObserver />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/financial-goals" element={<FinancialGoalsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
