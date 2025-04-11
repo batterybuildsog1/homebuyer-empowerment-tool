@@ -8,28 +8,11 @@ import LoanDetailsStep from "./steps/LoanDetailsStep";
 import ResultsStep from "./steps/ResultsStep";
 import GoalSettingStep from "./steps/GoalSettingStep";
 import { Heading } from "./ui/Heading";
-
-// Custom CSS for financial styling
-const customStyles = `
-  .text-finance-blue {
-    color: #1E40AF;
-  }
-  .text-finance-navy {
-    color: #0F172A;
-  }
-  .text-finance-green {
-    color: #059669;
-  }
-  .financial-card {
-    background-color: white;
-    border-radius: 0.5rem;
-    padding: 1.25rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  .dark .financial-card {
-    background-color: hsl(222.2, 26%, 11%);
-  }
-`;
+import { Card, CardContent } from "./ui/card";
+import { StepIndicator } from "./ui/StepIndicator";
+import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 const MortgageCalculator: React.FC = () => {
   const { currentStep, setCurrentStep, userData } = useMortgage();
@@ -41,15 +24,6 @@ const MortgageCalculator: React.FC = () => {
     if (storedApiKey) {
       setApiKey(storedApiKey);
     }
-    
-    // Add custom styles to the document
-    const styleElement = document.createElement('style');
-    styleElement.textContent = customStyles;
-    document.head.appendChild(styleElement);
-    
-    return () => {
-      document.head.removeChild(styleElement);
-    };
   }, []);
 
   // Validate step progression
@@ -63,7 +37,7 @@ const MortgageCalculator: React.FC = () => {
     } else if (currentStep === 4 && !userData.results.maxHomePrice) {
       setCurrentStep(3);
     }
-  }, [currentStep, userData]);
+  }, [currentStep, userData, setCurrentStep]);
 
   const handleApiKeySet = (key: string) => {
     setApiKey(key);
@@ -71,57 +45,87 @@ const MortgageCalculator: React.FC = () => {
 
   // Map step components with their titles
   const steps = [
-    { component: <LocationStep />, title: "Your Location" },
-    { component: <FinancialStep />, title: "Financial Information" },
+    { component: <LocationStep />, title: "Location" },
+    { component: <FinancialStep />, title: "Finances" },
     { component: <LoanDetailsStep />, title: "Loan Details" },
     { component: <ResultsStep />, title: "Results" },
     { component: <GoalSettingStep />, title: "Goal Setting" },
   ];
 
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Check if we need to show the API form
+  if (!apiKey) {
+    return (
+      <Card className="max-w-md mx-auto">
+        <CardContent className="pt-6">
+          <PerplexityApiForm onApiKeySet={handleApiKeySet} />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="container py-4 sm:py-6 md:py-8 px-4 sm:px-6 lg:px-8 space-y-4 md:space-y-6">
-      <div className="w-full max-w-full sm:max-w-3xl lg:max-w-5xl mx-auto">
-        <div className="mb-8 text-center space-y-2">
-          <Heading as="h1" size="3xl">Homebuyer Empowerment Tool</Heading>
-          <p className="text-muted-foreground text-lg">
-            Calculate how much home you can afford and create a roadmap to homeownership
-          </p>
+    <div className="space-y-8 pb-20 md:pb-0">
+      {/* Step Indicators */}
+      <div className="relative">
+        <div className="grid grid-cols-5 gap-1 md:gap-0">
+          {steps.map((step, index) => (
+            <StepIndicator 
+              key={index}
+              step={index}
+              currentStep={currentStep}
+              label={step.title}
+              totalSteps={steps.length}
+            />
+          ))}
+          <div className="absolute top-5 left-0 right-0 h-[2px] bg-border -z-10 hidden md:block"></div>
         </div>
-        
-        <div className="pb-8">
-          <div className="flex items-center justify-center mb-8 w-full">
-            <ol className="flex items-center justify-between w-full max-w-3xl mx-auto">
-              {steps.map((step, index) => (
-                <li key={index} className="flex items-center flex-1 justify-center">
-                  <div className={`flex items-center justify-center w-12 h-12 text-base font-medium rounded-full shadow-md transform transition-all duration-300 ${
-                    currentStep === index 
-                      ? "bg-primary text-primary-foreground ring-2 ring-primary/20" 
-                      : currentStep > index 
-                      ? "bg-primary/80 text-primary-foreground"
-                      : "bg-gray-100 text-muted-foreground"
-                  }`}>
-                    <span>{index + 1}</span>
-                  </div>
-                  <div 
-                    className={`hidden sm:flex items-center w-full ${
-                      index === steps.length - 1 ? 'hidden' : ''
-                    }`}
-                  >
-                    <div className={`w-full h-1 ${
-                      currentStep > index 
-                        ? "bg-primary" 
-                        : "bg-gray-200"
-                    }`}></div>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-          
-          <div className="py-4">
+      </div>
+      
+      {/* Step Content */}
+      <Card className="border shadow-sm">
+        <CardContent className="p-6 md:p-8">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
             {steps[currentStep].component}
-          </div>
-        </div>
+          </motion.div>
+        </CardContent>
+      </Card>
+      
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-4">
+        <Button 
+          variant="outline" 
+          onClick={handlePrevious}
+          disabled={currentStep === 0}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" /> Previous
+        </Button>
+        
+        <Button 
+          onClick={handleNext}
+          disabled={currentStep === steps.length - 1}
+          className="gap-2"
+        >
+          Next <ArrowRight className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useMortgage } from "@/context/MortgageContext";
-import { MapPin } from "lucide-react";
+import { MapPin, Home, ArrowRight } from "lucide-react";
 
 const LocationStep: React.FC = () => {
   const { userData, updateLocation, setCurrentStep } = useMortgage();
@@ -50,27 +50,34 @@ const LocationStep: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
-          Where are you looking to buy?
-        </CardTitle>
-        <CardDescription>
-          We'll use this information to provide accurate estimates for property taxes and insurance rates in your area.
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
+    <div className="space-y-6">
+      <div className="flex items-start space-x-4">
+        <div className="bg-finance-purple/10 p-3 rounded-full">
+          <MapPin className="h-6 w-6 text-finance-purple" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Where are you looking to buy?</h2>
+          <p className="text-muted-foreground mt-1">
+            We'll use this information to provide accurate estimates for property taxes and insurance rates in your area.
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+        <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="city">City</Label>
-            <Input
-              id="city"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              placeholder="Enter city name"
-            />
-            {errors.city && <p className="text-sm text-destructive">{errors.city}</p>}
+            <div className="relative">
+              <Home className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Enter city name"
+                className="pl-10"
+              />
+            </div>
+            {errors.city && <p className="text-sm text-destructive mt-1">{errors.city}</p>}
           </div>
           
           <div className="space-y-2">
@@ -81,26 +88,30 @@ const LocationStep: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase().slice(0, 2) })}
               placeholder="CA"
               maxLength={2}
+              className="uppercase"
             />
-            {errors.state && <p className="text-sm text-destructive">{errors.state}</p>}
+            {errors.state && <p className="text-sm text-destructive mt-1">{errors.state}</p>}
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="zipCode">ZIP Code</Label>
-            <Input
-              id="zipCode"
-              value={formData.zipCode}
-              onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-              placeholder="12345"
-            />
-            {errors.zipCode && <p className="text-sm text-destructive">{errors.zipCode}</p>}
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full">Continue</Button>
-        </CardFooter>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="zipCode">ZIP Code</Label>
+          <Input
+            id="zipCode"
+            value={formData.zipCode}
+            onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+            placeholder="12345"
+          />
+          {errors.zipCode && <p className="text-sm text-destructive mt-1">{errors.zipCode}</p>}
+        </div>
+
+        <div className="pt-4">
+          <Button type="submit" className="w-full sm:w-auto gap-2">
+            Continue <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 };
 

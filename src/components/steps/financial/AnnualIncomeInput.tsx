@@ -1,6 +1,7 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { DollarSign } from "lucide-react";
+import { DollarSign, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useState, useEffect, useRef } from "react";
 import { useDataFetching } from "@/hooks/data/useDataFetching";
@@ -96,25 +97,41 @@ const AnnualIncomeInput = ({
   };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="annualIncome">Annual Income</Label>
+    <div className="space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="bg-finance-purple/10 p-2 rounded-full flex-shrink-0">
+          <TrendingUp className="h-5 w-5 text-finance-purple" />
+        </div>
+        <div>
+          <Label htmlFor="annualIncome" className="text-base font-medium">Annual Income</Label>
+          <p className="text-sm text-muted-foreground">
+            Enter your gross annual income before taxes.
+          </p>
+        </div>
+      </div>
+      
       <div className="relative">
         <DollarSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
         <Input
           id="annualIncome"
           type="text"
-          className="pl-10"
+          className="pl-10 font-medium text-base"
           value={displayValue}
           onChange={handleInputChange}
           placeholder="75000"
         />
       </div>
+      
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <p className="text-sm text-muted-foreground">
-        Enter your gross annual income before taxes. {annualIncome > 0 && (
-          <span className="font-medium">{formatCurrency(annualIncome / 12, 0)}/month</span>
-        )}
-      </p>
+      
+      {annualIncome > 0 && (
+        <div className="bg-secondary/50 p-3 rounded-md border border-border flex justify-between items-center">
+          <span className="text-sm text-muted-foreground">Monthly Income</span>
+          <span className="text-finance-purple font-semibold">
+            {formatCurrency(annualIncome / 12, 0)}/month
+          </span>
+        </div>
+      )}
     </div>
   );
 };

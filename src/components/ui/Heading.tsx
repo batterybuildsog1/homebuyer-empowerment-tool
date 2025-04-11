@@ -19,12 +19,12 @@ export function Heading({
   ...props
 }: HeadingProps) {
   const sizeClasses = {
-    "4xl": "text-5xl md:text-6xl font-extrabold tracking-tight",
-    "3xl": "text-4xl md:text-5xl font-extrabold tracking-tight",
+    "4xl": "text-5xl md:text-6xl font-bold tracking-tight",
+    "3xl": "text-4xl md:text-5xl font-bold tracking-tight",
     "2xl": "text-3xl md:text-4xl font-bold tracking-tight",
-    xl: "text-2xl md:text-3xl font-bold tracking-tight",
+    xl: "text-2xl md:text-3xl font-semibold tracking-tight",
     lg: "text-xl md:text-2xl font-semibold tracking-tight",
-    md: "text-lg md:text-xl font-semibold tracking-tight",
+    md: "text-lg md:text-xl font-medium tracking-tight",
     sm: "text-base md:text-lg font-medium",
     xs: "text-sm md:text-base font-medium",
   };
