@@ -1,20 +1,30 @@
 
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/Heading";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, DollarSign, Home, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, DollarSign, Home, TrendingUp, Users, Menu, X } from "lucide-react";
+import { Mail } from "@/components/ui/icons";
 import { formatCurrency } from "@/utils/formatters";
 import { calculateMaxPurchasePrice } from "@/utils/mortgage/loanCalculations";
 
 const HeroPage = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [annualIncome, setAnnualIncome] = useState(100000);
   const [standardPrice, setStandardPrice] = useState(0);
   const [enhancedPrice, setEnhancedPrice] = useState(0);
   const [percentIncrease, setPercentIncrease] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check login status on mount
+  useEffect(() => {
+    const userLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    setIsLoggedIn(userLoggedIn);
+  }, []);
 
   // Calculate buying power comparison based on income
   useEffect(() => {
@@ -63,6 +73,23 @@ const HeroPage = () => {
     setAnnualIncome(parseInt(value) || 0);
   };
 
+  // Handle get started click
+  const handleGetStarted = () => {
+    if (isLoggedIn) {
+      navigate('/mortgage-planning');
+    } else {
+      navigate('/auth');
+    }
+  };
+
+  // Handle email submit
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      navigate('/auth?email=' + encodeURIComponent(email));
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#1A1F2C] text-white">
       {/* Navigation */}
@@ -71,21 +98,80 @@ const HeroPage = () => {
           <Home className="h-8 w-8 text-[#8b76e0]" />
           <span className="font-bold text-xl">Moneybucket.ai</span>
         </div>
+        
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className="hover:text-[#8b76e0] transition-colors">Home</Link>
           <Link to="/mortgage-planning" className="hover:text-[#8b76e0] transition-colors">Mortgage</Link>
           <Link to="/financial-goals" className="hover:text-[#8b76e0] transition-colors">Goals</Link>
           <Link to="/dashboard" className="hover:text-[#8b76e0] transition-colors">Dashboard</Link>
         </nav>
-        <div className="flex items-center space-x-4">
-          <Button asChild variant="outline" className="hidden md:flex">
-            <Link to="/dashboard">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/dashboard">Get Started</Link>
-          </Button>
+        
+        {/* Desktop Auth Buttons */}
+        <div className="hidden md:flex items-center space-x-4">
+          {isLoggedIn ? (
+            <>
+              <Button asChild variant="outline">
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/mortgage-planning">Mortgage Planning</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button asChild variant="outline">
+                <Link to="/auth">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/auth?tab=signup">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
+        
+        {/* Mobile Menu Button */}
+        <button 
+          className="md:hidden text-white"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </header>
+      
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-[#232738] p-4 border-b border-white/10">
+          <nav className="flex flex-col space-y-4">
+            <Link to="/" className="py-2 hover:text-[#8b76e0] transition-colors">Home</Link>
+            <Link to="/mortgage-planning" className="py-2 hover:text-[#8b76e0] transition-colors">Mortgage</Link>
+            <Link to="/financial-goals" className="py-2 hover:text-[#8b76e0] transition-colors">Goals</Link>
+            <Link to="/dashboard" className="py-2 hover:text-[#8b76e0] transition-colors">Dashboard</Link>
+            
+            <div className="pt-2 border-t border-white/10 flex flex-col space-y-2">
+              {isLoggedIn ? (
+                <>
+                  <Button asChild size="sm">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button asChild size="sm">
+                    <Link to="/mortgage-planning">Mortgage Planning</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/auth">Login</Link>
+                  </Button>
+                  <Button asChild size="sm">
+                    <Link to="/auth?tab=signup">Get Started</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
 
       {/* Hero Section */}
       <main className="flex-1 flex flex-col">
@@ -102,9 +188,9 @@ const HeroPage = () => {
               even when others say it's impossible.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+            <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 <Input 
                   type="email"
                   placeholder="Enter your email"
@@ -113,11 +199,11 @@ const HeroPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <Button size="lg" className="bg-[#8b76e0] hover:bg-[#7b66d0] flex items-center gap-2">
-                Calculate Your Buying Power
+              <Button type="submit" size="lg" className="bg-[#8b76e0] hover:bg-[#7b66d0] flex items-center gap-2">
+                Get My Buying Power
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </div>
+            </form>
             
             <div className="flex flex-wrap gap-4 md:gap-6">
               <Card className="bg-white/5 border-white/10 w-full sm:w-auto">
@@ -229,14 +315,12 @@ const HeroPage = () => {
             
             <div className="mt-10 flex justify-center">
               <Button 
-                asChild 
                 size="lg" 
                 className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white px-8 shadow-lg"
+                onClick={handleGetStarted}
               >
-                <Link to="/mortgage-planning">
-                  Get my personalized buying power
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                Get my personalized buying power
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -3,15 +3,27 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
+import AuthButton from "@/components/ui/AuthButton";
 import { 
   BarChart3, 
   Home, 
   TargetIcon, 
   ChevronRight,
-  Check
+  Check,
+  Menu,
+  X
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 const Index = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    const userLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+    setIsLoggedIn(userLoggedIn);
+  }, []);
+  
   return (
     <>
       <Helmet>
@@ -31,8 +43,8 @@ const Index = () => {
           </div>
           
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Dashboard
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Home
             </Link>
             <Link to="/mortgage-planning" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Mortgage
@@ -40,15 +52,55 @@ const Index = () => {
             <Link to="/financial-goals" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Goals
             </Link>
-            <Link to="/help" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Help
+            <Link to="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Dashboard
             </Link>
           </nav>
           
-          <Button size="sm">
-            Get Started
-          </Button>
+          <div className="flex items-center gap-4">
+            <AuthButton />
+            {!isLoggedIn && (
+              <Button size="sm" className="hidden md:flex">
+                <Link to="/auth?tab=signup">Get Started</Link>
+              </Button>
+            )}
+            
+            <button 
+              className="md:hidden" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </header>
+        
+        {/* Mobile menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden container mx-auto px-4 pb-4 pt-2">
+            <nav className="flex flex-col space-y-4 border-t pt-4">
+              <Link to="/" className="text-sm hover:text-primary transition-colors py-2">
+                Home
+              </Link>
+              <Link to="/mortgage-planning" className="text-sm hover:text-primary transition-colors py-2">
+                Mortgage
+              </Link>
+              <Link to="/financial-goals" className="text-sm hover:text-primary transition-colors py-2">
+                Goals
+              </Link>
+              <Link to="/dashboard" className="text-sm hover:text-primary transition-colors py-2">
+                Dashboard
+              </Link>
+              
+              {!isLoggedIn && (
+                <div className="pt-2">
+                  <Button asChild size="sm" className="w-full">
+                    <Link to="/auth?tab=signup">Get Started</Link>
+                  </Button>
+                </div>
+              )}
+            </nav>
+          </div>
+        )}
         
         {/* Hero Section */}
         <section className="container mx-auto px-4 py-16 md:py-24">
@@ -77,11 +129,15 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <Button size="lg" className="px-8">
-                Start Free
+              <Button size="lg" className="px-8" asChild>
+                <Link to={isLoggedIn ? "/mortgage-planning" : "/auth?tab=signup"}>
+                  {isLoggedIn ? "Go to Dashboard" : "Start Free"}
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="group">
-                Learn more <ChevronRight className="ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+              <Button size="lg" variant="outline" className="group" asChild>
+                <Link to={isLoggedIn ? "/mortgage-planning" : "/auth"}>
+                  {isLoggedIn ? "Mortgage Planning" : "Learn more"} <ChevronRight className="ml-1 group-hover:translate-x-1 transition-transform duration-300" />
+                </Link>
               </Button>
             </motion.div>
           </div>
@@ -144,7 +200,11 @@ const Index = () => {
                   <PricingItem>Mortgage calculator</PricingItem>
                   <PricingItem>3 financial goals</PricingItem>
                 </ul>
-                <Button variant="outline" size="lg" className="w-full">Get Started</Button>
+                <Button variant="outline" size="lg" className="w-full" asChild>
+                  <Link to={isLoggedIn ? "/dashboard" : "/auth?tab=signup"}>
+                    {isLoggedIn ? "Access Dashboard" : "Get Started"}
+                  </Link>
+                </Button>
               </div>
               
               {/* Pro Tier */}
@@ -161,7 +221,11 @@ const Index = () => {
                   <PricingItem>Unlimited financial goals</PricingItem>
                   <PricingItem>Custom reports</PricingItem>
                 </ul>
-                <Button size="lg" className="w-full">Upgrade Now</Button>
+                <Button size="lg" className="w-full" asChild>
+                  <Link to={isLoggedIn ? "/dashboard" : "/auth?tab=signup"}>
+                    {isLoggedIn ? "Upgrade Now" : "Start Free Trial"}
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>
