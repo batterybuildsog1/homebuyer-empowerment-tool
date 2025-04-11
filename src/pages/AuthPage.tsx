@@ -15,6 +15,7 @@ const AuthPage = () => {
   const navigate = useNavigate();
   const { isLoggedIn, login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
   
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
@@ -61,6 +62,10 @@ const AuthPage = () => {
     }, 1000);
   };
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -84,7 +89,7 @@ const AuthPage = () => {
             <p className="text-muted-foreground mt-2">Sign in to your account or create a new one</p>
           </div>
           
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -142,7 +147,7 @@ const AuthPage = () => {
                 </CardContent>
                 <CardFooter className="flex flex-col">
                   <div className="text-sm text-center text-muted-foreground mt-2">
-                    Don't have an account? <TabsTrigger value="signup" className="inline text-primary hover:underline p-0 h-auto">Sign up</TabsTrigger>
+                    Don't have an account? <Button variant="link" className="p-0 h-auto" onClick={() => handleTabChange("signup")}>Sign up</Button>
                   </div>
                 </CardFooter>
               </Card>
@@ -210,7 +215,7 @@ const AuthPage = () => {
                 </CardContent>
                 <CardFooter className="flex flex-col">
                   <div className="text-sm text-center text-muted-foreground mt-2">
-                    Already have an account? <TabsTrigger value="login" className="inline text-primary hover:underline p-0 h-auto">Log in</TabsTrigger>
+                    Already have an account? <Button variant="link" className="p-0 h-auto" onClick={() => handleTabChange("login")}>Log in</Button>
                   </div>
                 </CardFooter>
               </Card>
