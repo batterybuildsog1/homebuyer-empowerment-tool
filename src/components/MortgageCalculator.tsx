@@ -2,12 +2,12 @@
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import PerplexityApiForm from "./PerplexityApiForm";
+import PerplexityApiFormMock from "./PerplexityApiFormMock";
 import LocationStep from "./steps/LocationStep";
 import FinancialStep from "./steps/FinancialStep";
 import LoanDetailsStep from "./steps/LoanDetailsStep";
 import ResultsStep from "./steps/ResultsStep";
 import GoalSettingStep from "./steps/GoalSettingStep";
-import { Heading } from "./ui/Heading";
 import { Card, CardContent } from "./ui/card";
 import { StepIndicator } from "./ui/StepIndicator";
 import { motion } from "framer-motion";
@@ -41,6 +41,7 @@ const MortgageCalculator: React.FC = () => {
 
   const handleApiKeySet = (key: string) => {
     setApiKey(key);
+    localStorage.setItem("perplexity_api_key", key);
   };
 
   // Map step components with their titles
