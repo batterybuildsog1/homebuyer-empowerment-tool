@@ -91,9 +91,9 @@ const HeroPage = () => {
           </div>
         </div>
         
-        {/* Right Image - Modified gradient to be more transparent */}
+        {/* Right Image */}
         <div className="hidden md:block flex-1 relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1F2C]/70 to-transparent z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1A1F2C] to-transparent z-10"></div>
           <img 
             src="/lovable-uploads/568b51fd-afc4-4ca5-9554-5f21d204b036.png" 
             alt="Modern home exterior" 
