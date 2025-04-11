@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,12 +20,15 @@ const HeroPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // Check login status on mount
   useEffect(() => {
     const userLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
     setIsLoggedIn(userLoggedIn);
   }, []);
 
+  // Calculate buying power comparison based on income
   useEffect(() => {
+    // Standard lender calculation (43% DTI)
     const standardDTI = 43;
     const standardRate = 6.75; // Average market rate
     const standardMaxPrice = calculateMaxPurchasePrice(
@@ -38,6 +42,7 @@ const HeroPage = () => {
       0 // No PMI with 20% down
     );
 
+    // Moneybucket.ai enhanced calculation (52% DTI)
     const enhancedDTI = 52;
     const enhancedRate = 6.5; // Slightly better rate
     const enhancedMaxPrice = calculateMaxPurchasePrice(
@@ -51,8 +56,10 @@ const HeroPage = () => {
       0 // No PMI with 20% down
     );
 
+    // Cap at about $450,000 for the enhanced version
     const cappedEnhancedPrice = Math.min(enhancedMaxPrice, 450000);
     
+    // Calculate percentage increase
     const increase = Math.round(((cappedEnhancedPrice - standardMaxPrice) / standardMaxPrice) * 100);
 
     setStandardPrice(standardMaxPrice);
@@ -60,11 +67,13 @@ const HeroPage = () => {
     setPercentIncrease(increase);
   }, [annualIncome]);
 
+  // Handle income input changes
   const handleIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
     setAnnualIncome(parseInt(value) || 0);
   };
 
+  // Handle get started click
   const handleGetStarted = () => {
     if (isLoggedIn) {
       navigate('/mortgage-planning');
@@ -73,6 +82,7 @@ const HeroPage = () => {
     }
   };
 
+  // Handle email submit
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
@@ -82,12 +92,14 @@ const HeroPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#1A1F2C] text-white">
+      {/* Navigation */}
       <header className="w-full p-4 md:p-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Home className="h-8 w-8 text-[#8b76e0]" />
           <span className="font-bold text-xl">Moneybucket.ai</span>
         </div>
         
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-8">
           <Link to="/" className="hover:text-[#8b76e0] transition-colors">Home</Link>
           <Link to="/mortgage-planning" className="hover:text-[#8b76e0] transition-colors">Mortgage</Link>
@@ -95,6 +107,7 @@ const HeroPage = () => {
           <Link to="/dashboard" className="hover:text-[#8b76e0] transition-colors">Dashboard</Link>
         </nav>
         
+        {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center space-x-4">
           {isLoggedIn ? (
             <>
@@ -117,6 +130,7 @@ const HeroPage = () => {
           )}
         </div>
         
+        {/* Mobile Menu Button */}
         <button 
           className="md:hidden text-white"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -125,6 +139,7 @@ const HeroPage = () => {
         </button>
       </header>
       
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-[#232738] p-4 border-b border-white/10">
           <nav className="flex flex-col space-y-4">
@@ -158,8 +173,11 @@ const HeroPage = () => {
         </div>
       )}
 
+      {/* Hero Section */}
       <main className="flex-1 flex flex-col">
+        {/* Top Hero Content */}
         <div className="flex flex-col md:flex-row">
+          {/* Left Content */}
           <div className="flex-1 p-6 md:p-12 flex flex-col justify-center max-w-2xl mx-auto md:mx-0">
             <Heading as="h1" size="3xl" className="mb-4 leading-tight">
               <span className="text-[#8b76e0]">Buy the house,</span> they said you couldn't.
@@ -214,19 +232,18 @@ const HeroPage = () => {
             </div>
           </div>
           
-          <div className="hidden md:block flex-1 relative overflow-hidden">
+          {/* Right Image */}
+          <div className="hidden md:block flex-1 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-[#1A1F2C] to-transparent z-10 opacity-80"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/6abfdea9-54b9-414f-9fbd-0400ee68ec01.png" 
-                alt="Beautiful home with white picket fence at sunset" 
-                className="w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1A1F2C] via-transparent to-transparent opacity-70"></div>
-            </div>
+            <img 
+              src="/lovable-uploads/568b51fd-afc4-4ca5-9554-5f21d204b036.png" 
+              alt="Modern home exterior" 
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
 
+        {/* Buying Power Calculator Section */}
         <div className="bg-white py-16 px-6 md:px-12">
           <div className="max-w-7xl mx-auto">
             <Heading as="h2" size="2xl" className="text-center mb-10 text-[#1A1F2C]">
@@ -234,6 +251,7 @@ const HeroPage = () => {
             </Heading>
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+              {/* Income Input */}
               <div className="bg-gray-50 p-6 rounded-lg shadow-sm border border-gray-100">
                 <Heading as="h3" size="md" className="mb-4 text-[#1A1F2C]">
                   Your annual income
@@ -249,7 +267,9 @@ const HeroPage = () => {
                 </div>
               </div>
               
+              {/* Comparison Cards */}
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Standard Lender Card */}
                 <Card className="bg-gray-50 border border-gray-200 shadow-sm overflow-hidden">
                   <CardContent className="p-6">
                     <div className="font-medium text-gray-500 mb-2">Standard Lenders</div>
@@ -269,6 +289,7 @@ const HeroPage = () => {
                   </CardContent>
                 </Card>
                 
+                {/* Moneybucket.ai Enhanced Card */}
                 <Card className="bg-gradient-to-br from-[#f0edff] to-white border border-[#e5e0ff] shadow-md overflow-hidden">
                   <CardContent className="p-6">
                     <div className="font-medium text-[#6b57d0] mb-2">With Moneybucket.ai</div>
@@ -306,6 +327,7 @@ const HeroPage = () => {
         </div>
       </main>
 
+      {/* Footer Section */}
       <footer className="bg-black/30 py-8 px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
