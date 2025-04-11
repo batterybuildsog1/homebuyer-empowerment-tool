@@ -108,7 +108,7 @@ const DashboardPage = () => {
           <CollapsibleTrigger asChild>
             <Button 
               variant="ghost" 
-              className="w-full flex justify-between items-center p-4 rounded-t-lg" 
+              className="w-full flex justify-between items-center p-4 rounded-t-lg transition-colors duration-300" 
             >
               <span className="text-lg font-medium">Financial Goals</span>
               {isDetailsOpen ? 
@@ -120,7 +120,7 @@ const DashboardPage = () => {
           <CollapsibleContent className="p-4 pt-0 space-y-4">
             <div className="grid gap-4">
               {goals.goals.map((goal) => (
-                <div key={goal.id} className="border rounded-lg p-3">
+                <div key={goal.id} className="border rounded-lg p-3 transition-all duration-300 hover:shadow-md">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-medium">{goal.title}</h3>
                     <span className="font-semibold">${goal.target.toLocaleString()}</span>
@@ -128,7 +128,7 @@ const DashboardPage = () => {
                   <div className="space-y-1">
                     <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                       <div 
-                        className="bg-primary h-2.5 rounded-full" 
+                        className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-in-out" 
                         style={{ width: `${goal.progress}%` }}
                       ></div>
                     </div>
@@ -141,7 +141,7 @@ const DashboardPage = () => {
               ))}
               <div className="text-center mt-2">
                 <Link to="/financial-goals">
-                  <Button variant="outline">View All Goals</Button>
+                  <Button variant="outline" className="transition-colors duration-300 hover:bg-primary/10">View All Goals</Button>
                 </Link>
               </div>
             </div>
@@ -149,19 +149,19 @@ const DashboardPage = () => {
         </Collapsible>
       </main>
 
-      <footer className="mt-8 py-4">
-        <nav className="grid grid-cols-4 gap-2">
+      <footer className="mt-8 py-4 sticky bottom-0 left-0 right-0 z-10">
+        <nav className="grid grid-cols-4 gap-2 shadow-md rounded-md border-t bg-card">
           <Link to="/dashboard">
-            <Button variant="ghost" className="w-full">Dashboard</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300">Dashboard</Button>
           </Link>
           <Link to="/mortgage-planning">
-            <Button variant="ghost" className="w-full">Mortgage</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300">Mortgage</Button>
           </Link>
           <Link to="/financial-goals">
-            <Button variant="ghost" className="w-full">Goals</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300">Goals</Button>
           </Link>
           <Link to="/">
-            <Button variant="ghost" className="w-full">Home</Button>
+            <Button variant="ghost" className="w-full transition-colors duration-300">Home</Button>
           </Link>
         </nav>
       </footer>

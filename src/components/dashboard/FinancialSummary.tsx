@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FinancialSummaryProps {
   income: {
-    total: number;
+    totalIncome: number;
   };
   expenses: {
-    total: number;
+    totalExpenses: number;
   };
   savings: {
-    total: number;
+    totalSavings: number;
     rate: number;
     emergencyMonths: number;
   };
@@ -31,15 +31,15 @@ const FinancialSummary = ({ income, expenses, savings, debt }: FinancialSummaryP
           <div className="space-y-3">
             <div className="flex justify-between">
               <span>Income</span>
-              <span className="font-medium">${income.total.toLocaleString()}/yr</span>
+              <span className="font-medium">${income.totalIncome.toLocaleString()}/yr</span>
             </div>
             <div className="flex justify-between">
               <span>Expenses</span>
-              <span className="font-medium">${expenses.total.toLocaleString()}/yr</span>
+              <span className="font-medium">${expenses.totalExpenses.toLocaleString()}/yr</span>
             </div>
             <div className="flex justify-between">
               <span>Savings</span>
-              <span className="font-medium">${savings.total.toLocaleString()}</span>
+              <span className="font-medium">${savings.totalSavings.toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
               <span>Total Debt</span>
@@ -86,7 +86,7 @@ const FinancialSummary = ({ income, expenses, savings, debt }: FinancialSummaryP
             <div className="flex justify-between">
               <span>Down Payment</span>
               <span className="font-medium">
-                ${savings.total.toLocaleString()}
+                ${savings.totalSavings.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">

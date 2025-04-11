@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DashboardPage from "./pages/DashboardPage";
 import FinancialGoalsPage from "./pages/FinancialGoalsPage";
+import MortgagePlanningPage from "./pages/MortgagePlanningPage";
 
 // Ensure analytics is loaded
 import "@/services/analytics/analyticsConfig";
@@ -47,7 +48,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/financial-goals" element={<FinancialGoalsPage />} />
-            <Route path="/mortgage-planning" element={<MortgageCalculator />} />
+            <Route path="/mortgage-planning" element={<MortgagePlanningPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
