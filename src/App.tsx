@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, useNavigationType, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
-import { UserProvider } from "./context/UserContext";
+import { UserProvider, useUser } from "./context/UserContext";
 import HeroPage from "./pages/HeroPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -40,12 +40,23 @@ const AnalyticsRouteObserver = () => {
   return null;
 };
 
-// Protected route wrapper
+// Protected route wrapper with improved logic
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const isLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
+  const { isLoggedIn } = useUser();
   
   if (!isLoggedIn) {
     return <Navigate to="/auth" replace />;
+  }
+  
+  return children;
+};
+
+// Redirect already authenticated users from public-only routes
+const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
+  const { isLoggedIn } = useUser();
+  
+  if (isLoggedIn) {
+    return <Navigate to="/dashboard" replace />;
   }
   
   return children;
@@ -64,7 +75,13 @@ const App = () => (
               {/* Public routes */}
               <Route path="/" element={<HeroPage />} />
               <Route path="/home" element={<Index />} />
-              <Route path="/auth" element={<AuthPage />} />
+              
+              {/* Public-only routes (redirect if already logged in) */}
+              <Route path="/auth" element={
+                <PublicOnlyRoute>
+                  <AuthPage />
+                </PublicOnlyRoute>
+              } />
               
               {/* Protected routes */}
               <Route path="/onboarding" element={

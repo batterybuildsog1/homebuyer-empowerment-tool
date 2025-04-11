@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,9 +9,11 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Lock, Mail, User } from "lucide-react";
 import { Heading } from "@/components/ui/Heading";
 import { toast } from "sonner";
+import { useUser } from "@/context/UserContext";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { isLoggedIn, login } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   
   // Form states
@@ -21,6 +23,13 @@ const AuthPage = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupName, setSignupName] = useState("");
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    }
+  }, [isLoggedIn, navigate]);
+
   // Mock authentication - in a real app, this would connect to your auth backend
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +37,8 @@ const AuthPage = () => {
     
     // Simulate API call
     setTimeout(() => {
-      // Store a fake token to simulate login state
-      localStorage.setItem('userLoggedIn', 'true');
-      localStorage.setItem('userName', 'Demo User');
+      // Use the context's login function instead of directly setting localStorage
+      login(loginEmail.split('@')[0] || 'Demo User');
       
       toast.success("Successfully logged in!");
       setIsLoading(false);
@@ -44,9 +52,8 @@ const AuthPage = () => {
     
     // Simulate API call
     setTimeout(() => {
-      // Store a fake token to simulate login state
-      localStorage.setItem('userLoggedIn', 'true');
-      localStorage.setItem('userName', signupName || 'New User');
+      // Use the context's login function instead of directly setting localStorage
+      login(signupName || 'New User');
       
       toast.success("Account created successfully!");
       setIsLoading(false);

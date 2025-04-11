@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, User } from "lucide-react";
@@ -13,20 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const AuthButton = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Check login status
-    const loggedIn = localStorage.getItem('userLoggedIn') === 'true';
-    const name = localStorage.getItem('userName');
-    setIsLoggedIn(loggedIn);
-    setUserName(name);
-  }, []);
+  const { isLoggedIn, userName, logout } = useUser();
   
   const handleLogout = () => {
-    localStorage.removeItem('userLoggedIn');
-    localStorage.removeItem('userName');
+    logout();
     window.location.href = '/';
   };
   

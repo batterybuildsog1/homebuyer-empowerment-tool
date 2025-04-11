@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heading } from "@/components/ui/Heading";
-import { Check, ChevronRight, Home, CreditCard, Target, ArrowRight } from "lucide-react";
+import { Check, ChevronRight, Home, CreditCard, Target } from "lucide-react";
 import { toast } from "sonner";
 
 // Step components
@@ -162,7 +162,8 @@ const OnboardingPage = () => {
         <Card className="w-full max-w-3xl">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <steps[currentStep].icon className="h-5 w-5 text-primary" />
+              {/* Fixed syntax error - using the appropriate JSX syntax for dynamic component rendering */}
+              {React.createElement(steps[currentStep].icon, { className: "h-5 w-5 text-primary" })}
               <CardTitle>{steps[currentStep].title}</CardTitle>
             </div>
             <CardDescription>{steps[currentStep].description}</CardDescription>
