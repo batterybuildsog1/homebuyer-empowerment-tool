@@ -1,61 +1,56 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronDownIcon, ChevronUpIcon, RefreshCwIcon } from "lucide-react";
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid 
-} from "recharts";
+import { RefreshCwIcon } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useFinancialData } from "@/hooks/useFinancialData";
-
-// Color palette for charts
-const COLORS = ["#4A90E2", "#50C878", "#F5A623", "#E74C3C", "#9B59B6", "#34495E"];
+import useFinancialStore from "@/store/financialStore";
+import ExpenseChart from "@/components/dashboard/ExpenseChart";
+import FinancialSummary from "@/components/dashboard/FinancialSummary";
 
 const DashboardPage = () => {
-  const { data, loading, error, fetchData } = useFinancialData();
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const { 
+    expenses, 
+    income, 
+    savings, 
+    debt, 
+    goals, 
+    refreshData 
+  } = useFinancialStore();
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    fetchData();
-    setLastUpdated(new Date());
-  }, [fetchData]);
+    handleRefresh();
+  }, []);
 
-  const handleRefresh = () => {
-    fetchData();
-    setLastUpdated(new Date());
+  const handleRefresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await refreshData();
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to refresh data'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) {
+  if (loading && !expenses.categorizedExpenses) {
     return (
       <div className="min-h-screen p-4 md:p-6 lg:p-8">
         <h1 className="text-2xl font-semibold mb-6">Financial Dashboard</h1>
         <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="shadow-md">
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-5/6 mb-2" />
-                <Skeleton className="h-4 w-4/6" />
-              </CardContent>
-            </Card>
+            <div key={i} className="rounded-lg border shadow-md p-6">
+              <Skeleton className="h-6 w-3/4 mb-4" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-5/6 mb-2" />
+              <Skeleton className="h-4 w-4/6" />
+            </div>
           ))}
         </div>
       </div>
@@ -66,33 +61,10 @@ const DashboardPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <p className="text-red-500 mb-4">Unable to load your financial data</p>
-        <Button onClick={fetchData}>Try Again</Button>
+        <Button onClick={handleRefresh}>Try Again</Button>
       </div>
     );
   }
-
-  const { income, expenses, savings, debt, goals } = data;
-
-  // Prepare chart data for expenses by category
-  const expenseChartData = expenses.categories.map((category, index) => ({
-    name: category.name,
-    value: category.amount,
-    color: COLORS[index % COLORS.length]
-  }));
-
-  // Prepare subcategory data if a category is selected
-  const getSubcategoryData = () => {
-    if (!selectedCategory) return [];
-    
-    const category = expenses.categories.find(c => c.name === selectedCategory);
-    if (!category || !category.subcategories) return [];
-    
-    return category.subcategories.map((subcat, index) => ({
-      name: subcat.name,
-      value: subcat.amount,
-      color: COLORS[(index + 3) % COLORS.length] // Offset colors for visual distinction
-    }));
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-6 lg:p-8">
@@ -100,179 +72,34 @@ const DashboardPage = () => {
         <h1 className="text-2xl font-semibold">Financial Dashboard</h1>
         <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground hidden md:inline-block">
-            {lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : 'Not updated yet'}
+            {expenses.lastUpdated ? `Last updated: ${expenses.lastUpdated.toLocaleTimeString()}` : 'Not updated yet'}
           </span>
           <Button 
             size="sm" 
             variant="outline" 
             onClick={handleRefresh}
+            disabled={loading}
             className="flex items-center gap-1"
           >
-            <RefreshCwIcon className="h-4 w-4" />
-            <span className="hidden sm:inline-block">Refresh</span>
+            <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline-block">{loading ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
         </div>
       </header>
       
       <main className="grid gap-6 md:gap-8">
-        {/* Financial Overview Row - Always visible */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {/* Financial Snapshot */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                Financial Snapshot
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Income</span>
-                  <span className="font-medium">${income.total.toLocaleString()}/yr</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Expenses</span>
-                  <span className="font-medium">${expenses.total.toLocaleString()}/yr</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Savings</span>
-                  <span className="font-medium">${savings.total.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Total Debt</span>
-                  <span className="font-medium">${debt.total.toLocaleString()}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Financial Health */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                Financial Health
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Debt-to-Income</span>
-                  <span className={debt.dti > 40 ? "text-red-500 font-medium" : "text-green-500 font-medium"}>
-                    {debt.dti}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Savings Rate</span>
-                  <span className="font-medium">{savings.rate}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Emergency Fund</span>
-                  <span className={savings.emergencyMonths < 3 ? "text-red-500 font-medium" : "text-green-500 font-medium"}>
-                    {savings.emergencyMonths} months
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Mortgage Readiness */}
-          <Card className="shadow-md hover:shadow-lg transition-shadow duration-300 lg:col-span-1 md:col-span-2 lg:col-auto">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-xl">
-                Mortgage Readiness
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Down Payment</span>
-                  <span className="font-medium">
-                    ${savings.accounts.find(a => a.name === "Down Payment")?.balance.toLocaleString() || "0"} 
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>DTI Ratio</span>
-                  <span className={debt.dti > 36 ? "text-red-500 font-medium" : "text-green-500 font-medium"}>
-                    {debt.dti}% {debt.dti > 36 ? "(Too High)" : "(Good)"}
-                  </span>
-                </div>
-                <div className="mt-4">
-                  <Link to="/mortgage-planning">
-                    <Button variant="outline" className="w-full">
-                      Mortgage Calculator
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
+        {/* Financial Overview Cards */}
+        <FinancialSummary 
+          income={income} 
+          expenses={expenses} 
+          savings={savings} 
+          debt={debt} 
+        />
+        
         {/* Expense Breakdown Section */}
-        <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              Expense Breakdown
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Main Category Pie Chart */}
-              <div className="h-[350px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={expenseChartData}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      onClick={(data) => setSelectedCategory(data.name)}
-                      className="cursor-pointer"
-                    >
-                      {expenseChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+        <ExpenseChart categorizedExpenses={expenses.categorizedExpenses} />
 
-              {/* Subcategory Chart (shows when category is selected) */}
-              <div className={`h-[350px] w-full ${!selectedCategory ? 'hidden md:block' : ''}`}>
-                {selectedCategory ? (
-                  <>
-                    <h3 className="text-lg font-medium mb-2 text-center">{selectedCategory} Breakdown</h3>
-                    <ResponsiveContainer width="100%" height="90%">
-                      <BarChart data={getSubcategoryData()}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']} />
-                        <Bar dataKey="value" fill="#4A90E2">
-                          {getSubcategoryData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Select a category to see detailed breakdown
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Collapsible Additional Details Section */}
+        {/* Financial Goals Preview */}
         <Collapsible 
           open={isDetailsOpen} 
           onOpenChange={setIsDetailsOpen}
@@ -283,75 +110,40 @@ const DashboardPage = () => {
               variant="ghost" 
               className="w-full flex justify-between items-center p-4 rounded-t-lg" 
             >
-              <span className="text-lg font-medium">Additional Financial Details</span>
-              {isDetailsOpen ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              <span className="text-lg font-medium">Financial Goals</span>
+              {isDetailsOpen ? 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-up"><path d="m18 15-6-6-6 6"/></svg> : 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+              }
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="p-4 pt-0 space-y-4">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {/* Goals Progress */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Financial Goals</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {goals.slice(0, 2).map((goal) => (
-                    <div key={goal.id} className="mb-4">
-                      <div className="flex justify-between mb-1">
-                        <span>{goal.title}</span>
-                        <span>{goal.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                        <div 
-                          className="bg-primary h-2.5 rounded-full" 
-                          style={{ width: `${goal.progress}%` }}
-                        ></div>
-                      </div>
+            <div className="grid gap-4">
+              {goals.goals.map((goal) => (
+                <div key={goal.id} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-medium">{goal.title}</h3>
+                    <span className="font-semibold">${goal.target.toLocaleString()}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div 
+                        className="bg-primary h-2.5 rounded-full" 
+                        style={{ width: `${goal.progress}%` }}
+                      ></div>
                     </div>
-                  ))}
-                  <div className="mt-4">
-                    <Link to="/financial-goals">
-                      <Button variant="outline" className="w-full">
-                        Manage Goals
-                      </Button>
-                    </Link>
+                    <div className="flex justify-between text-sm">
+                      <span>Progress: {goal.progress}%</span>
+                      <span>Target Date: {new Date(goal.deadline).toLocaleDateString()}</span>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Debt Accounts */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Debt Accounts</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {debt.accounts.map((account, idx) => (
-                      <div key={idx} className="flex justify-between">
-                        <span>{account.name}</span>
-                        <span className="font-medium">${account.balance.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Savings Accounts */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Savings Accounts</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {savings.accounts.map((account, idx) => (
-                      <div key={idx} className="flex justify-between">
-                        <span>{account.name}</span>
-                        <span className="font-medium">${account.balance.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              ))}
+              <div className="text-center mt-2">
+                <Link to="/financial-goals">
+                  <Button variant="outline">View All Goals</Button>
+                </Link>
+              </div>
             </div>
           </CollapsibleContent>
         </Collapsible>
