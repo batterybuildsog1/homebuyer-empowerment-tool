@@ -24,26 +24,33 @@ const PrimaryResults: React.FC<PrimaryResultsProps> = ({
   }
   
   return (
-    <>
+    <div className="space-y-6">
       <FinancialOverview 
         maxHomePrice={results.maxHomePrice} 
-        monthlyPayment={results.monthlyPayment} 
+        monthlyPayment={results.monthlyPayment}
+        financialDetails={results.financialDetails}
       />
       
-      {results.financialDetails && (
-        <FinancialBreakdown 
-          financialDetails={results.financialDetails} 
-          monthlyDebts={financials.monthlyDebts}
-          maxHomePrice={results.maxHomePrice}
-          ltv={loanDetails.ltv}
-        />
-      )}
-      
-      <MortgageSummary 
-        loanDetails={loanDetails} 
-        maxHomePrice={results.maxHomePrice} 
-      />
-    </>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <MortgageSummary 
+            loanDetails={loanDetails} 
+            maxHomePrice={results.maxHomePrice} 
+          />
+        </div>
+        
+        <div>
+          {results.financialDetails && (
+            <FinancialBreakdown 
+              financialDetails={results.financialDetails} 
+              monthlyDebts={financials.monthlyDebts}
+              maxHomePrice={results.maxHomePrice}
+              ltv={loanDetails.ltv}
+            />
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -70,7 +70,7 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   }
   console.log("PMI/MIP rate:", pmiRate);
   
-  // Calculate max purchase price
+  // Calculate max purchase price - this should align with the borrowing power amount
   const maxPurchasePrice = calculateMaxPurchasePrice(
     financials.annualIncome,
     financials.monthlyDebts,

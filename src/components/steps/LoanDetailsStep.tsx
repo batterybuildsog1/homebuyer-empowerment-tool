@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 import { useLoanData } from "@/hooks/useLoanData";
@@ -12,7 +12,7 @@ import { useMortgage } from "@/context/MortgageContext";
 const LoanDetailsStep: React.FC = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const { fetchProgress, formData } = useLoanData();
-  const { userData } = useMortgage();
+  const { userData, updateLoanDetails } = useMortgage();
   
   // Function to check if we have all necessary data to proceed
   const checkDataReadiness = useCallback(() => {
@@ -33,6 +33,23 @@ const LoanDetailsStep: React.FC = () => {
     
     return ready;
   }, [formData]);
+
+  // Update interest rate in context whenever it changes
+  useEffect(() => {
+    if (isDataReady) {
+      const interestRate = formData.loanType === 'conventional' 
+        ? formData.conventionalInterestRate 
+        : formData.fhaInterestRate;
+      
+      if (interestRate !== null && interestRate !== userData.loanDetails.interestRate) {
+        updateLoanDetails({ 
+          interestRate,
+          propertyTax: formData.propertyTax,
+          propertyInsurance: formData.propertyInsurance
+        });
+      }
+    }
+  }, [formData, isDataReady, userData.loanDetails.interestRate, updateLoanDetails]);
 
   // Check if we have cached data
   const cachedDataExists = Boolean(localStorage.getItem("cached_loan_data"));

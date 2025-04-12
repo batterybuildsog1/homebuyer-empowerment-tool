@@ -3,11 +3,13 @@ import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
 import { validateMortgageData, calculateMortgageResults } from "@/utils/mortgageResultsCalculator";
+import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 
 export const useResultsCalculation = () => {
   const { userData, updateResults } = useMortgage();
   const [isCalculating, setIsCalculating] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const { trackEvent } = useAnalytics();
   
   // Memoized calculation function
   const runCalculations = useCallback(async () => {
@@ -39,6 +41,14 @@ export const useResultsCalculation = () => {
       
       console.log("Calculation completed successfully:", results);
       
+      // Track the calculation event
+      trackEvent(AnalyticsEvents.RESULTS_CALCULATED, {
+        loanType: userData.loanDetails.loanType,
+        ltv: userData.loanDetails.ltv,
+        ficoScore: userData.financials.ficoScore,
+        maxHomePrice: results.maxHomePrice
+      });
+      
       // Update results in context
       updateResults(results);
       toast.success("Mortgage calculation completed!");
@@ -49,7 +59,7 @@ export const useResultsCalculation = () => {
     } finally {
       setIsCalculating(false);
     }
-  }, [userData, updateResults]);
+  }, [userData, updateResults, trackEvent]);
   
   // Run calculations when dependent data changes
   useEffect(() => {

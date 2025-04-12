@@ -9,6 +9,7 @@ import { useResultsCalculation } from "@/hooks/useResultsCalculation";
 import ValidationError from "./results/ValidationError";
 import PrimaryResults from "./results/PrimaryResults";
 import ImprovementScenarios from "./results/ImprovementScenarios";
+import { toast } from "sonner";
 
 const ResultsStep: React.FC = () => {
   const { userData, setCurrentStep } = useMortgage();
@@ -18,9 +19,14 @@ const ResultsStep: React.FC = () => {
   const goToPreviousStep = () => {
     setCurrentStep(2); // Go back to Loan Details step
   };
+
+  const handleRecalculate = () => {
+    toast.info("Recalculating mortgage results...");
+    runCalculations();
+  };
   
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-5xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Home className="h-5 w-5" />
@@ -35,19 +41,19 @@ const ResultsStep: React.FC = () => {
           <ValidationError errorMessage={validationError} onGoBack={goToPreviousStep} />
         ) : (
           <Tabs value={currentTab} onValueChange={setCurrentTab}>
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="primary">Your Results</TabsTrigger>
               <TabsTrigger value="scenarios">Improvement Scenarios</TabsTrigger>
             </TabsList>
-            <TabsContent value="primary" className="space-y-6 pt-4">
+            <TabsContent value="primary" className="space-y-6">
               <PrimaryResults 
                 userData={userData} 
                 isCalculating={isCalculating} 
-                onRecalculate={runCalculations} 
+                onRecalculate={handleRecalculate} 
               />
             </TabsContent>
             
-            <TabsContent value="scenarios" className="pt-4">
+            <TabsContent value="scenarios">
               <div className="space-y-6">
                 <ImprovementScenarios 
                   scenarios={userData.results.scenarios} 
@@ -62,18 +68,26 @@ const ResultsStep: React.FC = () => {
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => setCurrentStep(2)}
+          onClick={goToPreviousStep}
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
         {!validationError && (
-          <Button 
-            onClick={() => setCurrentStep(4)}
-            className="flex items-center gap-1"
-          >
-            Goal Setting <ArrowRightCircle className="h-4 w-4 ml-1" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleRecalculate}
+            >
+              Recalculate
+            </Button>
+            <Button 
+              onClick={() => setCurrentStep(4)}
+              className="flex items-center gap-1"
+            >
+              Goal Setting <ArrowRightCircle className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         )}
       </CardFooter>
     </Card>
