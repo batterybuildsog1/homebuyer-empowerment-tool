@@ -2,7 +2,7 @@
 import { useUser } from "@/context/UserContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, LogIn } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,8 +52,11 @@ const AuthButton = () => {
   }
   
   return (
-    <Button asChild size="sm">
-      <Link to="/auth">Log in</Link>
+    <Button asChild size="sm" className="flex items-center gap-1">
+      <Link to="/auth">
+        <LogIn className="h-4 w-4" />
+        Log in
+      </Link>
     </Button>
   );
 };
