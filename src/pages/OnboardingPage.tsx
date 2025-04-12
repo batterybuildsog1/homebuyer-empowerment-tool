@@ -1,14 +1,16 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heading } from "@/components/ui/Heading";
-import { Check, ChevronRight, Home, CreditCard, Target } from "lucide-react";
+import { Check, ChevronRight, Home, CreditCard, Target, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 // Step components
 import FinancialStep from "@/components/steps/FinancialStep";
+import CompensatingFactorsStep from "@/components/steps/CompensatingFactorsStep";
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
@@ -26,6 +28,12 @@ const OnboardingPage = () => {
       title: "Financial Details",
       description: "Tell us about your income and expenses",
       icon: CreditCard
+    },
+    {
+      id: "factors",
+      title: "Compensating Factors",
+      description: "Factors that may improve your mortgage eligibility",
+      icon: ShieldCheck
     },
     {
       id: "goals",
@@ -98,6 +106,9 @@ const OnboardingPage = () => {
       case "finance":
         return <FinancialStep />;
       
+      case "factors":
+        return <CompensatingFactorsStep />;
+      
       case "goals":
         return (
           <div className="space-y-6">
@@ -161,7 +172,6 @@ const OnboardingPage = () => {
         <Card className="w-full max-w-3xl">
           <CardHeader>
             <div className="flex items-center gap-2">
-              {/* Fixed syntax error - using the appropriate JSX syntax for dynamic component rendering */}
               {React.createElement(steps[currentStep].icon, { className: "h-5 w-5 text-primary" })}
               <CardTitle>{steps[currentStep].title}</CardTitle>
             </div>

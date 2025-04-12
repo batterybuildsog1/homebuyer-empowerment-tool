@@ -5,6 +5,7 @@ import PerplexityApiForm from "./PerplexityApiForm";
 import PerplexityApiFormMock from "./PerplexityApiFormMock";
 import LocationStep from "./steps/LocationStep";
 import FinancialStep from "./steps/FinancialStep";
+import CompensatingFactorsStep from "./steps/CompensatingFactorsStep";
 import LoanDetailsStep from "./steps/LoanDetailsStep";
 import ResultsStep from "./steps/ResultsStep";
 import GoalSettingStep from "./steps/GoalSettingStep";
@@ -32,10 +33,12 @@ const MortgageCalculator: React.FC = () => {
       setCurrentStep(0);
     } else if (currentStep === 2 && !userData.financials.annualIncome) {
       setCurrentStep(1);
-    } else if (currentStep === 3 && (!userData.loanDetails.interestRate || !userData.loanDetails.propertyTax)) {
+    } else if (currentStep === 3 && (!userData.financials.selectedFactors || Object.keys(userData.financials.selectedFactors).length === 0)) {
       setCurrentStep(2);
-    } else if (currentStep === 4 && !userData.results.maxHomePrice) {
+    } else if (currentStep === 4 && (!userData.loanDetails.interestRate || !userData.loanDetails.propertyTax)) {
       setCurrentStep(3);
+    } else if (currentStep === 5 && !userData.results.maxHomePrice) {
+      setCurrentStep(4);
     }
   }, [currentStep, userData, setCurrentStep]);
 
@@ -48,6 +51,7 @@ const MortgageCalculator: React.FC = () => {
   const steps = [
     { component: <LocationStep />, title: "Location" },
     { component: <FinancialStep />, title: "Finances" },
+    { component: <CompensatingFactorsStep />, title: "Factors" },
     { component: <LoanDetailsStep />, title: "Loan Details" },
     { component: <ResultsStep />, title: "Results" },
     { component: <GoalSettingStep />, title: "Goal Setting" },
@@ -80,7 +84,7 @@ const MortgageCalculator: React.FC = () => {
     <div className="space-y-8 pb-20 md:pb-0">
       {/* Step Indicators */}
       <div className="relative">
-        <div className="grid grid-cols-5 gap-1 md:gap-0">
+        <div className="grid grid-cols-6 gap-1 md:gap-0">
           {steps.map((step, index) => (
             <StepIndicator 
               key={index}

@@ -17,13 +17,11 @@ export interface FinancialFormData {
     otherDebt: number;
   };
   ficoScore: number;
-  mitigatingFactors: string[];
   selectedFactors: Record<string, string>;
 }
 
 export const useFinancialForm = () => {
-  const { userData, updateFinancials, setCurrentStep, updateLoanDetails } = useMortgage();
-  const { fetchExternalData, fetchProgress } = useDataFetching();
+  const { userData, updateFinancials, setCurrentStep } = useMortgage();
   const { trackEvent } = useAnalytics();
   
   // Form state
@@ -38,14 +36,12 @@ export const useFinancialForm = () => {
       otherDebt: 0
     },
     ficoScore: userData.financials.ficoScore || 680,
-    mitigatingFactors: userData.financials.mitigatingFactors || [],
     selectedFactors: userData.financials.selectedFactors || {}
   });
   
   // Form validation and submission state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasFetchedData, setHasFetchedData] = useState(false);
 
   // Handlers for form field changes
   const handleIncomeChange = (value: number) => {
@@ -69,46 +65,6 @@ export const useFinancialForm = () => {
 
   const handleFicoScoreChange = (value: number) => {
     setFormData(prev => ({ ...prev, ficoScore: value }));
-  };
-
-  const handleMitigatingFactorChange = (id: string) => {
-    setFormData(prev => {
-      const newFactors = prev.mitigatingFactors.includes(id)
-        ? prev.mitigatingFactors.filter(factor => factor !== id)
-        : [...prev.mitigatingFactors, id];
-      
-      // Track the factor selection/deselection event
-      trackEvent(
-        newFactors.includes(id) ? AnalyticsEvents.FACTOR_SELECTED : AnalyticsEvents.FACTOR_DESELECTED,
-        { 
-          factorId: id,
-          factorValue: newFactors.includes(id) ? 'enabled' : 'disabled',
-        }
-      );
-      
-      return {
-        ...prev,
-        mitigatingFactors: newFactors
-      };
-    });
-  };
-
-  // New handler for dropdown-based factor selection
-  const handleFactorOptionChange = (id: string, value: string) => {
-    setFormData(prev => {
-      const updatedFactors = { ...prev.selectedFactors, [id]: value };
-      
-      // Track the factor option selection event
-      trackEvent(AnalyticsEvents.FACTOR_SELECTED, {
-        factorId: id,
-        optionValue: value
-      });
-      
-      return {
-        ...prev,
-        selectedFactors: updatedFactors
-      };
-    });
   };
 
   // Form validation
@@ -138,41 +94,25 @@ export const useFinancialForm = () => {
         ficoScore: formData.ficoScore,
         downPaymentPercent: 20,
         downPayment: 0,
-        mitigatingFactors: formData.mitigatingFactors,
-        selectedFactors: formData.selectedFactors,
       });
       
       setIsSubmitting(true);
       
-      if (!fetchProgress.hasAttemptedFetch && !hasFetchedData) {
-        try {
-          const fetchedData = await fetchExternalData(false);
-          if (fetchedData) {
-            updateLoanDetails(fetchedData);
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          toast.error("There was a problem fetching rate data. Continuing without it.");
-          
-          trackEvent(AnalyticsEvents.FORM_ERROR, {
-            step: 'financial',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      } else {
+      try {
+        trackEvent(AnalyticsEvents.FINANCIAL_STEP_SUBMITTED, {
+          annualIncome: formData.annualIncome,
+          monthlyDebts: formData.monthlyDebts,
+          ficoScore: formData.ficoScore,
+        });
+        
         toast.success("Financial information saved!");
+        setCurrentStep(2); // Move to compensating factors step
+      } catch (error) {
+        console.error("Error saving financial details:", error);
+        toast.error("There was a problem saving your information.");
+      } finally {
+        setIsSubmitting(false);
       }
-      
-      trackEvent(AnalyticsEvents.FINANCIAL_STEP_SUBMITTED, {
-        annualIncome: formData.annualIncome,
-        monthlyDebts: formData.monthlyDebts,
-        ficoScore: formData.ficoScore,
-        selectedFactors: formData.selectedFactors,
-        mitigatingFactorsCount: formData.mitigatingFactors.length,
-      });
-      
-      setIsSubmitting(false);
-      setCurrentStep(2);
     }
   };
 
@@ -183,8 +123,6 @@ export const useFinancialForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleMitigatingFactorChange,
-    handleFactorOptionChange,
     handleSubmit,
     validateForm
   };

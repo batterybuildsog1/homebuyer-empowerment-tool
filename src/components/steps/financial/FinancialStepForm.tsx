@@ -1,10 +1,9 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
-import MitigatingFactorsSection from "./MitigatingFactorsSection";
 import BorrowingPowerChart from "./BorrowingPowerChart";
 import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
@@ -18,7 +17,6 @@ const FinancialStepForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleFactorOptionChange,
     handleSubmit
   } = useFinancialForm();
 
@@ -41,11 +39,6 @@ const FinancialStepForm = () => {
         error={errors.ficoScore}
       />
       
-      <MitigatingFactorsSection
-        selectedFactors={formData.selectedFactors}
-        onFactorChange={handleFactorOptionChange}
-      />
-      
       <div className="mt-6">
         <BorrowingPowerChart 
           annualIncome={formData.annualIncome}
@@ -64,8 +57,8 @@ const FinancialStepForm = () => {
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Processing..." : "Continue"}
+        <Button type="submit" disabled={isSubmitting} className="flex items-center gap-1">
+          Continue <ArrowRight className="h-4 w-4" />
         </Button>
       </div>
     </form>
