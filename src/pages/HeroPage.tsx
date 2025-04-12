@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -111,19 +110,19 @@ const HeroPage = () => {
         <div className="hidden md:flex items-center space-x-4">
           {isLoggedIn ? (
             <>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="text-white border-white/20 hover:bg-white/10 hover:text-white">
                 <Link to="/dashboard">Dashboard</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white">
                 <Link to="/mortgage-planning">Mortgage Planning</Link>
               </Button>
             </>
           ) : (
             <>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="text-white border-white/20 hover:bg-white/10 hover:text-white">
                 <Link to="/auth">Login</Link>
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white">
                 <Link to="/auth?tab=signup">Get Started</Link>
               </Button>
             </>
@@ -151,19 +150,19 @@ const HeroPage = () => {
             <div className="pt-2 border-t border-white/10 flex flex-col space-y-2">
               {isLoggedIn ? (
                 <>
-                  <Button asChild size="sm">
+                  <Button asChild size="sm" variant="outline" className="text-white border-white/20 hover:bg-white/10 hover:text-white">
                     <Link to="/dashboard">Dashboard</Link>
                   </Button>
-                  <Button asChild size="sm">
+                  <Button asChild size="sm" className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white">
                     <Link to="/mortgage-planning">Mortgage Planning</Link>
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="text-white border-white/20 hover:bg-white/10 hover:text-white">
                     <Link to="/auth">Login</Link>
                   </Button>
-                  <Button asChild size="sm">
+                  <Button asChild size="sm" className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white">
                     <Link to="/auth?tab=signup">Get Started</Link>
                   </Button>
                 </>

@@ -52,10 +52,10 @@ const AuthButton = () => {
   }
   
   return (
-    <Button asChild size="sm" className="flex items-center gap-1">
+    <Button asChild size="sm" className="flex items-center gap-1 bg-primary hover:bg-primary/90">
       <Link to="/auth">
         <LogIn className="h-4 w-4" />
-        Log in
+        Login
       </Link>
     </Button>
   );
