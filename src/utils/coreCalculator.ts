@@ -22,6 +22,12 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   
   const { financials, loanDetails } = userData;
   
+  // Validate critical data
+  if (!financials.annualIncome || !loanDetails.interestRate) {
+    console.error("Missing critical data for calculation");
+    return null;
+  }
+  
   // Create safe selectedFactors with defaults to prevent errors
   // First check if we have new selectedFactors, otherwise use empty object
   const userSelectedFactors = financials.selectedFactors || {};
@@ -47,6 +53,23 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   const monthlyIncome = financials.annualIncome / 12;
   const maxMonthlyDebtPayment = monthlyIncome * (maxDTI / 100);
   const availableForMortgage = maxMonthlyDebtPayment - financials.monthlyDebts;
+  
+  if (availableForMortgage <= 0) {
+    console.error("Available for mortgage is negative or zero");
+    return {
+      maxHomePrice: 0,
+      monthlyPayment: 0,
+      scenarios: [],
+      financialDetails: {
+        maxDTI,
+        monthlyIncome,
+        maxMonthlyDebtPayment,
+        availableForMortgage: 0,
+        adjustedRate: 0
+      }
+    };
+  }
+  
   console.log("Monthly income:", monthlyIncome, "Max monthly debt:", maxMonthlyDebtPayment, "Available for mortgage:", availableForMortgage);
   
   // Calculate the adjusted interest rate based on FICO and LTV
@@ -70,14 +93,18 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   }
   console.log("PMI/MIP rate:", pmiRate);
   
+  // Ensure we have property tax and insurance values
+  const propertyTax = loanDetails.propertyTax || 1.2; // Default to 1.2% if not available
+  const propertyInsurance = loanDetails.propertyInsurance || 1200; // Default to $1200/year if not available
+  
   // Calculate max purchase price - this should align with the borrowing power amount
   const maxPurchasePrice = calculateMaxPurchasePrice(
     financials.annualIncome,
     financials.monthlyDebts,
     maxDTI,
     adjustedRate,
-    loanDetails.propertyTax,
-    loanDetails.propertyInsurance || 1200, // Default to $1200 if not available
+    propertyTax,
+    propertyInsurance,
     100 - loanDetails.ltv, // Convert LTV to down payment %
     pmiRate
   );
@@ -91,8 +118,8 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     loanAmount,
     adjustedRate,
     30, // 30-year term
-    (loanDetails.propertyTax / 100) * maxPurchasePrice, // Annual property tax
-    loanDetails.propertyInsurance || 1200, // Annual insurance
+    (propertyTax / 100) * maxPurchasePrice, // Annual property tax
+    propertyInsurance, // Annual insurance
     pmiRate // PMI/MIP rate
   );
   console.log("Calculated monthly payment:", monthlyPayment);

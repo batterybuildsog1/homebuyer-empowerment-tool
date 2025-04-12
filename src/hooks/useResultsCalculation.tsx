@@ -3,7 +3,7 @@ import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
 import { validateMortgageData, calculateMortgageResults } from "@/utils/mortgageResultsCalculator";
-import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 export const useResultsCalculation = () => {
   const { userData, updateResults } = useMortgage();
@@ -42,7 +42,7 @@ export const useResultsCalculation = () => {
       console.log("Calculation completed successfully:", results);
       
       // Track the calculation event
-      trackEvent(AnalyticsEvents.RESULTS_CALCULATED, {
+      trackEvent('results_calculated', {
         loanType: userData.loanDetails.loanType,
         ltv: userData.loanDetails.ltv,
         ficoScore: userData.financials.ficoScore,

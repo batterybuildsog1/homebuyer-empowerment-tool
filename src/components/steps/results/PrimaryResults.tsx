@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import FinancialOverview from "./FinancialOverview";
 import FinancialBreakdown from "./FinancialBreakdown";
 import MortgageSummary from "./MortgageSummary";
@@ -19,7 +19,20 @@ const PrimaryResults: React.FC<PrimaryResultsProps> = ({
 }) => {
   const { results, financials, loanDetails } = userData;
   
-  if (!results.maxHomePrice) {
+  // Force recalculation if results seem inconsistent
+  useEffect(() => {
+    // Check if we need to force a recalculation (inconsistent or missing data)
+    const needsRecalculation = !results.maxHomePrice || 
+                             !results.monthlyPayment ||
+                             !results.financialDetails;
+    
+    if (needsRecalculation && !isCalculating) {
+      console.log("Forcing recalculation due to missing or inconsistent data");
+      onRecalculate();
+    }
+  }, [results, isCalculating, onRecalculate]);
+  
+  if (isCalculating || !results.maxHomePrice || !results.financialDetails) {
     return <LoadingResults isCalculating={isCalculating} onRecalculate={onRecalculate} />;
   }
   

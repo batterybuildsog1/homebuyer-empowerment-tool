@@ -1,7 +1,7 @@
 
 import React from "react";
 import { formatCurrency } from "@/utils/formatters";
-import { DollarSign } from "lucide-react";
+import { DollarSign, Home, CreditCard } from "lucide-react";
 
 interface FinancialOverviewProps {
   maxHomePrice: number | null;
@@ -18,20 +18,38 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({
   monthlyPayment,
   financialDetails
 }) => {
+  if (!maxHomePrice || !monthlyPayment || !financialDetails) return null;
+  
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="financial-card text-center p-6 bg-card rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">Maximum Home Price</h3>
-          <p className="text-3xl font-bold text-blue-500">
+        <div className="financial-card p-6 bg-card rounded-lg shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium flex items-center">
+              <Home className="h-5 w-5 mr-2 text-blue-500" />
+              Maximum Home Price
+            </h3>
+          </div>
+          <p className="text-3xl font-bold text-blue-500 text-center">
             {formatCurrency(maxHomePrice)}
+          </p>
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Based on your income, debts, and loan factors
           </p>
         </div>
         
-        <div className="financial-card text-center p-6 bg-card rounded-lg shadow-sm">
-          <h3 className="text-lg font-medium mb-2">Monthly Payment</h3>
-          <p className="text-3xl font-bold text-blue-600">
+        <div className="financial-card p-6 bg-card rounded-lg shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium flex items-center">
+              <CreditCard className="h-5 w-5 mr-2 text-blue-600" />
+              Monthly Payment
+            </h3>
+          </div>
+          <p className="text-3xl font-bold text-blue-600 text-center">
             {formatCurrency(monthlyPayment)}
+          </p>
+          <p className="text-sm text-muted-foreground text-center mt-2">
+            Includes principal, interest, taxes, and insurance
           </p>
         </div>
       </div>
@@ -54,7 +72,7 @@ const FinancialOverview: React.FC<FinancialOverviewProps> = ({
               <span className="font-medium">{formatCurrency(financialDetails.maxMonthlyDebtPayment)}</span>
             </div>
             
-            <div className="flex justify-between items-center pt-2 border-t">
+            <div className="flex justify-between items-center pt-2 border-t bg-slate-50 dark:bg-slate-900 p-2 rounded">
               <span className="text-sm font-medium">Available for Mortgage:</span>
               <span className="font-bold text-green-600">{formatCurrency(financialDetails.availableForMortgage)}</span>
             </div>

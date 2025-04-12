@@ -1,9 +1,9 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMortgage } from "@/context/MortgageContext";
-import { Home, ArrowLeft, ArrowRightCircle } from "lucide-react";
+import { Home, ArrowLeft, ArrowRightCircle, RefreshCw } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResultsCalculation } from "@/hooks/useResultsCalculation";
 import ValidationError from "./results/ValidationError";
@@ -15,6 +15,14 @@ const ResultsStep: React.FC = () => {
   const { userData, setCurrentStep } = useMortgage();
   const [currentTab, setCurrentTab] = useState("primary");
   const { isCalculating, validationError, runCalculations } = useResultsCalculation();
+  
+  // Force an initial calculation when the component mounts
+  useEffect(() => {
+    if (!userData.results.maxHomePrice || !userData.results.monthlyPayment) {
+      console.log("Initial calculation on component mount");
+      runCalculations();
+    }
+  }, [runCalculations, userData.results]);
   
   const goToPreviousStep = () => {
     setCurrentStep(2); // Go back to Loan Details step
@@ -78,7 +86,10 @@ const ResultsStep: React.FC = () => {
             <Button
               variant="outline"
               onClick={handleRecalculate}
+              className="flex items-center gap-1"
+              disabled={isCalculating}
             >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isCalculating ? 'animate-spin' : ''}`} /> 
               Recalculate
             </Button>
             <Button 
