@@ -18,18 +18,22 @@ const CompensatingFactorsForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <MitigatingFactorsSection
-        selectedFactors={formData.selectedFactors}
-        onFactorChange={handleFactorOptionChange}
-      />
-      
-      <div className="mt-6">
-        <BorrowingPowerChart 
-          annualIncome={userData.financials.annualIncome}
-          ficoScore={userData.financials.ficoScore}
-          debtItems={userData.financials.debtItems}
-          selectedFactors={formData.selectedFactors}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <MitigatingFactorsSection
+            selectedFactors={formData.selectedFactors}
+            onFactorChange={handleFactorOptionChange}
+          />
+        </div>
+        
+        <div>
+          <BorrowingPowerChart 
+            annualIncome={userData.financials.annualIncome}
+            ficoScore={userData.financials.ficoScore}
+            debtItems={userData.financials.debtItems}
+            selectedFactors={formData.selectedFactors}
+          />
+        </div>
       </div>
 
       <div className="flex justify-between pt-4">

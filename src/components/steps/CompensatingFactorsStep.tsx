@@ -5,7 +5,7 @@ import CompensatingFactorsForm from "./compensating/CompensatingFactorsForm";
 
 const CompensatingFactorsStep: React.FC = () => {
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="h-5 w-5" />
