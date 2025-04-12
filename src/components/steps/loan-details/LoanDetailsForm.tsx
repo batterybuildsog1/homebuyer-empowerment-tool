@@ -80,7 +80,7 @@ const LoanDetailsForm: React.FC<LoanDetailsFormProps> = ({
 
     // Save the complete, validated form data to context
     updateLoanDetails(finalLoanDetails);
-    setCurrentStep(3); // Navigate to the next step (Results)
+    setCurrentStep(4); // Navigate to the next step (Results)
   };
 
   // Determine if we should show previously cached data or current form data
@@ -93,57 +93,56 @@ const LoanDetailsForm: React.FC<LoanDetailsFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="space-y-6">
-        <LoanTypeSelector 
-          loanType={formData.loanType}
-          upfrontMIP={formData.upfrontMIP}
-          ongoingMIP={formData.ongoingMIP}
-          onLoanTypeChange={handleLoanTypeChange}
-        />
-        
-        <DownPaymentSlider 
-          downPayment={formData.downPayment}
-          loanType={formData.loanType}
-          ltv={ltv}
-          onDownPaymentChange={handleDownPaymentChange}
-        />
-        
-        <DataSummary 
-          loanType={dataToDisplay.loanType}
-          conventionalInterestRate={dataToDisplay.conventionalInterestRate}
-          fhaInterestRate={dataToDisplay.fhaInterestRate}
-          propertyTax={dataToDisplay.propertyTax}
-          propertyInsurance={dataToDisplay.propertyInsurance}
-          hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
-          onFetchData={fetchExternalData}
-        />
-        
-        {!isDataReady && !fetchProgress.isLoading && (
-          <div className="text-center text-amber-500 flex items-center justify-center gap-2">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <p>Waiting for data. Please ensure you've entered your location and income.</p>
-          </div>
-        )}
-      </div>
+    <div className="space-y-6">
+      <LoanTypeSelector 
+        loanType={formData.loanType}
+        upfrontMIP={formData.upfrontMIP}
+        ongoingMIP={formData.ongoingMIP}
+        onLoanTypeChange={handleLoanTypeChange}
+      />
+      
+      <DownPaymentSlider 
+        downPayment={formData.downPayment}
+        loanType={formData.loanType}
+        ltv={ltv}
+        onDownPaymentChange={handleDownPaymentChange}
+      />
+      
+      <DataSummary 
+        loanType={dataToDisplay.loanType}
+        conventionalInterestRate={dataToDisplay.conventionalInterestRate}
+        fhaInterestRate={dataToDisplay.fhaInterestRate}
+        propertyTax={dataToDisplay.propertyTax}
+        propertyInsurance={dataToDisplay.propertyInsurance}
+        hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
+        onFetchData={fetchExternalData}
+      />
+      
+      {!isDataReady && !fetchProgress.isLoading && (
+        <div className="text-center text-amber-500 flex items-center justify-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <p>Waiting for data. Please ensure you've entered your location and income.</p>
+        </div>
+      )}
       
       <div className="flex justify-between mt-6">
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => setCurrentStep(1)}
+          onClick={() => setCurrentStep(2)}
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
         <Button 
           type="submit" 
+          onClick={handleSubmit}
           disabled={!isDataReady}
         >
           Continue
         </Button>
       </div>
-    </form>
+    </div>
   );
 };
 

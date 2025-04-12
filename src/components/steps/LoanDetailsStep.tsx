@@ -6,10 +6,13 @@ import { useLoanData } from "@/hooks/useLoanData";
 import LoanDetailsForm from "./loan-details/LoanDetailsForm";
 import LoadingIndicator from "./loan-details/LoadingIndicator";
 import DataFetchingManager from "./loan-details/DataFetchingManager";
+import BorrowingPowerChart from "./financial/BorrowingPowerChart";
+import { useMortgage } from "@/context/MortgageContext";
 
 const LoanDetailsStep: React.FC = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const { fetchProgress, formData } = useLoanData();
+  const { userData } = useMortgage();
   
   // Function to check if we have all necessary data to proceed
   const checkDataReadiness = useCallback(() => {
@@ -35,7 +38,7 @@ const LoanDetailsStep: React.FC = () => {
   const cachedDataExists = Boolean(localStorage.getItem("cached_loan_data"));
   
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -59,11 +62,23 @@ const LoanDetailsStep: React.FC = () => {
             message={fetchProgress.message} 
           />
         ) : (
-          <LoanDetailsForm 
-            isDataReady={isDataReady}
-            setIsDataReady={setIsDataReady}
-            checkDataReadiness={checkDataReadiness}
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <LoanDetailsForm 
+                isDataReady={isDataReady}
+                setIsDataReady={setIsDataReady}
+                checkDataReadiness={checkDataReadiness}
+              />
+            </div>
+            <div>
+              <BorrowingPowerChart 
+                annualIncome={userData.financials.annualIncome}
+                ficoScore={userData.financials.ficoScore}
+                debtItems={userData.financials.debtItems}
+                selectedFactors={userData.financials.selectedFactors || {}}
+              />
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

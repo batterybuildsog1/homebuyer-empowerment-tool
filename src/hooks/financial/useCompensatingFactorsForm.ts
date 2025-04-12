@@ -50,7 +50,7 @@ export const useCompensatingFactorsForm = () => {
     setIsSubmitting(true);
     
     try {
-      trackEvent(AnalyticsEvents.COMPENSATING_FACTORS_SUBMITTED, {
+      trackEvent(AnalyticsEvents.FINANCIAL_SUBMITTED, {
         selectedFactorsCount: Object.keys(formData.selectedFactors).filter(key => 
           formData.selectedFactors[key] !== 'none'
         ).length
