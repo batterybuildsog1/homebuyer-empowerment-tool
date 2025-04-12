@@ -1,13 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { DollarSign, PieChart, CreditCard, Home } from 'lucide-react';
+import { DollarSign, CircleDollarSign } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
 import { calculateMaxDTI, calculateMaxLoanAmount } from '@/utils/mortgageCalculations';
 import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { formatCurrency } from '@/utils/formatters';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { PieChart as RechartsDonut, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface BorrowingPowerChartProps {
   annualIncome: number;
@@ -97,25 +96,20 @@ const BorrowingPowerChart = ({
   const getDonutData = () => {
     if (monthlyIncome <= 0) return [];
     
+    // We'll only show available for mortgage and debts in the chart
     const availableForMortgage = {
       name: 'Available for Mortgage',
       value: remainingMonthlyPayment,
-      color: '#8b76e0' // finance.purple
+      color: '#6366f1' // finance-purple equivalent
     };
     
     const debts = {
       name: 'Current Debts',
       value: totalDebt,
-      color: '#EF4444' // finance.red
+      color: '#ef4444' // red-500
     };
     
-    const remaining = {
-      name: 'Other Expenses',
-      value: monthlyIncome - maxMonthlyPayment,
-      color: '#60A5FA' // finance.lightBlue
-    };
-    
-    return [availableForMortgage, debts, remaining];
+    return [availableForMortgage, debts];
   };
   
   const donutData = getDonutData();
@@ -125,11 +119,11 @@ const BorrowingPowerChart = ({
   const debtImpactPercentage = maxLoanAmount > 0 ? (debtImpact / maxLoanAmount) * 100 : 0;
   
   return (
-    <Card className="h-full">
-      <CardContent className="p-4 space-y-4">
+    <Card className="w-full h-full overflow-hidden border rounded-lg shadow-sm">
+      <CardContent className="p-6">
         <div className="text-center">
-          <h3 className="text-lg font-medium flex items-center justify-center gap-2">
-            <DollarSign className="h-5 w-5 text-finance-purple" />
+          <h3 className="text-lg font-medium mb-1 flex items-center justify-center gap-1.5 text-finance-purple">
+            <DollarSign className="h-5 w-5" />
             Your Borrowing Power
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -137,81 +131,76 @@ const BorrowingPowerChart = ({
           </p>
         </div>
         
-        <div className="grid grid-cols-2 gap-3 text-center pt-1">
-          <div className="space-y-1">
-            <Label className="text-xs uppercase text-muted-foreground">Maximum</Label>
-            <div className="text-finance-purple text-xl font-bold">
+        <div className="grid grid-cols-2 gap-6 mt-4">
+          <div className="text-center">
+            <div className="text-xs uppercase text-muted-foreground">MAXIMUM</div>
+            <div className="text-finance-purple text-2xl font-semibold">
               {formatCurrency(maxLoanAmount)}
             </div>
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs uppercase text-muted-foreground">Adjusted</Label>
-            <div className="text-finance-green text-xl font-bold">
+          <div className="text-center">
+            <div className="text-xs uppercase text-muted-foreground">ADJUSTED</div>
+            <div className="text-green-500 text-2xl font-semibold">
               {formatCurrency(adjustedLoanAmount)}
             </div>
           </div>
         </div>
         
         {/* Donut Chart */}
-        <div className="w-full aspect-square max-w-[200px] mx-auto relative">
-          <ChartContainer config={{
-            mortgage: { color: '#8b76e0' },
-            debts: { color: '#EF4444' },
-            other: { color: '#60A5FA' },
-          }} className="h-full">
-            <PieChart width={200} height={200}>
-              <ChartTooltip content={<ChartTooltipContent />} />
+        <div className="relative mt-4 mx-auto" style={{ height: '180px', width: '180px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
               <Pie
                 data={donutData}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={2}
+                innerRadius={45}
+                outerRadius={75}
+                startAngle={90}
+                endAngle={-270}
+                paddingAngle={5}
                 dataKey="value"
-                nameKey="name"
-                labelLine={false}
               >
                 {donutData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
             </PieChart>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="text-lg font-bold">{formatCurrency(remainingMonthlyPayment)}</div>
-              <div className="text-xs text-muted-foreground">/mo</div>
-            </div>
-          </ChartContainer>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <div className="text-lg font-bold">{formatCurrency(remainingMonthlyPayment, 0)}</div>
+            <div className="text-xs text-muted-foreground">/mo</div>
+          </div>
         </div>
         
         {/* Monthly Breakdown */}
-        <div className="space-y-2 pt-1">
-          <div className="flex justify-between items-center text-sm">
+        <div className="space-y-2.5 mt-6">
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-finance-purple"></div>
-              <span>Monthly Income</span>
+              <div className="w-3 h-3 rounded-full bg-[#6366f1]"></div>
+              <span className="text-sm">Monthly Income</span>
             </div>
-            <span className="font-medium">{formatCurrency(monthlyIncome, 0)}</span>
+            <span className="font-medium text-sm">{formatCurrency(monthlyIncome, 0)}</span>
           </div>
           
-          <div className="flex justify-between items-center text-sm">
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-finance-red"></div>
-              <span>Monthly Debts</span>
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <span className="text-sm">Monthly Debts</span>
             </div>
-            <span className="font-medium">-{formatCurrency(totalDebt, 0)}</span>
+            <span className="font-medium text-sm">-{formatCurrency(totalDebt, 0)}</span>
           </div>
           
-          <div className="flex justify-between items-center text-sm font-medium">
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-finance-green"></div>
-              <span>Available for Mortgage</span>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span className="text-sm">Available for Mortgage</span>
             </div>
-            <span>{formatCurrency(remainingMonthlyPayment, 0)}</span>
+            <span className="font-medium text-sm">{formatCurrency(remainingMonthlyPayment, 0)}</span>
           </div>
         </div>
         
-        <div className="pt-1 text-xs text-center text-muted-foreground">
+        <div className="mt-4 pt-2 border-t text-xs text-center text-muted-foreground">
           Your debts reduce borrowing power by {formatCurrency(debtImpact, 0)} ({debtImpactPercentage.toFixed(0)}%)
         </div>
       </CardContent>
