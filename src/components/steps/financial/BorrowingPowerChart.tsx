@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, PieChart, CreditCard, Home } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
 import { calculateMaxDTI, calculateMaxLoanAmount } from '@/utils/mortgageCalculations';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import DebtImpactList, { createDebtImpactList } from './debt/DebtImpactList';
-import LoanAmountSummary from './summary/LoanAmountSummary';
-import DebtIncomeBar from './summary/DebtIncomeBar';
+import { formatCurrency } from '@/utils/formatters';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart as RechartsDonut, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface BorrowingPowerChartProps {
   annualIncome: number;
@@ -31,10 +31,10 @@ const BorrowingPowerChart = ({
   const { userData } = useMortgage();
   const [maxLoanAmount, setMaxLoanAmount] = useState<number>(0);
   const [adjustedLoanAmount, setAdjustedLoanAmount] = useState<number>(0);
-  const [debtImpacts, setDebtImpacts] = useState<Array<{ name: string; amount: number; icon: JSX.Element }>>([]);
   const [monthlyIncome, setMonthlyIncome] = useState<number>(0);
   const [maxMonthlyPayment, setMaxMonthlyPayment] = useState<number>(0);
   const [remainingMonthlyPayment, setRemainingMonthlyPayment] = useState<number>(0);
+  const [totalDebt, setTotalDebt] = useState<number>(0);
   const [maxDTI, setMaxDTI] = useState<number>(0);
 
   // Default values if not yet fetched
@@ -73,21 +73,18 @@ const BorrowingPowerChart = ({
     
     setMaxLoanAmount(maxLoan);
     
-    // Process debt items into impact components
-    const impacts = createDebtImpactList(debtItems);
-    setDebtImpacts(impacts);
-    
     // Calculate total debt
-    const totalDebt = Object.values(debtItems).reduce((sum, amount) => sum + amount, 0);
+    const totalMonthlyDebt = Object.values(debtItems).reduce((sum, amount) => sum + amount, 0);
+    setTotalDebt(totalMonthlyDebt);
     
     // Calculate remaining payment after debts
-    const remaining = maxPayment - totalDebt;
-    setRemainingMonthlyPayment(remaining);
+    const remaining = maxPayment - totalMonthlyDebt;
+    setRemainingMonthlyPayment(remaining > 0 ? remaining : 0);
     
     // Calculate adjusted loan amount with debts
     const adjustedLoan = calculateMaxLoanAmount(
       annualIncome,
-      totalDebt,
+      totalMonthlyDebt,
       calculatedMaxDTI,
       defaultInterestRate,
       defaultLoanType
@@ -96,44 +93,128 @@ const BorrowingPowerChart = ({
     setAdjustedLoanAmount(adjustedLoan);
   }, [annualIncome, ficoScore, debtItems, selectedFactors, defaultLoanType]);
   
+  // Prepare data for donut chart
+  const getDonutData = () => {
+    if (monthlyIncome <= 0) return [];
+    
+    const availableForMortgage = {
+      name: 'Available for Mortgage',
+      value: remainingMonthlyPayment,
+      color: '#8b76e0' // finance.purple
+    };
+    
+    const debts = {
+      name: 'Current Debts',
+      value: totalDebt,
+      color: '#EF4444' // finance.red
+    };
+    
+    const remaining = {
+      name: 'Other Expenses',
+      value: monthlyIncome - maxMonthlyPayment,
+      color: '#60A5FA' // finance.lightBlue
+    };
+    
+    return [availableForMortgage, debts, remaining];
+  };
+  
+  const donutData = getDonutData();
+  
+  // Calculate the impact of debts on borrowing power
+  const debtImpact = maxLoanAmount - adjustedLoanAmount;
+  const debtImpactPercentage = maxLoanAmount > 0 ? (debtImpact / maxLoanAmount) * 100 : 0;
+  
   return (
-    <Card className="p-4 space-y-4">
-      <div className="text-center">
-        <h3 className="text-lg font-medium flex items-center justify-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          Your Borrowing Power
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          See how your income and debts affect your maximum loan amount
-        </p>
-      </div>
-      
-      <div className="space-y-4 pt-2">
-        <LoanAmountSummary 
-          maxLoanAmount={maxLoanAmount} 
-          adjustedLoanAmount={adjustedLoanAmount} 
-        />
-        
-        <DebtIncomeBar 
-          monthlyIncome={monthlyIncome}
-          maxMonthlyPayment={maxMonthlyPayment}
-          remainingMonthlyPayment={remainingMonthlyPayment}
-        />
-        
-        <div className="space-y-2">
-          <Label className="text-sm">Impact of Debts on Borrowing Power</Label>
-          <DebtImpactList 
-            debtImpacts={debtImpacts}
-            maxLoanAmount={maxLoanAmount}
-            annualIncome={annualIncome}
-            ficoScore={ficoScore}
-            defaultInterestRate={defaultInterestRate}
-            defaultLoanType={defaultLoanType}
-            selectedFactors={selectedFactors}
-            defaultLTV={defaultLTV}
-          />
+    <Card className="h-full">
+      <CardContent className="p-4 space-y-4">
+        <div className="text-center">
+          <h3 className="text-lg font-medium flex items-center justify-center gap-2">
+            <DollarSign className="h-5 w-5 text-finance-purple" />
+            Your Borrowing Power
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            See how your income and debts affect your maximum loan amount
+          </p>
         </div>
-      </div>
+        
+        <div className="grid grid-cols-2 gap-3 text-center pt-1">
+          <div className="space-y-1">
+            <Label className="text-xs uppercase text-muted-foreground">Maximum</Label>
+            <div className="text-finance-purple text-xl font-bold">
+              {formatCurrency(maxLoanAmount)}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs uppercase text-muted-foreground">Adjusted</Label>
+            <div className="text-finance-green text-xl font-bold">
+              {formatCurrency(adjustedLoanAmount)}
+            </div>
+          </div>
+        </div>
+        
+        {/* Donut Chart */}
+        <div className="w-full aspect-square max-w-[200px] mx-auto relative">
+          <ChartContainer config={{
+            mortgage: { color: '#8b76e0' },
+            debts: { color: '#EF4444' },
+            other: { color: '#60A5FA' },
+          }} className="h-full">
+            <PieChart width={200} height={200}>
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Pie
+                data={donutData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={2}
+                dataKey="value"
+                nameKey="name"
+                labelLine={false}
+              >
+                {donutData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="text-lg font-bold">{formatCurrency(remainingMonthlyPayment)}</div>
+              <div className="text-xs text-muted-foreground">/mo</div>
+            </div>
+          </ChartContainer>
+        </div>
+        
+        {/* Monthly Breakdown */}
+        <div className="space-y-2 pt-1">
+          <div className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-finance-purple"></div>
+              <span>Monthly Income</span>
+            </div>
+            <span className="font-medium">{formatCurrency(monthlyIncome, 0)}</span>
+          </div>
+          
+          <div className="flex justify-between items-center text-sm">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-finance-red"></div>
+              <span>Monthly Debts</span>
+            </div>
+            <span className="font-medium">-{formatCurrency(totalDebt, 0)}</span>
+          </div>
+          
+          <div className="flex justify-between items-center text-sm font-medium">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-finance-green"></div>
+              <span>Available for Mortgage</span>
+            </div>
+            <span>{formatCurrency(remainingMonthlyPayment, 0)}</span>
+          </div>
+        </div>
+        
+        <div className="pt-1 text-xs text-center text-muted-foreground">
+          Your debts reduce borrowing power by {formatCurrency(debtImpact, 0)} ({debtImpactPercentage.toFixed(0)}%)
+        </div>
+      </CardContent>
     </Card>
   );
 };
