@@ -22,30 +22,34 @@ const FinancialStepForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <AnnualIncomeInput 
-        annualIncome={formData.annualIncome} 
-        onIncomeChange={handleIncomeChange}
-        error={errors.annualIncome}
-      />
-      
-      <DebtItemsSection 
-        debtItems={formData.debtItems}
-        onDebtItemChange={handleDebtItemChange}
-      />
-      
-      <FicoScoreSlider
-        ficoScore={formData.ficoScore}
-        onScoreChange={handleFicoScoreChange}
-        error={errors.ficoScore}
-      />
-      
-      <div className="mt-6">
-        <BorrowingPowerChart 
-          annualIncome={formData.annualIncome}
-          ficoScore={formData.ficoScore}
-          debtItems={formData.debtItems}
-          selectedFactors={formData.selectedFactors}
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          <AnnualIncomeInput 
+            annualIncome={formData.annualIncome} 
+            onIncomeChange={handleIncomeChange}
+            error={errors.annualIncome}
+          />
+          
+          <DebtItemsSection 
+            debtItems={formData.debtItems}
+            onDebtItemChange={handleDebtItemChange}
+          />
+          
+          <FicoScoreSlider
+            ficoScore={formData.ficoScore}
+            onScoreChange={handleFicoScoreChange}
+            error={errors.ficoScore}
+          />
+        </div>
+        
+        <div>
+          <BorrowingPowerChart 
+            annualIncome={formData.annualIncome}
+            ficoScore={formData.ficoScore}
+            debtItems={formData.debtItems}
+            selectedFactors={formData.selectedFactors}
+          />
+        </div>
       </div>
 
       <div className="flex justify-between pt-4">

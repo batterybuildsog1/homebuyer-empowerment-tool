@@ -5,7 +5,7 @@ import FinancialStepForm from "./financial/FinancialStepForm";
 
 const FinancialStep: React.FC = () => {
   return (
-    <Card className="w-full max-w-lg mx-auto">
+    <Card className="w-full mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />

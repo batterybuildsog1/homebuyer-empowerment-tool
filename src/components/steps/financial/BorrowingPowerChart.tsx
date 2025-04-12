@@ -97,7 +97,7 @@ const BorrowingPowerChart = ({
   }, [annualIncome, ficoScore, debtItems, selectedFactors, defaultLoanType]);
   
   return (
-    <Card className="p-4 space-y-4">
+    <Card className="p-4 space-y-4 h-full">
       <div className="text-center">
         <h3 className="text-lg font-medium flex items-center justify-center gap-2">
           <DollarSign className="h-5 w-5" />
