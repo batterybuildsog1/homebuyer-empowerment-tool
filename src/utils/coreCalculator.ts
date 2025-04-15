@@ -37,8 +37,10 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     return acc;
   }, {} as Record<string, string>);
   
-  // Calculate non-housing DTI for enhanced DTI calculation
+  // Calculate monthly income once and reuse it throughout the function
   const monthlyIncome = financials.annualIncome / 12;
+  
+  // Calculate non-housing DTI for enhanced DTI calculation
   const nonHousingDTI = financials.monthlyDebts > 0 && monthlyIncome > 0 
     ? (financials.monthlyDebts / monthlyIncome) * 100 
     : 0;
@@ -60,8 +62,7 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   );
   console.log("Calculated maxDTI:", maxDTI);
   
-  // Calculate monthly income and available debt service
-  const monthlyIncome = financials.annualIncome / 12;
+  // Calculate available debt service using the already defined monthlyIncome variable
   const maxMonthlyDebtPayment = monthlyIncome * (maxDTI / 100);
   const availableForMortgage = maxMonthlyDebtPayment - financials.monthlyDebts;
   
