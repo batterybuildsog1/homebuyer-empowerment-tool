@@ -1,3 +1,4 @@
+
 /**
  * Mortgage calculation utilities
  * This file re-exports mortgage calculation functions from more focused modules
@@ -16,7 +17,8 @@ export {
 // Re-export from compensating factor service
 export {
   prepareDTICalculationData,
-  createEnhancedFactors
+  createEnhancedFactors,
+  countStrongFactors
 } from './mortgage/compensatingFactorService';
 
 // Re-export from loan calculations

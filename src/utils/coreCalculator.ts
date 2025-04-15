@@ -11,6 +11,10 @@ import {
 } from "./mortgage/loanCalculations";
 import { calculateAdjustedRate } from "./mortgage/rateAdjustments";
 import { calculateAlternativeScenarios } from "./scenarioCalculator";
+import { 
+  createEnhancedFactors,
+  countStrongFactors 
+} from "./mortgage/compensatingFactorService";
 
 /**
  * Calculates mortgage results based on user data
@@ -51,6 +55,10 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     nonHousingDTI: nonHousingDTI < 5 ? "<5%" : nonHousingDTI <= 10 ? "5-10%" : ">10%"
   };
   
+  // Calculate the strong factor count for the enhanced factors
+  const strongFactorCount = countStrongFactors(enhancedFactors);
+  console.log("Strong factor count:", strongFactorCount);
+  
   // Calculate the max DTI based on FICO score, LTV, and compensating factors
   const maxDTI = calculateMaxDTI(
     financials.ficoScore,
@@ -77,7 +85,8 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
         monthlyIncome,
         maxMonthlyDebtPayment,
         availableForMortgage: 0,
-        adjustedRate: 0
+        adjustedRate: 0,
+        strongFactorCount  // Include the strong factor count
       }
     };
   }
@@ -142,7 +151,8 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     monthlyIncome,
     maxMonthlyDebtPayment,
     availableForMortgage,
-    adjustedRate
+    adjustedRate,
+    strongFactorCount  // Include the strong factor count
   };
   
   // Generate alternative scenarios

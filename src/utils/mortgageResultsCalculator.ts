@@ -19,6 +19,7 @@ export interface MortgageResults {
     maxMonthlyDebtPayment: number;
     availableForMortgage: number;
     adjustedRate: number;
+    strongFactorCount?: number; // Added this property
   };
 }
 
