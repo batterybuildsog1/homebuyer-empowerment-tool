@@ -1,12 +1,13 @@
-
 import { useState } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 import { toast } from "sonner";
+import { getCreditHistoryOption, getNonHousingDTIOption } from "@/utils/mortgageCalculations";
 
 // Define types for the form data
 export interface CompensatingFactorsFormData {
   selectedFactors: Record<string, string>;
+  currentHousingPayment: number;
 }
 
 export const useCompensatingFactorsForm = () => {
@@ -15,7 +16,8 @@ export const useCompensatingFactorsForm = () => {
   
   // Form state
   const [formData, setFormData] = useState<CompensatingFactorsFormData>({
-    selectedFactors: userData.financials.selectedFactors || {}
+    selectedFactors: userData.financials.selectedFactors || {},
+    currentHousingPayment: userData.financials.currentHousingPayment || 0
   });
   
   // Form submission state
@@ -38,21 +40,52 @@ export const useCompensatingFactorsForm = () => {
       };
     });
   };
+  
+  // Handler for current housing payment change
+  const handleCurrentHousingPaymentChange = (value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      currentHousingPayment: value
+    }));
+  };
 
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Calculate credit history based on FICO score
+    const ficoScore = userData.financials.ficoScore;
+    const creditHistoryOption = getCreditHistoryOption(ficoScore);
+    
+    // Calculate non-housing DTI based on debts and income
+    const monthlyDebts = userData.financials.monthlyDebts;
+    const monthlyIncome = userData.financials.annualIncome / 12;
+    const nonHousingDTIOption = getNonHousingDTIOption(monthlyDebts, monthlyIncome);
+    
+    // Combine all factors
+    const updatedFactors = {
+      ...formData.selectedFactors,
+      creditHistory: creditHistoryOption,
+      nonHousingDTI: nonHousingDTIOption
+    };
+    
+    // Update financials in context
     updateFinancials({
-      selectedFactors: formData.selectedFactors,
+      selectedFactors: updatedFactors,
+      currentHousingPayment: formData.currentHousingPayment
     });
     
     setIsSubmitting(true);
     
     try {
       trackEvent(AnalyticsEvents.FINANCIAL_STEP_SUBMITTED, {
-        selectedFactorsCount: Object.keys(formData.selectedFactors).filter(key => 
-          formData.selectedFactors[key] !== 'none'
+        selectedFactorsCount: Object.keys(updatedFactors).filter(key => 
+          updatedFactors[key] !== 'none' &&
+          updatedFactors[key] !== 'does not meet' &&
+          updatedFactors[key] !== '>20%' &&
+          updatedFactors[key] !== '<2 years' &&
+          updatedFactors[key] !== '>30%' &&
+          updatedFactors[key] !== '<5%'
         ).length
       });
       
@@ -70,6 +103,7 @@ export const useCompensatingFactorsForm = () => {
     formData,
     isSubmitting,
     handleFactorOptionChange,
+    handleCurrentHousingPaymentChange,
     handleSubmit,
     userData
   };

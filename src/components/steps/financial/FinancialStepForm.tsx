@@ -1,10 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
 import BorrowingPowerChart from "./BorrowingPowerChart";
+import CompensatingFactorsSection from "./CompensatingFactorsSection";
 import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
@@ -17,8 +17,13 @@ const FinancialStepForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
+    handleCompensatingFactorChange,
+    handleCurrentHousingPaymentChange,
     handleSubmit
   } = useFinancialForm();
+
+  // Calculate monthly income for DTI calculations
+  const monthlyIncome = formData.annualIncome > 0 ? formData.annualIncome / 12 : 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -33,6 +38,7 @@ const FinancialStepForm = () => {
           <DebtItemsSection 
             debtItems={formData.debtItems}
             onDebtItemChange={handleDebtItemChange}
+            monthlyIncome={monthlyIncome} // Pass monthly income for DTI calculation
           />
           
           <FicoScoreSlider
@@ -42,7 +48,14 @@ const FinancialStepForm = () => {
           />
         </div>
         
-        <div>
+        <div className="space-y-6">
+          <CompensatingFactorsSection 
+            selectedFactors={formData.selectedFactors}
+            onFactorChange={handleCompensatingFactorChange}
+            currentHousingPayment={formData.currentHousingPayment}
+            onCurrentHousingPaymentChange={handleCurrentHousingPaymentChange}
+          />
+          
           <BorrowingPowerChart 
             annualIncome={formData.annualIncome}
             ficoScore={formData.ficoScore}

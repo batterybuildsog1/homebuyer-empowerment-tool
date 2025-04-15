@@ -17,6 +17,7 @@ export interface UserData {
     downPaymentPercent: number;
     mitigatingFactors: string[]; // Legacy field for backward compatibility
     selectedFactors: Record<string, string>; // New field for detailed compensating factors
+    currentHousingPayment: number; // Current housing payment for payment shock calculation
     debtItems: {
       carLoan: number;
       studentLoan: number;

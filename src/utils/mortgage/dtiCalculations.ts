@@ -1,4 +1,3 @@
-
 // DTI limits based on FICO score and loan type
 const DTI_LIMITS = {
   conventional: {
@@ -19,42 +18,49 @@ const DTI_LIMITS = {
   }
 };
 
-// Detailed compensating factors mapping with DTI adjustment weights
+// Enhanced compensating factors mapping with DTI adjustment weights
 export const compensatingFactors: Record<string, Record<string, number>> = {
   cashReserves: {
-    "none": 0,                  // No adjustment
-    "3-6 months": 2,           // Moderate cushion: +2% DTI
-    "6+ months": 4,            // Strong cushion: +4% DTI
+    "none": 0,
+    "1-2 months": 1,
+    "3-5 months": 3,
+    "6+ months": 5,
   },
   residualIncome: {
-    "none": 0,                  // No adjustment
-    "20-30%": 2,               // Decent buffer: +2% DTI
-    "30%+": 4,                 // Significant buffer: +4% DTI
+    "does not meet": 0,
+    "meets VA guidelines": 4,
   },
   creditHistory: {
-    "none": 0,                  // Default for FICO < 720 (no adjustment)
-    "720-759": 2,              // Good credit: +2% DTI
-    "760+": 3,                 // Elite credit: +3% DTI
+    "<640": 0,
+    "640-679": 1,
+    "680-719": 2,
+    "720-759": 3,
+    "760+": 4,
   },
   housingPaymentIncrease: {
-    "none": 0,                  // No adjustment
-    "<10%": 3,                 // Minimal increase: +3% DTI
-    "10-20%": 2,               // Moderate increase: +2% DTI
+    ">20%": 0,
+    "10-20%": 1,
+    "<10%": 2,
   },
   employmentHistory: {
-    "none": 0,                  // No adjustment
-    "3-5 years": 1,            // Stable: +1% DTI
-    "5+ years": 2,             // Very stable: +2% DTI
+    "<2 years": 0,
+    "2-5 years": 1,
+    ">5 years": 2,
   },
   creditUtilization: {
-    "none": 0,                  // No adjustment
-    "<30%": 1,                 // Low utilization: +1% DTI
-    "<10%": 2,                 // Very low utilization: +2% DTI
+    ">30%": 0,
+    "10-30%": 1,
+    "<10%": 2,
   },
   downPayment: {
-    "none": 0,                  // No adjustment
-    "10-15%": 1,               // Moderate down payment: +1% DTI
-    "15%+": 2,                 // Large down payment: +2% DTI
+    "<5%": 0,
+    "5-10%": 1,
+    ">10%": 2,
+  },
+  nonHousingDTI: {
+    ">10%": 0,
+    "5-10%": 2,
+    "<5%": 4,
   },
 };
 
@@ -66,8 +72,20 @@ export const compensatingFactors: Record<string, Record<string, number>> = {
 export const getCreditHistoryOption = (ficoScore: number): string => {
   if (ficoScore >= 760) return "760+";
   if (ficoScore >= 720) return "720-759";
-  return "none";
+  if (ficoScore >= 680) return "680-719";
+  if (ficoScore >= 640) return "640-679";
+  return "<640";
 };
+
+// Import and re-export functions from compensatingFactorService
+import {
+  getNonHousingDTIOption,
+  isStrongFactor,
+  countStrongFactors,
+  prepareDTICalculationData,
+} from './compensatingFactorService';
+
+export { getNonHousingDTIOption, isStrongFactor, countStrongFactors };
 
 /**
  * Calculates the maximum allowable DTI based on loan type and compensating factors
@@ -75,31 +93,30 @@ export const getCreditHistoryOption = (ficoScore: number): string => {
  * @param ltv Loan-to-value ratio
  * @param loanType Type of loan (e.g., 'fha', 'conventional')
  * @param selectedFactors User's selected compensating factors
+ * @param monthlyDebts User's monthly debt payments (optional)
+ * @param monthlyIncome User's monthly income (optional)
  * @returns Adjusted maximum DTI percentage
  */
 export const calculateMaxDTI = (
   ficoScore: number,
   ltv: number,
   loanType: 'conventional' | 'fha',
-  selectedFactors: Record<string, string> | string[] = {}
+  selectedFactors: Record<string, string> | string[] = {},
+  monthlyDebts: number = 0,
+  monthlyIncome: number = 0
 ): number => {
-  let baseDTI = loanType === 'fha' ? 43 : 36; // Base DTI: 43% for FHA, 36% for conventional
-
-  // Check for legacy mitigatingFactors array (for backward compatibility)
-  // If selectedFactors is actually an array of strings, we're using the old format
+  // Handle legacy array format for backward compatibility
   if (Array.isArray(selectedFactors)) {
     // Legacy handling for backward compatibility
     const dtiLimits = DTI_LIMITS[loanType];
     let maxDTI = dtiLimits.default;
 
-    // Check for strong mitigating factors (old logic)
     if (loanType === 'conventional') {
       if (ficoScore >= 720) maxDTI = dtiLimits.strongFactors.highFICO;
       if ((selectedFactors as string[]).includes('reserves')) {
         maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
       }
       if (ltv <= 75) {
-        // For conventional loans, we need to cast to access the lowLTV property
         const conventionalFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.conventional.strongFactors;
         maxDTI = Math.max(maxDTI, conventionalFactors.lowLTV);
       }
@@ -109,7 +126,6 @@ export const calculateMaxDTI = (
         maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
       }
       if ((selectedFactors as string[]).length >= 2) {
-        // For FHA loans, we need to cast to access the compensatingFactors property
         const fhaFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.fha.strongFactors;
         maxDTI = Math.max(maxDTI, fhaFactors.compensatingFactors);
       }
@@ -118,31 +134,53 @@ export const calculateMaxDTI = (
     return maxDTI;
   }
 
-  // New logic using detailed compensating factors
-  if (loanType === 'fha') {
-    let dtiIncrease = 0;
-
-    // Automatically set creditHistory based on FICO score
-    const creditHistoryOption = getCreditHistoryOption(ficoScore);
-    const factorsToEvaluate = { ...selectedFactors, creditHistory: creditHistoryOption };
-
-    // Calculate total DTI increase from selected factors
-    for (const [factor, option] of Object.entries(factorsToEvaluate)) {
-      if (compensatingFactors[factor] && compensatingFactors[factor][option] !== undefined) {
-        dtiIncrease += compensatingFactors[factor][option];
-      } else {
-        console.warn(`Invalid option "${option}" for factor "${factor}"`);
-      }
-    }
-
-    // Return DTI, capped at 57%
-    return Math.min(baseDTI + dtiIncrease, 57);
+  // For conventional loans, use the existing method
+  if (loanType === 'conventional') {
+    return calculateConventionalDTI(ficoScore, ltv, selectedFactors as Record<string, string>);
   }
+  
+  // Use the centralized service for FHA loans
+  const { enhancedFactors, dtiCap } = prepareDTICalculationData(
+    ficoScore,
+    ltv,
+    loanType,
+    selectedFactors as Record<string, string>,
+    monthlyDebts,
+    monthlyIncome
+  );
+  
+  // Base DTI for FHA
+  const baseDTI = 43;
+  
+  // Calculate total DTI increase from all factors
+  let dtiIncrease = 0;
+  for (const [factor, option] of Object.entries(enhancedFactors)) {
+    if (compensatingFactors[factor] && compensatingFactors[factor][option] !== undefined) {
+      dtiIncrease += compensatingFactors[factor][option];
+    }
+  }
+  
+  // Return DTI, capped appropriately based on strong factors
+  return Math.min(baseDTI + dtiIncrease, dtiCap);
+};
 
-  // For conventional loans, apply the new compensating factors logic
+/**
+ * Calculate maximum DTI for conventional loans
+ * @param ficoScore User's FICO score
+ * @param ltv Loan-to-value ratio 
+ * @param selectedFactors User's selected compensating factors
+ * @returns Maximum DTI percentage for conventional loans
+ */
+const calculateConventionalDTI = (
+  ficoScore: number,
+  ltv: number,
+  selectedFactors: Record<string, string> = {}
+): number => {
+  // Start with base DTI
+  let baseDTI = 36;
   let dtiIncrease = 0;
   
-  // Automatically set creditHistory based on FICO score
+  // Use the standardized credit history determination
   const creditHistoryOption = getCreditHistoryOption(ficoScore);
   const factorsToEvaluate = { ...selectedFactors, creditHistory: creditHistoryOption };
   

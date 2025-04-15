@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import MitigatingFactorsSection from "../financial/MitigatingFactorsSection";
+import CompensatingFactorsSection from "../financial/CompensatingFactorsSection";
 import BorrowingPowerChart from "../financial/BorrowingPowerChart";
 import { useCompensatingFactorsForm } from "@/hooks/financial/useCompensatingFactorsForm";
 import { useMortgage } from "@/context/MortgageContext";
@@ -12,6 +11,7 @@ const CompensatingFactorsForm = () => {
     formData,
     isSubmitting,
     handleFactorOptionChange,
+    handleCurrentHousingPaymentChange,
     handleSubmit,
     userData
   } = useCompensatingFactorsForm();
@@ -20,9 +20,11 @@ const CompensatingFactorsForm = () => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <MitigatingFactorsSection
+          <CompensatingFactorsSection
             selectedFactors={formData.selectedFactors}
             onFactorChange={handleFactorOptionChange}
+            currentHousingPayment={formData.currentHousingPayment}
+            onCurrentHousingPaymentChange={handleCurrentHousingPaymentChange}
           />
         </div>
         

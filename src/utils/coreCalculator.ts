@@ -29,7 +29,6 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   }
   
   // Create safe selectedFactors with defaults to prevent errors
-  // First check if we have new selectedFactors, otherwise use empty object
   const userSelectedFactors = financials.selectedFactors || {};
   
   // Create a safe version with defaults for any missing factors
@@ -38,14 +37,26 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     return acc;
   }, {} as Record<string, string>);
   
-  // Calculate the max DTI based on FICO score, LTV, and selected factors
-  // Support both new selectedFactors and legacy mitigatingFactors
+  // Calculate non-housing DTI for enhanced DTI calculation
+  const monthlyIncome = financials.annualIncome / 12;
+  const nonHousingDTI = financials.monthlyDebts > 0 && monthlyIncome > 0 
+    ? (financials.monthlyDebts / monthlyIncome) * 100 
+    : 0;
+  
+  // Add calculated values to factors
+  const enhancedFactors = {
+    ...safeSelectedFactors,
+    nonHousingDTI: nonHousingDTI < 5 ? "<5%" : nonHousingDTI <= 10 ? "5-10%" : ">10%"
+  };
+  
+  // Calculate the max DTI based on FICO score, LTV, and compensating factors
   const maxDTI = calculateMaxDTI(
     financials.ficoScore,
     loanDetails.ltv,
     loanDetails.loanType,
-    // If we have new-style selectedFactors, use those, otherwise use legacy mitigatingFactors
-    Object.keys(userSelectedFactors).length > 0 ? safeSelectedFactors : financials.mitigatingFactors
+    enhancedFactors,
+    financials.monthlyDebts,
+    monthlyIncome
   );
   console.log("Calculated maxDTI:", maxDTI);
   

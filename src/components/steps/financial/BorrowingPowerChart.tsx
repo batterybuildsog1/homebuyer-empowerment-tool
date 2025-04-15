@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { DollarSign } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
-import { calculateMaxDTI, calculateMaxLoanAmount } from '@/utils/mortgageCalculations';
+import { calculateMaxDTI, calculateMaxLoanAmount, countStrongFactors, getNonHousingDTIOption } from '@/utils/mortgageCalculations';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import DebtImpactList, { createDebtImpactList } from './debt/DebtImpactList';
@@ -26,7 +25,7 @@ const BorrowingPowerChart = ({
   annualIncome, 
   ficoScore, 
   debtItems, 
-  selectedFactors 
+  selectedFactors
 }: BorrowingPowerChartProps) => {
   const { userData } = useMortgage();
   const [maxLoanAmount, setMaxLoanAmount] = useState<number>(0);
@@ -36,6 +35,7 @@ const BorrowingPowerChart = ({
   const [maxMonthlyPayment, setMaxMonthlyPayment] = useState<number>(0);
   const [remainingMonthlyPayment, setRemainingMonthlyPayment] = useState<number>(0);
   const [maxDTI, setMaxDTI] = useState<number>(0);
+  const [strongFactorCount, setStrongFactorCount] = useState<number>(0);
 
   // Default values if not yet fetched
   const defaultInterestRate = 7.5;
@@ -45,21 +45,36 @@ const BorrowingPowerChart = ({
   useEffect(() => {
     if (annualIncome <= 0) return;
 
+    // Calculate monthly income and total debt
+    const monthly = annualIncome / 12;
+    const totalDebt = Object.values(debtItems).reduce((sum, amount) => sum + (Number(amount) || 0), 0);
+    
+    setMonthlyIncome(monthly);
+    
+    // Prepare factors for DTI calculation with nonHousingDTI
+    const factorsWithNonHousingDTI = {
+      ...selectedFactors,
+      nonHousingDTI: getNonHousingDTIOption(totalDebt, monthly)
+    };
+
     // Calculate the maximum DTI based on FICO score and compensating factors
     const calculatedMaxDTI = calculateMaxDTI(
       ficoScore,
       defaultLTV,
       defaultLoanType,
-      selectedFactors
+      factorsWithNonHousingDTI,
+      totalDebt,
+      monthly
     );
     
     setMaxDTI(calculatedMaxDTI);
-
-    // Monthly income and max monthly payment based on DTI
-    const monthly = annualIncome / 12;
-    const maxPayment = monthly * (calculatedMaxDTI / 100);
     
-    setMonthlyIncome(monthly);
+    // Calculate and set strong factor count
+    const strongCount = countStrongFactors(factorsWithNonHousingDTI);
+    setStrongFactorCount(strongCount);
+
+    // Calculate max monthly payment based on DTI
+    const maxPayment = monthly * (calculatedMaxDTI / 100);
     setMaxMonthlyPayment(maxPayment);
 
     // Calculate maximum loan amount with no debts
@@ -77,12 +92,9 @@ const BorrowingPowerChart = ({
     const impacts = createDebtImpactList(debtItems);
     setDebtImpacts(impacts);
     
-    // Calculate total debt
-    const totalDebt = Object.values(debtItems).reduce((sum, amount) => sum + amount, 0);
-    
     // Calculate remaining payment after debts
     const remaining = maxPayment - totalDebt;
-    setRemainingMonthlyPayment(remaining);
+    setRemainingMonthlyPayment(remaining > 0 ? remaining : 0);
     
     // Calculate adjusted loan amount with debts
     const adjustedLoan = calculateMaxLoanAmount(
@@ -93,7 +105,7 @@ const BorrowingPowerChart = ({
       defaultLoanType
     );
     
-    setAdjustedLoanAmount(adjustedLoan);
+    setAdjustedLoanAmount(adjustedLoan > 0 ? adjustedLoan : 0);
   }, [annualIncome, ficoScore, debtItems, selectedFactors, defaultLoanType]);
   
   return (
@@ -118,6 +130,8 @@ const BorrowingPowerChart = ({
           monthlyIncome={monthlyIncome}
           maxMonthlyPayment={maxMonthlyPayment}
           remainingMonthlyPayment={remainingMonthlyPayment}
+          maxDTI={maxDTI}
+          strongFactorCount={strongFactorCount}
         />
         
         <div className="space-y-2">

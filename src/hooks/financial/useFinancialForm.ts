@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { useDataFetching } from "@/hooks/data/useDataFetching";
 import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 import { toast } from "sonner";
+import { getCreditHistoryOption, getNonHousingDTIOption } from "@/utils/mortgageCalculations";
 
 // Define types for the form data
 export interface FinancialFormData {
@@ -18,6 +18,7 @@ export interface FinancialFormData {
   };
   ficoScore: number;
   selectedFactors: Record<string, string>;
+  currentHousingPayment: number;
 }
 
 export const useFinancialForm = () => {
@@ -36,7 +37,15 @@ export const useFinancialForm = () => {
       otherDebt: 0
     },
     ficoScore: userData.financials.ficoScore || 680,
-    selectedFactors: userData.financials.selectedFactors || {}
+    selectedFactors: userData.financials.selectedFactors || {
+      cashReserves: "none",
+      residualIncome: "does not meet",
+      housingPaymentIncrease: ">20%",
+      employmentHistory: "<2 years",
+      creditUtilization: ">30%",
+      downPayment: "<5%"
+    },
+    currentHousingPayment: userData.financials.currentHousingPayment || 0
   });
   
   // Form validation and submission state
@@ -55,16 +64,36 @@ export const useFinancialForm = () => {
         [id]: value
       };
       
+      const totalMonthlyDebts = Object.values(updatedDebtItems).reduce((sum, val) => sum + (Number(val) || 0), 0);
+      
       return {
         ...prev,
         debtItems: updatedDebtItems,
-        monthlyDebts: Object.values(updatedDebtItems).reduce((sum, val) => sum + (Number(val) || 0), 0)
+        monthlyDebts: totalMonthlyDebts
       };
     });
   };
 
   const handleFicoScoreChange = (value: number) => {
     setFormData(prev => ({ ...prev, ficoScore: value }));
+  };
+  
+  // Handlers for compensating factors
+  const handleCompensatingFactorChange = (factor: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedFactors: {
+        ...prev.selectedFactors,
+        [factor]: value
+      }
+    }));
+  };
+
+  const handleCurrentHousingPaymentChange = (value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      currentHousingPayment: value
+    }));
   };
 
   // Form validation
@@ -87,11 +116,29 @@ export const useFinancialForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Calculate credit history based on FICO score
+      const ficoScore = formData.ficoScore;
+      const creditHistoryOption = getCreditHistoryOption(ficoScore);
+      
+      // Calculate non-housing DTI based on debts and income
+      const monthlyDebts = formData.monthlyDebts;
+      const monthlyIncome = formData.annualIncome / 12;
+      const nonHousingDTIOption = getNonHousingDTIOption(monthlyDebts, monthlyIncome);
+      
+      // Combine all factors
+      const updatedFactors = {
+        ...formData.selectedFactors,
+        creditHistory: creditHistoryOption,
+        nonHousingDTI: nonHousingDTIOption
+      };
+      
       updateFinancials({
         annualIncome: formData.annualIncome,
         monthlyDebts: formData.monthlyDebts,
         debtItems: formData.debtItems,
         ficoScore: formData.ficoScore,
+        selectedFactors: updatedFactors,
+        currentHousingPayment: formData.currentHousingPayment,
         downPaymentPercent: 20,
         downPayment: 0,
       });
@@ -123,6 +170,8 @@ export const useFinancialForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
+    handleCompensatingFactorChange,
+    handleCurrentHousingPaymentChange,
     handleSubmit,
     validateForm
   };

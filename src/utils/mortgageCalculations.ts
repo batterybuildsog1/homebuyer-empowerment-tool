@@ -1,4 +1,3 @@
-
 /**
  * Mortgage calculation utilities
  * This file re-exports mortgage calculation functions from more focused modules
@@ -8,8 +7,17 @@
 export { 
   calculateMaxDTI,
   compensatingFactors,
-  getCreditHistoryOption 
+  getCreditHistoryOption,
+  getNonHousingDTIOption, 
+  isStrongFactor,
+  countStrongFactors
 } from './mortgage/dtiCalculations';
+
+// Re-export from compensating factor service
+export {
+  prepareDTICalculationData,
+  createEnhancedFactors
+} from './mortgage/compensatingFactorService';
 
 // Re-export from loan calculations
 export { 

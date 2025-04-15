@@ -1,4 +1,3 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
@@ -29,8 +28,18 @@ export const useResultsCalculation = () => {
       
       setValidationError(null);
       
-      // Calculate mortgage results
-      const results = calculateMortgageResults(userData);
+      // Ensure we have selectedFactors data before calculation
+      const enrichedUserData = {
+        ...userData,
+        financials: {
+          ...userData.financials,
+          // Make sure selectedFactors exists, use empty object as fallback
+          selectedFactors: userData.financials.selectedFactors || {}
+        }
+      };
+      
+      // Calculate mortgage results with the enhanced data
+      const results = calculateMortgageResults(enrichedUserData);
       
       if (!results) {
         toast.error("Calculation failed. Please check your inputs.");
@@ -46,7 +55,9 @@ export const useResultsCalculation = () => {
         loanType: userData.loanDetails.loanType,
         ltv: userData.loanDetails.ltv,
         ficoScore: userData.financials.ficoScore,
-        maxHomePrice: results.maxHomePrice
+        maxHomePrice: results.maxHomePrice,
+        // Track compensating factors data for analytics
+        hasStrongFactors: results.financialDetails?.strongFactorCount >= 2 || false
       });
       
       // Update results in context
@@ -76,6 +87,8 @@ export const useResultsCalculation = () => {
     userData.financials.annualIncome,
     userData.financials.monthlyDebts,
     userData.financials.ficoScore,
+    userData.financials.selectedFactors,
+    userData.financials.currentHousingPayment,
     userData.loanDetails.ltv,
     userData.loanDetails.loanType,
     userData.loanDetails.interestRate,

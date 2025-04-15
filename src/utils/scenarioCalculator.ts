@@ -33,10 +33,17 @@ export function calculateAlternativeScenarios(
     return acc;
   }, {} as Record<string, string>);
   
-  // Determine which factors to use (new or legacy)
-  const factorsToUse = Object.keys(userSelectedFactors).length > 0 
-    ? safeSelectedFactors 
-    : financials.mitigatingFactors;
+  // Prepare enhanced factors with calculated DTI
+  const monthlyIncome = financials.annualIncome / 12;
+  const nonHousingDTI = financials.monthlyDebts > 0 && monthlyIncome > 0 
+    ? (financials.monthlyDebts / monthlyIncome) * 100 
+    : 0;
+  
+  // Add calculated values to factors
+  const enhancedFactors = {
+    ...safeSelectedFactors,
+    nonHousingDTI: nonHousingDTI < 5 ? "<5%" : nonHousingDTI <= 10 ? "5-10%" : ">10%"
+  };
   
   // Scenario 1: Switch loan type
   const alternativeLoanType = loanDetails.loanType === 'conventional' ? 'fha' : 'conventional';
@@ -46,7 +53,9 @@ export function calculateAlternativeScenarios(
     financials.ficoScore,
     loanDetails.ltv,
     alternativeLoanType,
-    factorsToUse
+    enhancedFactors,
+    financials.monthlyDebts,
+    monthlyIncome
   );
   
   const altRate = calculateAdjustedRate(

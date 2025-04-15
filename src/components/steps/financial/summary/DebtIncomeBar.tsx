@@ -1,5 +1,4 @@
-
-import { DollarSign, TrendingDown } from 'lucide-react';
+import { DollarSign, TrendingDown, CheckCircle, AlertCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/utils/formatters';
 
@@ -7,15 +6,23 @@ interface DebtIncomeBarProps {
   monthlyIncome: number;
   maxMonthlyPayment: number;
   remainingMonthlyPayment: number;
+  maxDTI?: number; // New prop for showing calculated max DTI
+  strongFactorCount?: number; // New prop for showing strong factor count
 }
 
 const DebtIncomeBar = ({
   monthlyIncome,
   maxMonthlyPayment,
-  remainingMonthlyPayment
+  remainingMonthlyPayment,
+  maxDTI = 0,
+  strongFactorCount = 0
 }: DebtIncomeBarProps) => {
   const percentageRemaining = maxMonthlyPayment > 0 
     ? (remainingMonthlyPayment / maxMonthlyPayment) * 100 
+    : 0;
+    
+  const dtiRatio = monthlyIncome > 0 
+    ? (maxMonthlyPayment / monthlyIncome) * 100 
     : 0;
 
   return (
@@ -35,6 +42,28 @@ const DebtIncomeBar = ({
           Available for Mortgage: {formatCurrency(remainingMonthlyPayment)}
         </span>
       </div>
+      
+      {/* New DTI information section */}
+      {maxDTI > 0 && (
+        <div className="flex justify-between text-sm mt-2 pt-2 border-t">
+          <span className="flex items-center gap-1">
+            Max DTI: <span className="font-medium">{maxDTI.toFixed(1)}%</span>
+          </span>
+          <span className="flex items-center gap-1">
+            {strongFactorCount >= 2 ? (
+              <>
+                <CheckCircle className="h-4 w-4 text-finance-green" />
+                <span className="text-finance-green">Strong Profile ({strongFactorCount})</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <span>Need more strong factors</span>
+              </>
+            )}
+          </span>
+        </div>
+      )}
     </div>
   );
 };
