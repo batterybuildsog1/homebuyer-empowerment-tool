@@ -32,7 +32,7 @@ export interface FinancialDetails {
   availableForMortgage: number;
   adjustedRate: number;
   strongFactorCount?: number;
-  // DTI specific properties
+  // New DTI specific properties
   frontEndDTI?: number;
   backEndDTI?: number;
   frontEndDTIStatus?: DTIStatus;

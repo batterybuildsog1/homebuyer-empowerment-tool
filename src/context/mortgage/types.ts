@@ -1,4 +1,3 @@
-
 /**
  * Types for the mortgage calculator context
  */
@@ -55,6 +54,20 @@ export interface UserData {
       availableForMortgage: number;
       adjustedRate: number;
       strongFactorCount?: number;
+      frontEndDTI?: number;
+      backEndDTI?: number;
+      frontEndDTIStatus?: {
+        value: number;
+        status: 'normal' | 'caution' | 'warning' | 'exceeded';
+        message: string;
+        helpText: string;
+      };
+      backEndDTIStatus?: {
+        value: number;
+        status: 'normal' | 'caution' | 'warning' | 'exceeded';
+        message: string;
+        helpText: string;
+      };
     };
   };
   goals: {
