@@ -8,13 +8,13 @@ export const DTI_LIMITS = {
   CONVENTIONAL: {
     FRONT_END: {
       DEFAULT: 36,
-      WARNING: 36, // No explicit front-end limit in DU
+      WARNING: 45, // Higher front-end warning for conventional
       HARD_CAP: null // No hard cap in DU
     },
     BACK_END: {
       DEFAULT: 45,
-      WARNING: 45,
-      HARD_CAP: 50 // Maximum allowed in DU
+      WARNING: 50,
+      HARD_CAP: 55 // Maximum allowed in DU with compensating factors
     }
   },
   FHA: {

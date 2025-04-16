@@ -3,6 +3,7 @@ import React from "react";
 import { Calculator } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { UserData } from "@/context/MortgageContext";
+import DTIWarningTooltip from "@/components/ui/DTIWarningTooltip";
 
 interface FinancialBreakdownProps {
   financialDetails: NonNullable<UserData['results']['financialDetails']>;
@@ -26,8 +27,23 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       
       <div className="space-y-2 text-sm">
         <div className="flex justify-between py-1 border-b">
-          <span>Maximum DTI Used:</span>
-          <span className="font-medium">{financialDetails.maxDTI}%</span>
+          <span>Housing Expense Ratio:</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{financialDetails.frontEndDTI?.toFixed(1) || "N/A"}%</span>
+            {financialDetails.frontEndDTIStatus && (
+              <DTIWarningTooltip dtiStatus={financialDetails.frontEndDTIStatus} />
+            )}
+          </div>
+        </div>
+        
+        <div className="flex justify-between py-1 border-b">
+          <span>Total Debt Ratio (DTI):</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{financialDetails.backEndDTI?.toFixed(1) || financialDetails.maxDTI.toFixed(1)}%</span>
+            {financialDetails.backEndDTIStatus && (
+              <DTIWarningTooltip dtiStatus={financialDetails.backEndDTIStatus} />
+            )}
+          </div>
         </div>
         
         <div className="flex justify-between py-1 border-b">

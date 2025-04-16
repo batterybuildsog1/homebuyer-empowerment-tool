@@ -2,6 +2,7 @@
 import { UserData } from "@/context/MortgageContext";
 import { validateMortgageData } from "./validationUtils";
 import { calculateMortgageResults as calculateResults } from "./coreCalculator";
+import { DTIStatus } from "./mortgage/dtiCalculations";
 
 export interface MortgageResults {
   maxHomePrice: number | null;
@@ -19,7 +20,11 @@ export interface MortgageResults {
     maxMonthlyDebtPayment: number;
     availableForMortgage: number;
     adjustedRate: number;
-    strongFactorCount?: number; // Added this property
+    strongFactorCount?: number;
+    frontEndDTI?: number;
+    backEndDTI?: number;
+    frontEndDTIStatus?: DTIStatus;
+    backEndDTIStatus?: DTIStatus;
   };
 }
 

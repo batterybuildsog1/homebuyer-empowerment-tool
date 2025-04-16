@@ -53,7 +53,7 @@ export const compensatingFactors: Record<string, Record<string, number>> = {
   },
 };
 
-// New standardized interface for DTI results
+// Standardized interface for DTI limits
 export interface DTILimits {
   frontEnd: {
     default: number;
@@ -67,6 +67,14 @@ export interface DTILimits {
     warning: number;
     hardCap: number | null;
   };
+}
+
+// Simple DTI status interface for easy consumption in UI components
+export interface DTIStatus {
+  value: number;
+  status: 'normal' | 'caution' | 'warning' | 'exceeded';
+  message: string;
+  helpText: string;
 }
 
 /**
@@ -101,6 +109,95 @@ export function calculateDTILimits(
   };
   
   return result;
+}
+
+/**
+ * Evaluates the front-end DTI status
+ * @param dtiValue Current front-end DTI value
+ * @param loanType Loan type (conventional or FHA)
+ * @param hasStrongFactors Whether the borrower has strong compensating factors
+ * @returns Status object with appropriate message and severity
+ */
+export function evaluateFrontEndDTI(
+  dtiValue: number,
+  loanType: 'conventional' | 'fha',
+  hasStrongFactors: boolean = false
+): DTIStatus {
+  const limits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS].FRONT_END;
+  const defaultLimit = limits.DEFAULT;
+  const warningThreshold = limits.WARNING;
+  
+  // No hard cap on front-end DTI, but provide warnings at appropriate levels
+  if (dtiValue <= defaultLimit) {
+    return {
+      value: dtiValue,
+      status: 'normal',
+      message: 'Housing expense ratio is within standard guidelines',
+      helpText: `Your housing expenses are ${dtiValue.toFixed(1)}% of your monthly income, which is within the standard ${defaultLimit}% guideline for ${loanType.toUpperCase()} loans.`
+    };
+  } else if (dtiValue <= warningThreshold) {
+    return {
+      value: dtiValue,
+      status: 'caution',
+      message: `Housing ratio of ${dtiValue.toFixed(1)}% exceeds standard ${defaultLimit}%`,
+      helpText: `While higher than the standard ${defaultLimit}% guideline, housing ratios up to ${warningThreshold}% are often acceptable with strong compensating factors like good credit or cash reserves.`
+    };
+  } else {
+    return {
+      value: dtiValue,
+      status: 'warning',
+      message: `Housing ratio of ${dtiValue.toFixed(1)}% exceeds ${warningThreshold}%`,
+      helpText: `Housing ratios above ${warningThreshold}% may be difficult to qualify for. ${hasStrongFactors ? 'Your strong compensating factors may help, but' : 'Consider'} reducing your target home price or increasing your down payment.`
+    };
+  }
+}
+
+/**
+ * Evaluates the back-end DTI status
+ * @param dtiValue Current back-end DTI value
+ * @param loanType Loan type (conventional or FHA)
+ * @param hasStrongFactors Whether the borrower has strong compensating factors
+ * @returns Status object with appropriate message and severity
+ */
+export function evaluateBackEndDTI(
+  dtiValue: number,
+  loanType: 'conventional' | 'fha',
+  hasStrongFactors: boolean = false
+): DTIStatus {
+  const limits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS].BACK_END;
+  const defaultLimit = limits.DEFAULT;
+  const warningThreshold = limits.WARNING;
+  const hardCap = limits.HARD_CAP || 59; // Default to 59% if not specified
+  
+  if (dtiValue <= defaultLimit) {
+    return {
+      value: dtiValue,
+      status: 'normal',
+      message: 'Total debt ratio is within standard guidelines',
+      helpText: `Your total debt obligations are ${dtiValue.toFixed(1)}% of your monthly income, which is within the standard ${defaultLimit}% guideline for ${loanType.toUpperCase()} loans.`
+    };
+  } else if (dtiValue <= warningThreshold) {
+    return {
+      value: dtiValue,
+      status: 'caution',
+      message: `Debt ratio of ${dtiValue.toFixed(1)}% exceeds standard ${defaultLimit}%`,
+      helpText: `While higher than the standard ${defaultLimit}% guideline, debt ratios up to ${warningThreshold}% may be acceptable ${hasStrongFactors ? 'with your strong compensating factors' : 'if you have compensating factors like good credit or cash reserves'}.`
+    };
+  } else if (dtiValue <= hardCap) {
+    return {
+      value: dtiValue,
+      status: 'warning',
+      message: `Debt ratio of ${dtiValue.toFixed(1)}% approaching maximum ${hardCap}%`,
+      helpText: `Debt ratios above ${warningThreshold}% require significant compensating factors. ${hasStrongFactors ? 'Even with your strong profile, this' : 'This'} may limit your loan options or require additional down payment.`
+    };
+  } else {
+    return {
+      value: dtiValue,
+      status: 'exceeded',
+      message: `Debt ratio of ${dtiValue.toFixed(1)}% exceeds maximum ${hardCap}%`,
+      helpText: `Debt ratios above ${hardCap}% exceed lending guidelines. Consider reducing existing debt, increasing down payment, or choosing a less expensive home.`
+    };
+  }
 }
 
 /**

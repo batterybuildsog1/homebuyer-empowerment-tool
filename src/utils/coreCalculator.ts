@@ -3,7 +3,9 @@ import { UserData } from "@/context/MortgageContext";
 import { MortgageResults } from "./mortgageResultsCalculator";
 import { 
   calculateMaxDTI, 
-  compensatingFactors 
+  compensatingFactors,
+  evaluateFrontEndDTI,
+  evaluateBackEndDTI 
 } from "./mortgage/dtiCalculations";
 import {
   calculateMaxPurchasePrice,
@@ -86,7 +88,9 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
         maxMonthlyDebtPayment,
         availableForMortgage: 0,
         adjustedRate: 0,
-        strongFactorCount  // Include the strong factor count
+        strongFactorCount,
+        backEndDTI: maxDTI,
+        backEndDTIStatus: evaluateBackEndDTI(maxDTI, loanDetails.loanType, strongFactorCount >= 2)
       }
     };
   }
@@ -145,6 +149,23 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
   );
   console.log("Calculated monthly payment:", monthlyPayment);
   
+  // Calculate front-end DTI (PITI / monthly income)
+  const frontEndDTI = (monthlyPayment / monthlyIncome) * 100;
+  console.log("Calculated front-end DTI:", frontEndDTI);
+  
+  // Evaluate DTI statuses based on calculated values
+  const frontEndDTIStatus = evaluateFrontEndDTI(
+    frontEndDTI,
+    loanDetails.loanType,
+    strongFactorCount >= 2
+  );
+  
+  const backEndDTIStatus = evaluateBackEndDTI(
+    maxDTI,
+    loanDetails.loanType,
+    strongFactorCount >= 2
+  );
+  
   // Store the new financial details
   const financialDetails = {
     maxDTI,
@@ -152,7 +173,11 @@ export const calculateMortgageResults = (userData: UserData): MortgageResults | 
     maxMonthlyDebtPayment,
     availableForMortgage,
     adjustedRate,
-    strongFactorCount  // Include the strong factor count
+    strongFactorCount,
+    frontEndDTI,
+    backEndDTI: maxDTI,
+    frontEndDTIStatus,
+    backEndDTIStatus
   };
   
   // Generate alternative scenarios
