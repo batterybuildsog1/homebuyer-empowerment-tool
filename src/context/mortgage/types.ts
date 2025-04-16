@@ -1,3 +1,4 @@
+
 /**
  * Types for the mortgage calculator context
  */
@@ -53,6 +54,7 @@ export interface UserData {
       maxMonthlyDebtPayment: number;
       availableForMortgage: number;
       adjustedRate: number;
+      strongFactorCount?: number;
     };
   };
   goals: {
@@ -61,6 +63,7 @@ export interface UserData {
     monthlyExpenses: Record<string, number>;
     savingRate: number | null;
   };
+  workflowCompleted?: boolean; // Add this property to fix the TypeScript error
 }
 
 export interface MortgageContextType {

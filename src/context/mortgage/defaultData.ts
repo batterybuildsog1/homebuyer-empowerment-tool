@@ -58,4 +58,5 @@ export const defaultUserData: UserData = {
     monthlyExpenses: {},
     savingRate: null,
   },
+  workflowCompleted: false // Add default value for workflowCompleted
 };

@@ -1,5 +1,8 @@
 
 import { calculateMaxDTI } from './dtiCalculations';
+import { PROPERTY_EXPENSES } from '../constants/mortgageConstants';
+import { calculateMonthlyPropertyTax, calculateMonthlyInsurance } from './propertyExpenseCalculator';
+import { calculateMonthlyMortgageInsurance } from './insuranceCalculator';
 
 /**
  * Calculates the monthly mortgage payment
@@ -64,8 +67,8 @@ export const calculateMaxPurchasePrice = (
   monthlyDebts: number,
   dti: number,
   interestRate: number,
-  propertyTaxRate: number,
-  annualInsurance: number,
+  propertyTaxRate: number = PROPERTY_EXPENSES.DEFAULT_PROPERTY_TAX_PERCENT,
+  annualInsurance: number = PROPERTY_EXPENSES.DEFAULT_PROPERTY_INSURANCE,
   downPaymentPercent: number,
   pmiRate: number = 0,
   termYears: number = 30

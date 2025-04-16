@@ -7,18 +7,19 @@
 // Re-export from DTI calculations
 export { 
   calculateMaxDTI,
+  calculateDTILimits,
+  DTILimits,
   compensatingFactors,
   getCreditHistoryOption,
   getNonHousingDTIOption, 
-  isStrongFactor
-  // Removed duplicate export of countStrongFactors
+  isStrongFactor,
+  countStrongFactors
 } from './mortgage/dtiCalculations';
 
 // Re-export from compensating factor service
 export {
   prepareDTICalculationData,
-  createEnhancedFactors,
-  countStrongFactors
+  createEnhancedFactors
 } from './mortgage/compensatingFactorService';
 
 // Re-export from loan calculations
@@ -45,3 +46,22 @@ export {
   getNextFicoBand,
   getLowerLtvOption 
 } from './mortgage/improvementUtils';
+
+// Re-export from new standardized modules
+export {
+  calculateMonthlyPropertyTax,
+  calculateMonthlyInsurance,
+  calculateAnnualPropertyTax
+} from './mortgage/propertyExpenseCalculator';
+
+export {
+  calculateFhaMipRates as calculateMipRates,
+  calculateMonthlyMortgageInsurance
+} from './mortgage/insuranceCalculator';
+
+// Re-export constants
+export { 
+  DTI_LIMITS, 
+  PROPERTY_EXPENSES, 
+  INSURANCE_STANDARDS 
+} from './constants/mortgageConstants';

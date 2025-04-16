@@ -1,22 +1,11 @@
-// DTI limits based on FICO score and loan type
-const DTI_LIMITS = {
-  conventional: {
-    default: 36,
-    strongFactors: {
-      highFICO: 45,
-      reserves: 45,
-      lowLTV: 45
-    }
-  },
-  fha: {
-    default: 43,
-    strongFactors: {
-      highFICO: 50,
-      reserves: 50,
-      compensatingFactors: 50
-    }
-  }
-};
+
+import { DTI_LIMITS } from "../constants/mortgageConstants";
+import {
+  getNonHousingDTIOption,
+  isStrongFactor,
+  countStrongFactors,
+  prepareDTICalculationData,
+} from './compensatingFactorService';
 
 // Enhanced compensating factors mapping with DTI adjustment weights
 export const compensatingFactors: Record<string, Record<string, number>> = {
@@ -64,6 +53,56 @@ export const compensatingFactors: Record<string, Record<string, number>> = {
   },
 };
 
+// New standardized interface for DTI results
+export interface DTILimits {
+  frontEnd: {
+    default: number;
+    maximum: number;
+    warning: number;
+    hardCap: number | null;
+  };
+  backEnd: {
+    default: number;
+    maximum: number;
+    warning: number;
+    hardCap: number | null;
+  };
+}
+
+/**
+ * Calculate maximum DTI limits based on loan parameters
+ * @returns Both front-end and back-end DTI limits
+ */
+export function calculateDTILimits(
+  ficoScore: number,
+  ltv: number,
+  loanType: 'conventional' | 'fha',
+  selectedFactors: Record<string, string>,
+  monthlyDebts: number = 0,
+  monthlyIncome: number = 0
+): DTILimits {
+  // Start with default limits from constants
+  const limits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS];
+  
+  // Create base result structure
+  const result: DTILimits = {
+    frontEnd: {
+      default: limits.FRONT_END.DEFAULT,
+      maximum: limits.FRONT_END.WARNING, // Initial maximum is warning level
+      warning: limits.FRONT_END.WARNING,
+      hardCap: limits.FRONT_END.HARD_CAP,
+    },
+    backEnd: {
+      default: limits.BACK_END.DEFAULT,
+      maximum: calculateMaxBackEndDTI(ficoScore, ltv, loanType, selectedFactors, monthlyDebts, monthlyIncome),
+      warning: limits.BACK_END.WARNING,
+      hardCap: limits.BACK_END.HARD_CAP,
+    }
+  };
+  
+  return result;
+}
+
 /**
  * Determines the credit history option based on FICO score
  * @param ficoScore User's credit score
@@ -77,25 +116,11 @@ export const getCreditHistoryOption = (ficoScore: number): string => {
   return "<640";
 };
 
-// Import and re-export functions from compensatingFactorService
-import {
-  getNonHousingDTIOption,
-  isStrongFactor,
-  countStrongFactors,
-  prepareDTICalculationData,
-} from './compensatingFactorService';
-
 export { getNonHousingDTIOption, isStrongFactor, countStrongFactors };
 
 /**
  * Calculates the maximum allowable DTI based on loan type and compensating factors
- * @param ficoScore User's FICO score
- * @param ltv Loan-to-value ratio
- * @param loanType Type of loan (e.g., 'fha', 'conventional')
- * @param selectedFactors User's selected compensating factors
- * @param monthlyDebts User's monthly debt payments (optional)
- * @param monthlyIncome User's monthly income (optional)
- * @returns Adjusted maximum DTI percentage
+ * For backward compatibility, this function calls the new calculateMaxBackEndDTI function
  */
 export const calculateMaxDTI = (
   ficoScore: number,
@@ -105,29 +130,41 @@ export const calculateMaxDTI = (
   monthlyDebts: number = 0,
   monthlyIncome: number = 0
 ): number => {
+  return calculateMaxBackEndDTI(ficoScore, ltv, loanType, selectedFactors, monthlyDebts, monthlyIncome);
+};
+
+/**
+ * Internal refactored function with consistent naming for calculating back-end DTI
+ */
+function calculateMaxBackEndDTI(
+  ficoScore: number,
+  ltv: number,
+  loanType: 'conventional' | 'fha',
+  selectedFactors: Record<string, string> | string[] = {},
+  monthlyDebts: number = 0,
+  monthlyIncome: number = 0
+): number {
   // Handle legacy array format for backward compatibility
   if (Array.isArray(selectedFactors)) {
     // Legacy handling for backward compatibility
-    const dtiLimits = DTI_LIMITS[loanType];
-    let maxDTI = dtiLimits.default;
+    const dtiLimits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS];
+    let maxDTI = dtiLimits.BACK_END.DEFAULT;
 
     if (loanType === 'conventional') {
-      if (ficoScore >= 720) maxDTI = dtiLimits.strongFactors.highFICO;
+      if (ficoScore >= 720) maxDTI = dtiLimits.BACK_END.WARNING;
       if ((selectedFactors as string[]).includes('reserves')) {
-        maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
+        maxDTI = Math.max(maxDTI, dtiLimits.BACK_END.WARNING);
       }
       if (ltv <= 75) {
-        const conventionalFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.conventional.strongFactors;
-        maxDTI = Math.max(maxDTI, conventionalFactors.lowLTV);
+        maxDTI = Math.max(maxDTI, dtiLimits.BACK_END.WARNING);
       }
     } else { // FHA
-      if (ficoScore >= 680) maxDTI = dtiLimits.strongFactors.highFICO;
+      if (ficoScore >= 680) maxDTI = dtiLimits.BACK_END.WARNING;
       if ((selectedFactors as string[]).includes('reserves')) {
-        maxDTI = Math.max(maxDTI, dtiLimits.strongFactors.reserves);
+        maxDTI = Math.max(maxDTI, dtiLimits.BACK_END.WARNING);
       }
       if ((selectedFactors as string[]).length >= 2) {
-        const fhaFactors = dtiLimits.strongFactors as typeof DTI_LIMITS.fha.strongFactors;
-        maxDTI = Math.max(maxDTI, fhaFactors.compensatingFactors);
+        maxDTI = Math.max(maxDTI, dtiLimits.BACK_END.WARNING);
       }
     }
     
@@ -150,7 +187,7 @@ export const calculateMaxDTI = (
   );
   
   // Base DTI for FHA
-  const baseDTI = 43;
+  const baseDTI = DTI_LIMITS.FHA.BACK_END.DEFAULT;
   
   // Calculate total DTI increase from all factors
   let dtiIncrease = 0;
@@ -177,7 +214,7 @@ const calculateConventionalDTI = (
   selectedFactors: Record<string, string> = {}
 ): number => {
   // Start with base DTI
-  let baseDTI = 36;
+  let baseDTI = DTI_LIMITS.CONVENTIONAL.BACK_END.DEFAULT;
   let dtiIncrease = 0;
   
   // Use the standardized credit history determination
@@ -199,6 +236,6 @@ const calculateConventionalDTI = (
     ltvAdjustment = 2; // Additional +2% DTI for moderate LTV
   }
   
-  // Return DTI, capped at 50% for conventional loans
-  return Math.min(baseDTI + dtiIncrease + ltvAdjustment, 50);
+  // Return DTI, capped at the hard cap for conventional loans
+  return Math.min(baseDTI + dtiIncrease + ltvAdjustment, DTI_LIMITS.CONVENTIONAL.BACK_END.HARD_CAP || 50);
 };
