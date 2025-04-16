@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
-import { calculateFhaMipRates } from "@/utils/mortgageCalculations";
+import { calculateMipRates } from "@/utils/mortgageCalculations";
 
 interface LoanSettingsState {
   loanType: 'conventional' | 'fha';
@@ -52,7 +53,7 @@ export const useLoanSettings = () => {
     
     if (loanType === 'fha') {
       const newLtv = 100 - newDownPayment;
-      const { upfrontMipPercent, annualMipPercent } = calculateFhaMipRates(
+      const { upfrontMipPercent, annualMipPercent } = calculateMipRates(
         1000,
         newLtv
       );
@@ -97,7 +98,7 @@ export const useLoanSettings = () => {
     updateLoanDetails({ ltv: newLtv });
     
     if (formData.loanType === 'fha') {
-      const { upfrontMipPercent, annualMipPercent } = calculateFhaMipRates(1000, newLtv);
+      const { upfrontMipPercent, annualMipPercent } = calculateMipRates(1000, newLtv);
       
       setFormData(prev => ({
         ...prev,

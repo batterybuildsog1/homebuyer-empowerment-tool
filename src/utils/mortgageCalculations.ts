@@ -8,13 +8,15 @@
 export { 
   calculateMaxDTI,
   calculateDTILimits,
-  DTILimits,
   compensatingFactors,
   getCreditHistoryOption,
   getNonHousingDTIOption, 
   isStrongFactor,
   countStrongFactors
 } from './mortgage/dtiCalculations';
+
+// Properly export the DTILimits type
+export type { DTILimits } from './mortgage/dtiCalculations';
 
 // Re-export from compensating factor service
 export {
