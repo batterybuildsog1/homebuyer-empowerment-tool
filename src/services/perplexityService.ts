@@ -1,5 +1,3 @@
-
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface MortgageDataResponse {
@@ -11,8 +9,8 @@ export interface MortgageDataResponse {
   ongoingMIP?: number | null;
 }
 
-// Hardcoded fallback values if database fetch fails
-const FALLBACK_DATA = {
+// Hardcoded test values for development - eventually these would come from a backend service
+const TEST_DATA = {
   conventionalInterestRate: 6.75,
   fhaInterestRate: 6.25,
   propertyTax: 1.1, // National average property tax rate (%)
@@ -22,49 +20,19 @@ const FALLBACK_DATA = {
 };
 
 /**
- * Fetches mortgage interest rates from database
+ * Fetches mortgage interest rates
  */
 export const fetchMortgageRates = async (): Promise<{
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
 }> => {
-  try {
-    // Get the latest valid rates from the database
-    const { data: ratesData, error } = await supabase
-      .from("rates")
-      .select("*")
-      .eq("valid", true)
-      .order("date", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching rates:", error);
-      throw error;
-    }
-
-    if (!ratesData) {
-      console.warn("No valid rates found, using fallback values");
-      return {
-        conventionalInterestRate: FALLBACK_DATA.conventionalInterestRate,
-        fhaInterestRate: FALLBACK_DATA.fhaInterestRate
-      };
-    }
-
-    console.log(`Using rates from ${ratesData.date}:`, ratesData);
-    
-    return {
-      conventionalInterestRate: ratesData.conventional,
-      fhaInterestRate: ratesData.fha
-    };
-  } catch (error) {
-    console.error("Error in fetchMortgageRates:", error);
-    // Return fallback values in case of error
-    return {
-      conventionalInterestRate: FALLBACK_DATA.conventionalInterestRate,
-      fhaInterestRate: FALLBACK_DATA.fhaInterestRate
-    };
-  }
+  console.log("Using mortgage rate data (simulating backend call)");
+  
+  // Return values (would be from a backend service in production)
+  return {
+    conventionalInterestRate: TEST_DATA.conventionalInterestRate,
+    fhaInterestRate: TEST_DATA.fhaInterestRate
+  };
 };
 
 /**
@@ -82,8 +50,8 @@ export const fetchPropertyData = async (
   
   // Return values (would be from a backend service in production)
   return {
-    propertyTax: FALLBACK_DATA.propertyTax,
-    propertyInsurance: FALLBACK_DATA.propertyInsurance
+    propertyTax: TEST_DATA.propertyTax,
+    propertyInsurance: TEST_DATA.propertyInsurance
   };
 };
 
@@ -96,48 +64,40 @@ export const fetchAllMortgageData = async (
   zipCode: string
 ): Promise<MortgageDataResponse | null> => {
   try {
-    // First, try to get the latest valid rates from the database
-    const rates = await fetchMortgageRates();
-
+    console.log(`Getting mortgage data for ${state}, ${county}, ${zipCode} - simulating backend call`);
+    
+    // Return combined data (would be from a backend service in production)
     return {
-      ...rates,
-      propertyTax: FALLBACK_DATA.propertyTax,
-      propertyInsurance: FALLBACK_DATA.propertyInsurance,
-      upfrontMIP: FALLBACK_DATA.upfrontMIP,
-      ongoingMIP: FALLBACK_DATA.ongoingMIP
+      conventionalInterestRate: TEST_DATA.conventionalInterestRate,
+      fhaInterestRate: TEST_DATA.fhaInterestRate,
+      propertyTax: TEST_DATA.propertyTax,
+      propertyInsurance: TEST_DATA.propertyInsurance,
+      upfrontMIP: TEST_DATA.upfrontMIP,
+      ongoingMIP: TEST_DATA.ongoingMIP
     };
     
   } catch (error) {
     console.error(`Error in fetchAllMortgageData:`, error);
-    toast.error("Failed to fetch mortgage data. Using fallback values.");
-    return {
-      conventionalInterestRate: FALLBACK_DATA.conventionalInterestRate,
-      fhaInterestRate: FALLBACK_DATA.fhaInterestRate,
-      propertyTax: FALLBACK_DATA.propertyTax,
-      propertyInsurance: FALLBACK_DATA.propertyInsurance,
-      upfrontMIP: FALLBACK_DATA.upfrontMIP,
-      ongoingMIP: FALLBACK_DATA.ongoingMIP
-    };
+    toast.error("Error retrieving mortgage data.");
+    return null;
   }
 };
 
 // Keep legacy functions for backward compatibility
 export const getInterestRates = async (state: string): Promise<number | null> => {
-  const { conventionalInterestRate } = await fetchMortgageRates();
-  return conventionalInterestRate;
+  return TEST_DATA.conventionalInterestRate;
 };
 
 export const getFhaInterestRates = async (state: string): Promise<number | null> => {
-  const { fhaInterestRate } = await fetchMortgageRates();
-  return fhaInterestRate;
+  return TEST_DATA.fhaInterestRate;
 };
 
 export const getPropertyTaxRate = async (state: string, county: string): Promise<number | null> => {
   localStorage.setItem("last_county", county);
-  return FALLBACK_DATA.propertyTax;
+  return TEST_DATA.propertyTax;
 };
 
 export const getPropertyInsurance = async (state: string, zipCode: string): Promise<number | null> => {
   localStorage.setItem("last_zipcode", zipCode);
-  return FALLBACK_DATA.propertyInsurance;
+  return TEST_DATA.propertyInsurance;
 };
