@@ -7,12 +7,13 @@ import { Progress } from "@/components/ui/progress";
 import { Heading } from "@/components/ui/Heading";
 import { Check, ChevronRight, Home, CreditCard, Target, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { MortgageProvider } from "@/context/MortgageContext";
 
 // Step components
 import FinancialStep from "@/components/steps/FinancialStep";
 import CompensatingFactorsStep from "@/components/steps/CompensatingFactorsStep";
 
-const OnboardingPage = () => {
+const OnboardingSteps = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   
@@ -201,6 +202,15 @@ const OnboardingPage = () => {
         </Card>
       </main>
     </div>
+  );
+};
+
+// Wrap the OnboardingSteps component with MortgageProvider
+const OnboardingPage = () => {
+  return (
+    <MortgageProvider>
+      <OnboardingSteps />
+    </MortgageProvider>
   );
 };
 
