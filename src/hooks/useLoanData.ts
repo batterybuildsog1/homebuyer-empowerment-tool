@@ -10,7 +10,7 @@ import { useLoanSettings } from "./loan/useLoanSettings";
 export const useLoanData = () => {
   // Import all necessary hooks
   const { fetchProgress, fetchExternalData } = useDataFetching();
-  const { checkCachedData } = useLoanDataCache();
+  const { checkCachedData, invalidateCache } = useLoanDataCache();
   const { 
     formData, 
     ltv, 
@@ -26,6 +26,7 @@ export const useLoanData = () => {
     currentInterestRate,
     handleLoanTypeChange,
     handleDownPaymentChange,
-    fetchExternalData
+    fetchExternalData,
+    invalidateCache
   };
 };
