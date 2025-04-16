@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '@/components/theme-provider';  // Ensure this is exactly matching
 import { Toaster } from '@/components/ui/sonner';
 import HeroPage from './pages/HeroPage';
 import DashboardPage from './pages/DashboardPage';
