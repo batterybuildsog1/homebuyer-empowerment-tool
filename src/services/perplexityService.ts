@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 export interface MortgageDataResponse {
   conventionalInterestRate: number | null;
@@ -10,7 +9,7 @@ export interface MortgageDataResponse {
   ongoingMIP?: number | null;
 }
 
-// Hardcoded test values for development
+// Hardcoded test values for development - eventually these would come from a backend service
 const TEST_DATA = {
   conventionalInterestRate: 6.75,
   fhaInterestRate: 6.25,
@@ -20,40 +19,16 @@ const TEST_DATA = {
   ongoingMIP: 0.55 // FHA ongoing mortgage insurance premium (%)
 };
 
-// This function is kept for the original API implementation but returns hardcoded data
-export const fetchPerplexityData = async (
-  query: string,
-  queryType?: string
-): Promise<string | null> => {
-  console.log(`TEST MODE: Query request for ${queryType || 'general'} data`);
-  console.log(`Query: ${query}`);
-  
-  // Generate different mock responses based on query type
-  if (queryType === "mortgageRates") {
-    return JSON.stringify({
-      conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-      fhaInterestRate: TEST_DATA.fhaInterestRate
-    });
-  } else if (queryType === "propertyData") {
-    return JSON.stringify({
-      propertyTax: TEST_DATA.propertyTax,
-      propertyInsurance: TEST_DATA.propertyInsurance
-    });
-  }
-  
-  return null;
-};
-
 /**
- * Fetches mortgage interest rates (HARDCODED FOR TESTING)
+ * Fetches mortgage interest rates
  */
 export const fetchMortgageRates = async (): Promise<{
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
 }> => {
-  console.log("TEST MODE: Using hardcoded mortgage rates");
+  console.log("Using mortgage rate data (simulating backend call)");
   
-  // Return hardcoded values
+  // Return values (would be from a backend service in production)
   return {
     conventionalInterestRate: TEST_DATA.conventionalInterestRate,
     fhaInterestRate: TEST_DATA.fhaInterestRate
@@ -61,7 +36,7 @@ export const fetchMortgageRates = async (): Promise<{
 };
 
 /**
- * Fetches property tax rate and insurance premium (HARDCODED FOR TESTING)
+ * Fetches property tax rate and insurance premium
  */
 export const fetchPropertyData = async (
   state: string,
@@ -71,9 +46,9 @@ export const fetchPropertyData = async (
   propertyTax: number | null;
   propertyInsurance: number | null;
 }> => {
-  console.log(`TEST MODE: Using hardcoded property data for ${county}, ${state} (${zipCode})`);
+  console.log(`Getting property data for ${county}, ${state} (${zipCode}) - simulating backend call`);
   
-  // Return hardcoded values
+  // Return values (would be from a backend service in production)
   return {
     propertyTax: TEST_DATA.propertyTax,
     propertyInsurance: TEST_DATA.propertyInsurance
@@ -81,7 +56,7 @@ export const fetchPropertyData = async (
 };
 
 /**
- * Fetches all mortgage-related data (HARDCODED FOR TESTING)
+ * Fetches all mortgage-related data
  */
 export const fetchAllMortgageData = async (
   state: string,
@@ -89,9 +64,9 @@ export const fetchAllMortgageData = async (
   zipCode: string
 ): Promise<MortgageDataResponse | null> => {
   try {
-    console.log(`TEST MODE: Using hardcoded mortgage data for ${state}, ${county}, ${zipCode}`);
+    console.log(`Getting mortgage data for ${state}, ${county}, ${zipCode} - simulating backend call`);
     
-    // Return combined hardcoded data
+    // Return combined data (would be from a backend service in production)
     return {
       conventionalInterestRate: TEST_DATA.conventionalInterestRate,
       fhaInterestRate: TEST_DATA.fhaInterestRate,
@@ -103,20 +78,12 @@ export const fetchAllMortgageData = async (
     
   } catch (error) {
     console.error(`Error in fetchAllMortgageData:`, error);
-    toast.error("Error retrieving test data.");
+    toast.error("Error retrieving mortgage data.");
     return null;
   }
 };
 
-// Keep all the helper functions with simplified implementations
-function validateNumericValue(value: any): number | null {
-  if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
-    return value;
-  }
-  return null;
-}
-
-// Legacy functions for backward compatibility, now using hardcoded values
+// Keep legacy functions for backward compatibility
 export const getInterestRates = async (state: string): Promise<number | null> => {
   return TEST_DATA.conventionalInterestRate;
 };

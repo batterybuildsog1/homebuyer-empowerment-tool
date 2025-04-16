@@ -19,7 +19,7 @@ export const useDataFetching = () => {
   });
 
   /**
-   * Fetches mortgage data from external API
+   * Fetches mortgage data from service
    * @param isBackgroundFetch Whether this is a background fetch (no UI feedback)
    * @returns The fetched data or null if fetch failed
    */
@@ -87,7 +87,7 @@ export const useDataFetching = () => {
     }));
     
     try {
-      // Consolidated fetch for all mortgage data
+      // Fetch all mortgage data
       const result = await fetchAllMortgageData(
         userData.location.state,
         userData.location.county || userData.location.city,
@@ -95,7 +95,7 @@ export const useDataFetching = () => {
       );
 
       if (!result) {
-        throw new Error("Failed to fetch data from API");
+        throw new Error("Failed to fetch data");
       }
 
       // Update progress
@@ -162,7 +162,7 @@ export const useDataFetching = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       if (!isBackgroundFetch) {
-        toast.error("An error occurred while fetching data from the Perplexity API. Please try again later.");
+        toast.error("An error occurred while fetching mortgage data. Please try again later.");
       }
       return null; // Return null on error
     } finally {

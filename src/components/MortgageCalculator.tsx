@@ -1,8 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
-import PerplexityApiForm from "./PerplexityApiForm";
-import PerplexityApiFormMock from "./PerplexityApiFormMock";
 import LocationStep from "./steps/LocationStep";
 import FinancialStep from "./steps/FinancialStep";
 import CompensatingFactorsStep from "./steps/CompensatingFactorsStep";
@@ -18,16 +16,6 @@ import { toast } from "sonner";
 
 const MortgageCalculator: React.FC = () => {
   const { currentStep, setCurrentStep, userData, completeWorkflow } = useMortgage();
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [skipApiCheck, setSkipApiCheck] = useState(false);
-
-  useEffect(() => {
-    // Check if API key is already in localStorage
-    const storedApiKey = localStorage.getItem("perplexity_api_key");
-    if (storedApiKey) {
-      setApiKey(storedApiKey);
-    }
-  }, []);
 
   // Validate step progression
   useEffect(() => {
@@ -43,11 +31,6 @@ const MortgageCalculator: React.FC = () => {
       setCurrentStep(4);
     }
   }, [currentStep, userData, setCurrentStep]);
-
-  const handleApiKeySet = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem("perplexity_api_key", key);
-  };
 
   // Map step components with their titles
   const steps = [
@@ -74,35 +57,6 @@ const MortgageCalculator: React.FC = () => {
       setCurrentStep(currentStep - 1);
     }
   };
-
-  const handleSkipApiKeyCheck = () => {
-    setSkipApiCheck(true);
-  };
-
-  // Check if we need to show the API form
-  if (!apiKey && !skipApiCheck) {
-    return (
-      <Card className="max-w-md mx-auto">
-        <CardContent className="pt-6">
-          <div className="mb-4 text-center">
-            <h2 className="text-xl font-semibold mb-2">AI Assistant Required</h2>
-            <p className="text-muted-foreground mb-4">
-              For personalized mortgage advice and AI-powered recommendations, we need a Perplexity API key.
-            </p>
-            <div className="flex justify-center space-x-4 mb-6">
-              <Button 
-                variant="outline" 
-                onClick={handleSkipApiKeyCheck}
-              >
-                Skip for basic calculator
-              </Button>
-            </div>
-          </div>
-          <PerplexityApiForm onApiKeySet={handleApiKeySet} />
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-8 pb-20 md:pb-0">
