@@ -72,11 +72,19 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [workflowCompleted, setWorkflowCompleted] = useState<boolean>(() => {
+    // Check if workflow has been completed before
+    const savedData = loadFromLocalStorage();
+    return savedData?.workflowCompleted || false;
+  });
 
   // Save data whenever it changes
   useEffect(() => {
-    saveToLocalStorage(userData);
-  }, [userData]);
+    saveToLocalStorage({
+      ...userData,
+      workflowCompleted
+    });
+  }, [userData, workflowCompleted]);
 
   const updateLocation = (location: Partial<UserData['location']>) => {
     setUserData((prev) => ({
@@ -132,8 +140,24 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (window.confirm('Are you sure you want to reset all your data?')) {
       setUserData(defaultUserData);
       setCurrentStep(0);
+      setWorkflowCompleted(false);
       localStorage.removeItem('mortgage_calculator_data');
     }
+  };
+
+  const completeWorkflow = () => {
+    setWorkflowCompleted(true);
+  };
+
+  const isMortgageWorkflowCompleted = () => {
+    // Check if essential mortgage data has been filled out
+    return (
+      workflowCompleted || 
+      (userData.location.city && 
+      userData.location.state && 
+      userData.financials.annualIncome > 0 &&
+      userData.results.maxHomePrice > 0)
+    );
   };
 
   return (
@@ -142,15 +166,19 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
         userData,
         currentStep,
         isLoadingData,
+        workflowCompleted,
         setUserData,
         setCurrentStep,
         setIsLoadingData,
+        setWorkflowCompleted,
         updateLocation,
         updateFinancials,
         updateLoanDetails,
         updateResults,
         updateGoals,
         resetCalculator,
+        completeWorkflow,
+        isMortgageWorkflowCompleted
       }}
     >
       {children}

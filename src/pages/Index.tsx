@@ -14,15 +14,47 @@ import {
   X
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext";
+import { useMortgage } from "@/context/MortgageContext";
+import { MortgageProvider } from "@/context/MortgageContext";
+
+// Component to handle actions that need mortgage context
+const IndexActions = () => {
+  const { isLoggedIn } = useUser();
+  const navigate = null;
+  
+  // Only try to use mortgage context if user is logged in
+  let mortgageContext = null;
+  let isMortgageComplete = false;
+  try {
+    if (isLoggedIn) {
+      mortgageContext = useMortgage();
+      isMortgageComplete = mortgageContext?.isMortgageWorkflowCompleted() || false;
+    }
+  } catch (error) {
+    // This is expected when user is not logged in
+  }
+
+  const getStartedLink = () => {
+    if (!isLoggedIn) {
+      return "/auth?tab=signup";
+    }
+    
+    return isMortgageComplete ? "/dashboard" : "/mortgage-planning";
+  };
+
+  return (
+    <Button size="lg" className="px-8" asChild>
+      <Link to={getStartedLink()}>
+        {isLoggedIn ? (isMortgageComplete ? "Go to Dashboard" : "Mortgage Planning") : "Start Free"}
+      </Link>
+    </Button>
+  );
+};
 
 const Index = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  useEffect(() => {
-    const userLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-    setIsLoggedIn(userLoggedIn);
-  }, []);
+  const { isLoggedIn } = useUser();
   
   return (
     <>
@@ -129,11 +161,10 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <Button size="lg" className="px-8" asChild>
-                <Link to={isLoggedIn ? "/mortgage-planning" : "/auth?tab=signup"}>
-                  {isLoggedIn ? "Go to Dashboard" : "Start Free"}
-                </Link>
-              </Button>
+              <MortgageProvider>
+                <IndexActions />
+              </MortgageProvider>
+              
               <Button size="lg" variant="outline" className="group" asChild>
                 <Link to={isLoggedIn ? "/mortgage-planning" : "/auth"}>
                   {isLoggedIn ? "Mortgage Planning" : "Learn more"} <ChevronRight className="ml-1 group-hover:translate-x-1 transition-transform duration-300" />

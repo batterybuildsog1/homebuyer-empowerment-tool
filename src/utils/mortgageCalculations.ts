@@ -11,6 +11,7 @@ export {
   getCreditHistoryOption,
   getNonHousingDTIOption, 
   isStrongFactor
+  // Removed duplicate export of countStrongFactors
 } from './mortgage/dtiCalculations';
 
 // Re-export from compensating factor service

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigationType, Navigate 
 import { HelmetProvider } from "react-helmet-async";
 import { useEffect } from "react";
 import { UserProvider, useUser } from "./context/UserContext";
+import { MortgageProvider, useMortgage } from "./context/MortgageContext";
 import HeroPage from "./pages/HeroPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
@@ -62,6 +63,15 @@ const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
   return children;
 };
 
+// Mortgage workflow checker
+const MortgageWrapper = ({ children }: { children: JSX.Element }) => {
+  return (
+    <MortgageProvider>
+      {children}
+    </MortgageProvider>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
@@ -83,25 +93,34 @@ const App = () => (
                 </PublicOnlyRoute>
               } />
               
-              {/* Protected routes */}
+              {/* Protected routes with Mortgage provider */}
               <Route path="/onboarding" element={
                 <ProtectedRoute>
                   <OnboardingPage />
                 </ProtectedRoute>
               } />
+              
               <Route path="/dashboard" element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <MortgageWrapper>
+                    <DashboardPage />
+                  </MortgageWrapper>
                 </ProtectedRoute>
               } />
+              
               <Route path="/financial-goals" element={
                 <ProtectedRoute>
-                  <FinancialGoalsPage />
+                  <MortgageWrapper>
+                    <FinancialGoalsPage />
+                  </MortgageWrapper>
                 </ProtectedRoute>
               } />
+              
               <Route path="/mortgage-planning" element={
                 <ProtectedRoute>
-                  <MortgagePlanningPage />
+                  <MortgageWrapper>
+                    <MortgagePlanningPage />
+                  </MortgageWrapper>
                 </ProtectedRoute>
               } />
               

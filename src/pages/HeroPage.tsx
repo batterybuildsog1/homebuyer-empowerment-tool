@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,22 +9,23 @@ import { ArrowRight, DollarSign, Home, TrendingUp, Users, Menu, X } from "lucide
 import { Mail } from "@/components/ui/icons";
 import { formatCurrency } from "@/utils/formatters";
 import { calculateMaxPurchasePrice } from "@/utils/mortgage/loanCalculations";
+import { useUser } from "@/context/UserContext";
+import { useMortgage } from "@/context/MortgageContext";
+import { toast } from "sonner";
 
 const HeroPage = () => {
   const navigate = useNavigate();
+  const { isLoggedIn } = useUser();
   const [email, setEmail] = useState("");
   const [annualIncome, setAnnualIncome] = useState(100000);
   const [standardPrice, setStandardPrice] = useState(0);
   const [enhancedPrice, setEnhancedPrice] = useState(0);
   const [percentIncrease, setPercentIncrease] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Check login status on mount
-  useEffect(() => {
-    const userLoggedIn = localStorage.getItem('userLoggedIn') === 'true';
-    setIsLoggedIn(userLoggedIn);
-  }, []);
+  
+  // Use the mortgage context only if user is logged in
+  const mortgageContext = isLoggedIn ? useMortgage() : null;
+  const isMortgageComplete = mortgageContext?.isMortgageWorkflowCompleted() || false;
 
   // Calculate buying power comparison based on income
   useEffect(() => {
@@ -72,20 +74,33 @@ const HeroPage = () => {
     setAnnualIncome(parseInt(value) || 0);
   };
 
-  // Handle get started click
-  const handleGetStarted = () => {
-    if (isLoggedIn) {
-      navigate('/mortgage-planning');
-    } else {
+  // Direct user based on their status
+  const navigateToAppropriateScreen = () => {
+    if (!isLoggedIn) {
+      // Not logged in - go to auth
       navigate('/auth');
+      return;
     }
+    
+    if (!isMortgageComplete) {
+      // Logged in but mortgage workflow not completed - go to mortgage planning
+      navigate('/mortgage-planning');
+      return;
+    }
+    
+    // Logged in and mortgage workflow completed - go to dashboard
+    navigate('/dashboard');
+    toast.success("Welcome back! Here's your financial dashboard.");
   };
 
   // Handle email submit
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      navigate('/auth?email=' + encodeURIComponent(email));
+      navigate(`/auth?email=${encodeURIComponent(email)}`);
+    } else {
+      // No email, just navigate to auth page
+      navigate('/auth');
     }
   };
 
@@ -316,7 +331,7 @@ const HeroPage = () => {
               <Button 
                 size="lg" 
                 className="bg-[#8b76e0] hover:bg-[#7b66d0] text-white px-8 shadow-lg"
-                onClick={handleGetStarted}
+                onClick={navigateToAppropriateScreen}
               >
                 Get my personalized buying power
                 <ArrowRight className="ml-2 h-4 w-4" />

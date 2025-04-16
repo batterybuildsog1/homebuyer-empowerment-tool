@@ -14,10 +14,12 @@ import { StepIndicator } from "./ui/StepIndicator";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { toast } from "sonner";
 
 const MortgageCalculator: React.FC = () => {
-  const { currentStep, setCurrentStep, userData } = useMortgage();
+  const { currentStep, setCurrentStep, userData, completeWorkflow } = useMortgage();
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [skipApiCheck, setSkipApiCheck] = useState(false);
 
   useEffect(() => {
     // Check if API key is already in localStorage
@@ -60,6 +62,10 @@ const MortgageCalculator: React.FC = () => {
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // Final step completed, mark mortgage workflow as completed
+      completeWorkflow();
+      toast.success("You've completed the mortgage planning workflow!");
     }
   };
 
@@ -69,11 +75,29 @@ const MortgageCalculator: React.FC = () => {
     }
   };
 
+  const handleSkipApiKeyCheck = () => {
+    setSkipApiCheck(true);
+  };
+
   // Check if we need to show the API form
-  if (!apiKey) {
+  if (!apiKey && !skipApiCheck) {
     return (
       <Card className="max-w-md mx-auto">
         <CardContent className="pt-6">
+          <div className="mb-4 text-center">
+            <h2 className="text-xl font-semibold mb-2">AI Assistant Required</h2>
+            <p className="text-muted-foreground mb-4">
+              For personalized mortgage advice and AI-powered recommendations, we need a Perplexity API key.
+            </p>
+            <div className="flex justify-center space-x-4 mb-6">
+              <Button 
+                variant="outline" 
+                onClick={handleSkipApiKeyCheck}
+              >
+                Skip for basic calculator
+              </Button>
+            </div>
+          </div>
           <PerplexityApiForm onApiKeySet={handleApiKeySet} />
         </CardContent>
       </Card>
@@ -126,10 +150,13 @@ const MortgageCalculator: React.FC = () => {
         
         <Button 
           onClick={handleNext}
-          disabled={currentStep === steps.length - 1}
           className="gap-2"
         >
-          Next <ArrowRight className="h-4 w-4" />
+          {currentStep === steps.length - 1 ? (
+            "Complete Workflow"
+          ) : (
+            <>Next <ArrowRight className="h-4 w-4" /></>
+          )}
         </Button>
       </div>
     </div>

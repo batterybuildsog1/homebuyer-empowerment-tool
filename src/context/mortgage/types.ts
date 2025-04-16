@@ -1,4 +1,3 @@
-
 /**
  * Types for the mortgage calculator context
  */
@@ -68,13 +67,17 @@ export interface MortgageContextType {
   userData: UserData;
   currentStep: number;
   isLoadingData: boolean;
-  setUserData: React.Dispatch<React.SetStateAction<UserData>>;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
-  setIsLoadingData: React.Dispatch<React.SetStateAction<boolean>>;
+  workflowCompleted: boolean;
+  setUserData: (data: UserData) => void;
+  setCurrentStep: (step: number) => void;
+  setIsLoadingData: (loading: boolean) => void;
+  setWorkflowCompleted: (completed: boolean) => void;
   updateLocation: (location: Partial<UserData['location']>) => void;
   updateFinancials: (financials: Partial<UserData['financials']>) => void;
   updateLoanDetails: (loanDetails: Partial<UserData['loanDetails']>) => void;
   updateResults: (results: Partial<UserData['results']>) => void;
   updateGoals: (goals: Partial<UserData['goals']>) => void;
   resetCalculator: () => void;
+  completeWorkflow: () => void;
+  isMortgageWorkflowCompleted: () => boolean;
 }

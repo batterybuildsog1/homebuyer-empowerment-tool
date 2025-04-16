@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,12 +10,40 @@ import { ArrowLeft, Lock, Mail, User } from "lucide-react";
 import { Heading } from "@/components/ui/Heading";
 import { toast } from "sonner";
 import { useUser } from "@/context/UserContext";
+import { useMortgage } from "@/context/MortgageContext";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoggedIn, login } = useUser();
+  
+  // Try to get MortgageContext safely - will be used if user is logged in
+  let mortgageContext = null;
+  let isMortgageComplete = false;
+  try {
+    mortgageContext = useMortgage();
+    isMortgageComplete = mortgageContext?.isMortgageWorkflowCompleted() || false;
+  } catch (error) {
+    // Context not available, which is expected when user is not logged in
+  }
+  
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
+  
+  // Parse query parameters to pre-fill email and set active tab
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setLoginEmail(emailParam);
+      setSignupEmail(emailParam);
+    }
+    
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'signup') {
+      setActiveTab('signup');
+    }
+  }, [location]);
   
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
@@ -27,9 +55,14 @@ const AuthPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn) {
-      navigate('/dashboard');
+      // Determine where to redirect based on mortgage workflow status
+      if (isMortgageComplete) {
+        navigate('/dashboard');
+      } else {
+        navigate('/mortgage-planning');
+      }
     }
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, navigate, isMortgageComplete]);
 
   // Mock authentication - in a real app, this would connect to your auth backend
   const handleLogin = (e: React.FormEvent) => {
@@ -43,7 +76,10 @@ const AuthPage = () => {
       
       toast.success("Successfully logged in!");
       setIsLoading(false);
-      navigate('/dashboard');
+      
+      // Navigate to mortgage planning by default - after login context will be available
+      // and the redirect in useEffect will take care of proper routing
+      navigate('/mortgage-planning');
     }, 1000);
   };
 
@@ -58,6 +94,8 @@ const AuthPage = () => {
       
       toast.success("Account created successfully!");
       setIsLoading(false);
+      
+      // New users should always go to onboarding first
       navigate('/onboarding');
     }, 1000);
   };
@@ -115,6 +153,7 @@ const AuthPage = () => {
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           required
+                          autoComplete="email"
                         />
                       </div>
                     </div>
@@ -136,6 +175,7 @@ const AuthPage = () => {
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           required
+                          autoComplete="current-password"
                         />
                       </div>
                     </div>
@@ -172,6 +212,7 @@ const AuthPage = () => {
                           value={signupName}
                           onChange={(e) => setSignupName(e.target.value)}
                           required
+                          autoComplete="name"
                         />
                       </div>
                     </div>
@@ -188,6 +229,7 @@ const AuthPage = () => {
                           value={signupEmail}
                           onChange={(e) => setSignupEmail(e.target.value)}
                           required
+                          autoComplete="email"
                         />
                       </div>
                     </div>
@@ -204,6 +246,7 @@ const AuthPage = () => {
                           value={signupPassword}
                           onChange={(e) => setSignupPassword(e.target.value)}
                           required
+                          autoComplete="new-password"
                         />
                       </div>
                     </div>
