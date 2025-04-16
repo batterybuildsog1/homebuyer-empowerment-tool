@@ -1,39 +1,29 @@
 
-import React, { useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { HeroContent } from "@/components/hero/HeroContent";
+import { useState } from "react";
 import { HeroNavigation } from "@/components/hero/HeroNavigation";
+import { HeroContent } from "@/components/hero/HeroContent";
+import { BuyingPowerCalculator } from "@/components/hero/BuyingPowerCalculator";
 import { HeroFooter } from "@/components/hero/HeroFooter";
-import { RatesDashboard } from "@/components/rates/RatesDashboard";
 
 const HeroPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   return (
-    <div className="flex flex-col min-h-screen bg-[#1A1F2C]">
-      <Helmet>
-        <title>Finance Empowerment Tool</title>
-        <meta 
-          name="description" 
-          content="Master your finances and achieve your home buying goals" 
-        />
-      </Helmet>
-      
+    <div className="min-h-screen flex flex-col bg-[#1A1F2C] text-white">
       <HeroNavigation 
         mobileMenuOpen={mobileMenuOpen} 
         setMobileMenuOpen={setMobileMenuOpen} 
       />
-      
-      <main className="flex-grow">
-        <section className="min-h-[80vh] flex items-center border-b border-white/10">
-          <HeroContent />
-        </section>
-        
-        <section className="py-16 bg-gradient-to-b from-[#1A1F2C] to-[#101218]">
-          <RatesDashboard />
-        </section>
+
+      {/* Hero Section */}
+      <main className="flex-1 flex flex-col">
+        {/* Top Hero Content */}
+        <HeroContent />
+
+        {/* Buying Power Calculator Section */}
+        <BuyingPowerCalculator />
       </main>
-      
+
       <HeroFooter />
     </div>
   );

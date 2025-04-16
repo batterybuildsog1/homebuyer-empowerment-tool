@@ -21,13 +21,13 @@ const MND_CONFIG = {
   }
 };
 
-// Validate rate is within expected range (3% - 9%)
+// Validate rate is within expected range (3% - 8%)
 const isValidRate = (rate: number): boolean => 
-  rate >= 3 && rate <= 9;
+  rate >= 3 && rate <= 8;
 
-// Validate spread is within typical MBS range (20-75 bps)
+// Validate spread is within typical MBS range (30-55 bps)
 const isValidSpread = (spread: number): boolean => 
-  spread >= 20 && spread <= 75;
+  spread >= 30 && spread <= 55;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -38,72 +38,34 @@ serve(async (req) => {
   try {
     console.log("Starting mortgage rate fetch from MND...");
     const rates: Record<string, number> = {};
-    let fetchErrors = [];
 
     // Fetch and parse rates from both pages
     for (const [key, config] of Object.entries(MND_CONFIG)) {
-      try {
-        console.log(`Fetching ${key} rate from ${config.url}`);
-        const response = await fetch(config.url);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-        }
-        
-        const html = await response.text();
-        const $ = cheerio.load(html);
-        const rateSelector = $(config.selector).first();
-        
-        if (rateSelector.length === 0) {
-          throw new Error(`Selector "${config.selector}" not found on page`);
-        }
-        
-        const rateText = rateSelector.text().replace("%", "").trim();
-        const rate = Number(rateText);
-        
-        if (isNaN(rate)) {
-          throw new Error(`Rate text "${rateText}" is not a valid number`);
-        }
-        
-        console.log(`Found ${key} rate: ${rate}%`);
+      console.log(`Fetching ${key} rate from ${config.url}`);
+      const html = await fetch(config.url).then(r => r.text());
+      const $ = cheerio.load(html);
+      const rateText = $(config.selector).first().text().replace("%", "").trim();
+      const rate = Number(rateText);
+      
+      console.log(`Found ${key} rate: ${rate}%`);
 
-        // Validate individual rate
-        if (!isValidRate(rate)) {
-          throw new Error(`Rate ${rate} is outside valid range (3-9%)`);
-        }
-
-        rates[key] = rate;
-      } catch (error) {
-        console.error(`Error fetching ${key} rate:`, error);
-        fetchErrors.push(`${key}: ${error.message}`);
+      // Validate individual rate
+      if (!isValidRate(rate)) {
+        console.error(`Invalid ${key} rate: ${rate}`);
+        throw new Error(`Invalid ${key} rate: ${rate}`);
       }
+
+      rates[key] = rate;
     }
 
-    // If we couldn't fetch any rates, return error
-    if (Object.keys(rates).length === 0) {
-      throw new Error(`Failed to fetch any rates: ${fetchErrors.join("; ")}`);
-    }
+    // Calculate spread
+    const spread = Math.round((rates.conventional - rates.fha) * 100);
+    console.log(`Calculated spread: ${spread} bps`);
 
-    // If we have both rates, calculate and validate spread
-    let spreadBps = null;
-    let isValid = false;
-
-    if (rates.conventional && rates.fha) {
-      // Calculate spread in basis points
-      spreadBps = Math.round((rates.conventional - rates.fha) * 100);
-      console.log(`Calculated spread: ${spreadBps} bps`);
-
-      // Validate spread
-      isValid = isValidSpread(spreadBps);
-      if (!isValid) {
-        console.warn(`Spread of ${spreadBps} bps is outside expected range (20-75 bps)`);
-      }
-    } else {
-      console.warn("Could not calculate spread - missing one or more rates");
-      if (rates.conventional || rates.fha) {
-        // If we have at least one rate, consider it valid for storage
-        isValid = true;
-      }
+    // Validate spread
+    if (!isValidSpread(spread)) {
+      console.error(`Invalid spread: ${spread} bps`);
+      throw new Error(`Invalid spread: ${spread} bps`);
     }
 
     // Create Supabase client
@@ -116,39 +78,28 @@ serve(async (req) => {
     const today = new Date().toISOString().slice(0,10);
     console.log(`Saving rates for date: ${today}`);
 
-    // Prepare data for insertion
-    const rateData = {
+    // Upsert rates with validation flag
+    const { error } = await supabase.from("rates").upsert({
       date: today,
-      conventional: rates.conventional || null,
-      fha: rates.fha || null,
-      spread_bps: spreadBps,
-      valid: isValid,
+      conventional: rates.conventional,
+      fha: rates.fha,
+      spread_bps: spread,
+      valid: true,
       source: 'MND'
-    };
-
-    // Upsert rates
-    const { error } = await supabase
-      .from("rates")
-      .upsert(rateData);
+    });
 
     if (error) {
       console.error("Database error:", error);
       throw error;
     }
 
-    console.log("Successfully saved rates to database:", rateData);
+    console.log("Successfully saved rates to database");
 
     return new Response(
       JSON.stringify({ 
         status: "ok", 
         date: today,
-        rates: { 
-          conventional: rates.conventional || null, 
-          fha: rates.fha || null, 
-          spread_bps: spreadBps 
-        },
-        valid: isValid,
-        errors: fetchErrors.length > 0 ? fetchErrors : undefined
+        rates: { ...rates, spread_bps: spread } 
       }), 
       { headers: { 
         "Content-Type": "application/json", 
