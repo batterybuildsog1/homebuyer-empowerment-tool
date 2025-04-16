@@ -1,5 +1,5 @@
 
-import { DTI_LIMITS } from "../constants/mortgageConstants";
+import { DTI_LIMITS } from "../../constants/mortgageConstants";
 import { createEnhancedFactors, countStrongFactors } from "./compensatingFactorsCalculator";
 
 /**

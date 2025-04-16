@@ -1,137 +1,36 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigationType, Navigate } from "react-router-dom";
-import { HelmetProvider } from "react-helmet-async";
-import { useEffect } from "react";
-import { UserProvider, useUser } from "./context/UserContext";
-import { MortgageProvider, useMortgage } from "./context/MortgageContext";
-import HeroPage from "./pages/HeroPage";
-import AuthPage from "./pages/AuthPage";
-import OnboardingPage from "./pages/OnboardingPage";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import DashboardPage from "./pages/DashboardPage";
-import FinancialGoalsPage from "./pages/FinancialGoalsPage";
-import MortgagePlanningPage from "./pages/MortgagePlanningPage";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+import HeroPage from './pages/HeroPage';
+import DashboardPage from './pages/DashboardPage';
+import MortgagePlanningPage from './pages/MortgagePlanningPage';
+import FinancialGoalsPage from './pages/FinancialGoalsPage';
+import NotFound from './pages/NotFound';
+import { MortgageProvider } from '@/context/MortgageContext';
+import { HelmetProvider } from 'react-helmet-async';
+import './App.css';
 
-// Ensure analytics is loaded
-import "@/services/analytics/analyticsConfig";
-
-const queryClient = new QueryClient();
-
-// Analytics route observer component
-const AnalyticsRouteObserver = () => {
-  const location = useLocation();
-  const navigationType = useNavigationType();
-  
-  useEffect(() => {
-    // This is just a placeholder that ensures the analytics route tracking is initialized
-    // The actual tracking is done in the useAnalytics hook
-    console.debug(
-      "Route changed:", 
-      location.pathname, 
-      "Navigation type:", 
-      navigationType
-    );
-  }, [location, navigationType]);
-  
-  return null;
-};
-
-// Protected route wrapper with improved logic
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const { isLoggedIn } = useUser();
-  
-  if (!isLoggedIn) {
-    return <Navigate to="/auth" replace />;
-  }
-  
-  return children;
-};
-
-// Redirect already authenticated users from public-only routes
-const PublicOnlyRoute = ({ children }: { children: JSX.Element }) => {
-  const { isLoggedIn } = useUser();
-  
-  if (isLoggedIn) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
-};
-
-// Mortgage workflow checker
-const MortgageWrapper = ({ children }: { children: JSX.Element }) => {
+function App() {
   return (
-    <MortgageProvider>
-      {children}
-    </MortgageProvider>
-  );
-};
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <UserProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AnalyticsRouteObserver />
+      <ThemeProvider defaultTheme="dark" storageKey="finance-theme">
+        <MortgageProvider>
+          <Router>
             <Routes>
-              {/* Public routes */}
               <Route path="/" element={<HeroPage />} />
-              <Route path="/home" element={<Index />} />
-              
-              {/* Public-only routes (redirect if already logged in) */}
-              <Route path="/auth" element={
-                <PublicOnlyRoute>
-                  <AuthPage />
-                </PublicOnlyRoute>
-              } />
-              
-              {/* Protected routes with Mortgage provider */}
-              <Route path="/onboarding" element={
-                <ProtectedRoute>
-                  <OnboardingPage />
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <MortgageWrapper>
-                    <DashboardPage />
-                  </MortgageWrapper>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/financial-goals" element={
-                <ProtectedRoute>
-                  <MortgageWrapper>
-                    <FinancialGoalsPage />
-                  </MortgageWrapper>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/mortgage-planning" element={
-                <ProtectedRoute>
-                  <MortgageWrapper>
-                    <MortgagePlanningPage />
-                  </MortgageWrapper>
-                </ProtectedRoute>
-              } />
-              
-              {/* Catch-all route */}
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/mortgage" element={<MortgagePlanningPage />} />
+              <Route path="/goals" element={<FinancialGoalsPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </UserProvider>
+          </Router>
+          <Toaster />
+        </MortgageProvider>
+      </ThemeProvider>
     </HelmetProvider>
-  </QueryClientProvider>
-);
+  );
+}
 
 export default App;
