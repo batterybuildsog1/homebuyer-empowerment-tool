@@ -2,7 +2,7 @@
 import { UserData } from "@/context/MortgageContext";
 import { validateMortgageData } from "./validationUtils";
 import { calculateMortgageResults as calculateResults } from "./coreCalculator";
-import { DTIStatus } from "./mortgage/types/dtiTypes";
+import { FinancialDetails } from "./mortgage/types/dtiTypes";
 
 export interface MortgageResults {
   maxHomePrice: number | null;
@@ -14,18 +14,7 @@ export interface MortgageResults {
     maxHomePrice: number;
     monthlyPayment: number;
   }[];
-  financialDetails?: {
-    maxDTI: number;
-    monthlyIncome: number;
-    maxMonthlyDebtPayment: number;
-    availableForMortgage: number;
-    adjustedRate: number;
-    strongFactorCount?: number;
-    frontEndDTI?: number;
-    backEndDTI?: number;
-    frontEndDTIStatus?: DTIStatus;
-    backEndDTIStatus?: DTIStatus;
-  };
+  financialDetails?: FinancialDetails;
 }
 
 // Re-export the functions from the separate files

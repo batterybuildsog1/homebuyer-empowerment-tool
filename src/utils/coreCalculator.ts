@@ -5,7 +5,8 @@ import {
   calculateMaxDTI, 
   compensatingFactors,
   evaluateFrontEndDTI,
-  evaluateBackEndDTI 
+  evaluateBackEndDTI,
+  FinancialDetails
 } from "./mortgage/dtiCalculations";
 import {
   calculateMaxPurchasePrice,

@@ -49,6 +49,9 @@ export const useResultsCalculation = () => {
       }
       
       console.log("Calculation completed successfully:", results);
+
+      // Calculate strong factor count locally for analytics
+      const strongFactorCount = Object.values(userData.financials.selectedFactors || {}).filter(Boolean).length;
       
       // Track the calculation event
       trackEvent('results_calculated', {
@@ -56,8 +59,8 @@ export const useResultsCalculation = () => {
         ltv: userData.loanDetails.ltv,
         ficoScore: userData.financials.ficoScore,
         maxHomePrice: results.maxHomePrice,
-        // Track compensating factors data for analytics
-        hasStrongFactors: results.financialDetails?.strongFactorCount >= 2 || false
+        // Track compensating factors data for analytics using the locally calculated count
+        hasStrongFactors: strongFactorCount >= 2
       });
       
       // Update results in context

@@ -20,3 +20,21 @@ export interface DTILimits {
     hardCap: number | null;
   };
 }
+
+/**
+ * Financial details for mortgage results
+ * Contains calculated DTI values and ratios
+ */
+export interface FinancialDetails {
+  maxDTI: number;
+  monthlyIncome: number;
+  maxMonthlyDebtPayment: number;
+  availableForMortgage: number;
+  adjustedRate: number;
+  strongFactorCount?: number;
+  // DTI specific properties
+  frontEndDTI?: number;
+  backEndDTI?: number;
+  frontEndDTIStatus?: DTIStatus;
+  backEndDTIStatus?: DTIStatus;
+}

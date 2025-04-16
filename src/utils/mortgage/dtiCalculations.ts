@@ -1,6 +1,6 @@
 
 // Re-export types
-export type { DTIStatus, DTILimits } from './types/dtiTypes';
+export type { DTIStatus, DTILimits, FinancialDetails } from './types/dtiTypes';
 
 // Re-export DTI evaluators
 export { 
@@ -10,6 +10,7 @@ export {
 
 // Re-export calculators
 export { calculateMaxDTI } from './calculators/dtiCalculator';
+export { calculateDTILimits } from './calculators/dtiLimitsCalculator';
 export { 
   getNonHousingDTIOption,
   isStrongFactor,
@@ -20,3 +21,6 @@ export {
 
 // Re-export credit utils
 export { getCreditHistoryOption } from './utils/creditUtils';
+
+// Export compensating factors definitions
+export { compensatingFactors } from './constants/compensatingFactorsDefinitions';

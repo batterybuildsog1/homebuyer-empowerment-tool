@@ -5,7 +5,8 @@
  * in the DTI (Debt-to-Income) calculation.
  */
 
-import { compensatingFactors, getCreditHistoryOption } from "./dtiCalculations";
+import { compensatingFactors } from "./constants/compensatingFactorsDefinitions";
+import { getCreditHistoryOption } from "./utils/creditUtils";
 
 /**
  * Options for non-housing DTI ratios
