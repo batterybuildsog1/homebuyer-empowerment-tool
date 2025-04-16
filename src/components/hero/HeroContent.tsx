@@ -5,7 +5,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, TrendingUp, Users, Mail } from "lucide-react";
+import { UserRoundPlus, TrendingUp, Users } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
@@ -20,34 +20,9 @@ export const HeroContent = () => {
   const mortgageContext = isLoggedIn ? useMortgage() : null;
   const isMortgageComplete = mortgageContext?.isMortgageWorkflowCompleted() || false;
 
-  // Direct user based on their status
-  const navigateToAppropriateScreen = () => {
-    if (!isLoggedIn) {
-      // Not logged in - go to auth
-      navigate(ROUTES.auth);
-      return;
-    }
-    
-    if (!isMortgageComplete) {
-      // Logged in but mortgage workflow not completed - go to mortgage planning
-      navigate(ROUTES.mortgage);
-      return;
-    }
-    
-    // Logged in and mortgage workflow completed - go to dashboard
-    navigate(ROUTES.dashboard);
-    toast.success("Welcome back! Here's your financial dashboard.");
-  };
-
-  // Handle email submit
-  const handleEmailSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      navigate(`${ROUTES.auth}?email=${encodeURIComponent(email)}`);
-    } else {
-      // No email, just navigate to auth page
-      navigate(ROUTES.auth);
-    }
+  // Handle signup/login navigation
+  const handleSignUp = () => {
+    navigate(ROUTES.auth);
   };
 
   return (
@@ -63,22 +38,16 @@ export const HeroContent = () => {
           even when others say it's impossible.
         </p>
         
-        <form onSubmit={handleEmailSubmit} className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <Input 
-              type="email"
-              placeholder="Enter your email"
-              className="pl-10 bg-white/10 border-white/20 text-white w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <Button type="submit" size="lg" className="bg-[#8b76e0] hover:bg-[#7b66d0] flex items-center gap-2">
-            Get My Buying Power
-            <ArrowRight className="h-4 w-4" />
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Button 
+            onClick={handleSignUp} 
+            size="lg" 
+            className="bg-[#8b76e0] hover:bg-[#7b66d0] flex items-center gap-2 w-full sm:w-auto"
+          >
+            <UserRoundPlus className="h-4 w-4" />
+            Sign Up for Free
           </Button>
-        </form>
+        </div>
         
         <div className="flex flex-wrap gap-4 md:gap-6">
           <Card className="bg-white/5 border-white/10 w-full sm:w-auto">
