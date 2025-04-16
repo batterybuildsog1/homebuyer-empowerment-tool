@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { HeroContent } from "@/components/hero/HeroContent";
 import { HeroNavigation } from "@/components/hero/HeroNavigation";
 import { HeroFooter } from "@/components/hero/HeroFooter";
+import { RatesDashboard } from "@/components/rates/RatesDashboard";
 
 const HeroPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -26,6 +27,10 @@ const HeroPage = () => {
       <main className="flex-grow">
         <section className="min-h-[80vh] flex items-center border-b border-white/10">
           <HeroContent />
+        </section>
+        
+        <section className="py-16 bg-gradient-to-b from-[#1A1F2C] to-[#101218]">
+          <RatesDashboard />
         </section>
       </main>
       

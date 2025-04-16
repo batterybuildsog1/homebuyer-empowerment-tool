@@ -9,6 +9,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Mortgage News Daily URLs and selectors
+const MND_CONFIG = {
+  conventional: {
+    url: "https://www.mortgagenewsdaily.com/mortgage-rates",
+    selector: 'tr:contains("MND\'s 30 Year Fixed") td:nth-child(2)'
+  },
+  fha: {
+    url: "https://www.mortgagenewsdaily.com/mortgage-rates/30-year-fha",
+    selector: 'tr:contains("MND\'s 30 Year FHA") td:nth-child(2)'
+  }
+};
+
+// Validate rate is within expected range (3% - 9%)
+const isValidRate = (rate: number): boolean => 
+  rate >= 3 && rate <= 9;
+
+// Validate spread is within typical MBS range (20-75 bps)
+const isValidSpread = (spread: number): boolean => 
+  spread >= 20 && spread <= 75;
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -17,34 +37,73 @@ serve(async (req) => {
 
   try {
     console.log("Starting mortgage rate fetch from MND...");
-    
-    // Simplified approach - just fetch conventional rate
-    const response = await fetch("https://www.mortgagenewsdaily.com/mortgage-rates");
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
-    }
-    
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const rateSelector = $('tr:contains("30 Year Fixed") td:nth-child(2)').first();
-    
-    if (rateSelector.length === 0) {
-      throw new Error("Rate selector not found on page");
-    }
-    
-    const rateText = rateSelector.text().replace("%", "").trim();
-    const rate = Number(rateText);
-    
-    if (isNaN(rate)) {
-      throw new Error(`Rate text "${rateText}" is not a valid number`);
-    }
-    
-    console.log(`Found rate: ${rate}%`);
+    const rates: Record<string, number> = {};
+    let fetchErrors = [];
 
-    // Validate rate is reasonable (3-8%)
-    if (rate < 3 || rate > 8) {
-      throw new Error(`Rate ${rate} is outside valid range (3-8%)`);
+    // Fetch and parse rates from both pages
+    for (const [key, config] of Object.entries(MND_CONFIG)) {
+      try {
+        console.log(`Fetching ${key} rate from ${config.url}`);
+        const response = await fetch(config.url);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+        }
+        
+        const html = await response.text();
+        const $ = cheerio.load(html);
+        const rateSelector = $(config.selector).first();
+        
+        if (rateSelector.length === 0) {
+          throw new Error(`Selector "${config.selector}" not found on page`);
+        }
+        
+        const rateText = rateSelector.text().replace("%", "").trim();
+        const rate = Number(rateText);
+        
+        if (isNaN(rate)) {
+          throw new Error(`Rate text "${rateText}" is not a valid number`);
+        }
+        
+        console.log(`Found ${key} rate: ${rate}%`);
+
+        // Validate individual rate
+        if (!isValidRate(rate)) {
+          throw new Error(`Rate ${rate} is outside valid range (3-9%)`);
+        }
+
+        rates[key] = rate;
+      } catch (error) {
+        console.error(`Error fetching ${key} rate:`, error);
+        fetchErrors.push(`${key}: ${error.message}`);
+      }
+    }
+
+    // If we couldn't fetch any rates, return error
+    if (Object.keys(rates).length === 0) {
+      throw new Error(`Failed to fetch any rates: ${fetchErrors.join("; ")}`);
+    }
+
+    // If we have both rates, calculate and validate spread
+    let spreadBps = null;
+    let isValid = false;
+
+    if (rates.conventional && rates.fha) {
+      // Calculate spread in basis points
+      spreadBps = Math.round((rates.conventional - rates.fha) * 100);
+      console.log(`Calculated spread: ${spreadBps} bps`);
+
+      // Validate spread
+      isValid = isValidSpread(spreadBps);
+      if (!isValid) {
+        console.warn(`Spread of ${spreadBps} bps is outside expected range (20-75 bps)`);
+      }
+    } else {
+      console.warn("Could not calculate spread - missing one or more rates");
+      if (rates.conventional || rates.fha) {
+        // If we have at least one rate, consider it valid for storage
+        isValid = true;
+      }
     }
 
     // Create Supabase client
@@ -55,16 +114,19 @@ serve(async (req) => {
 
     // Get today's date in YYYY-MM-DD format
     const today = new Date().toISOString().slice(0,10);
-    console.log(`Saving rate for date: ${today}`);
+    console.log(`Saving rates for date: ${today}`);
 
-    // Simplified data structure
+    // Prepare data for insertion
     const rateData = {
       date: today,
-      conventional: rate,
+      conventional: rates.conventional || null,
+      fha: rates.fha || null,
+      spread_bps: spreadBps,
+      valid: isValid,
       source: 'MND'
     };
 
-    // Upsert rate
+    // Upsert rates
     const { error } = await supabase
       .from("rates")
       .upsert(rateData);
@@ -74,13 +136,19 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log("Successfully saved rate to database:", rateData);
+    console.log("Successfully saved rates to database:", rateData);
 
     return new Response(
       JSON.stringify({ 
         status: "ok", 
         date: today,
-        rate: rate
+        rates: { 
+          conventional: rates.conventional || null, 
+          fha: rates.fha || null, 
+          spread_bps: spreadBps 
+        },
+        valid: isValid,
+        errors: fetchErrors.length > 0 ? fetchErrors : undefined
       }), 
       { headers: { 
         "Content-Type": "application/json", 
