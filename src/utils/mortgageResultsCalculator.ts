@@ -2,7 +2,7 @@
 import { UserData } from "@/context/MortgageContext";
 import { validateMortgageData } from "./validationUtils";
 import { calculateMortgageResults as calculateResults } from "./coreCalculator";
-import { DTIStatus } from "./mortgage/dtiCalculations";
+import { DTIStatus } from "./mortgage/types/dtiTypes";
 
 export interface MortgageResults {
   maxHomePrice: number | null;
