@@ -36,17 +36,22 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Starting mortgage rate fetch from MND...");
     const rates: Record<string, number> = {};
 
     // Fetch and parse rates from both pages
     for (const [key, config] of Object.entries(MND_CONFIG)) {
+      console.log(`Fetching ${key} rate from ${config.url}`);
       const html = await fetch(config.url).then(r => r.text());
       const $ = cheerio.load(html);
       const rateText = $(config.selector).first().text().replace("%", "").trim();
       const rate = Number(rateText);
+      
+      console.log(`Found ${key} rate: ${rate}%`);
 
       // Validate individual rate
       if (!isValidRate(rate)) {
+        console.error(`Invalid ${key} rate: ${rate}`);
         throw new Error(`Invalid ${key} rate: ${rate}`);
       }
 
@@ -55,9 +60,11 @@ serve(async (req) => {
 
     // Calculate spread
     const spread = Math.round((rates.conventional - rates.fha) * 100);
+    console.log(`Calculated spread: ${spread} bps`);
 
     // Validate spread
     if (!isValidSpread(spread)) {
+      console.error(`Invalid spread: ${spread} bps`);
       throw new Error(`Invalid spread: ${spread} bps`);
     }
 
@@ -67,9 +74,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().slice(0,10);
+    console.log(`Saving rates for date: ${today}`);
+
     // Upsert rates with validation flag
     const { error } = await supabase.from("rates").upsert({
-      date: new Date().toISOString().slice(0,10),
+      date: today,
       conventional: rates.conventional,
       fha: rates.fha,
       spread_bps: spread,
@@ -77,11 +88,17 @@ serve(async (req) => {
       source: 'MND'
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Database error:", error);
+      throw error;
+    }
+
+    console.log("Successfully saved rates to database");
 
     return new Response(
       JSON.stringify({ 
         status: "ok", 
+        date: today,
         rates: { ...rates, spread_bps: spread } 
       }), 
       { headers: { 

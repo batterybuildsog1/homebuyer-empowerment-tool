@@ -3,3 +3,6 @@ project_id = "thcmyhermklehzjdmhio"
 
 [functions.perplexity-api]
 verify_jwt = false
+
+[functions.fetch_mnd_rates]
+verify_jwt = false
