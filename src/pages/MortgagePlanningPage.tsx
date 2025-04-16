@@ -9,6 +9,7 @@ import { useMortgage } from "@/context/MortgageContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, RefreshCw } from "lucide-react";
+import { ROUTES } from "@/utils/routes";
 
 // Main MortgagePlanningPage component
 const MortgagePlanningPage = () => {
@@ -40,7 +41,7 @@ const MortgagePlanningPage = () => {
           </Button>
           
           <Button 
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(ROUTES.dashboard)}
             className="gap-2"
           >
             <BarChart3 className="h-4 w-4" /> 
