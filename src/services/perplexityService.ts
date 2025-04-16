@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export interface MortgageDataResponse {
@@ -26,13 +27,23 @@ export const fetchMortgageRates = async (): Promise<{
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
 }> => {
-  console.log("Using mortgage rate data (simulating backend call)");
-  
-  // Return values (would be from a backend service in production)
-  return {
-    conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-    fhaInterestRate: TEST_DATA.fhaInterestRate
-  };
+  const { data: ratesData } = await supabase
+    .from("rates")
+    .select("*")
+    .eq("valid", true)
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  return ratesData 
+    ? {
+        conventionalInterestRate: ratesData.conventional,
+        fhaInterestRate: ratesData.fha
+      }
+    : {
+        conventionalInterestRate: TEST_DATA.conventionalInterestRate,
+        fhaInterestRate: TEST_DATA.fhaInterestRate
+      };
 };
 
 /**
@@ -64,12 +75,28 @@ export const fetchAllMortgageData = async (
   zipCode: string
 ): Promise<MortgageDataResponse | null> => {
   try {
-    console.log(`Getting mortgage data for ${state}, ${county}, ${zipCode} - simulating backend call`);
-    
-    // Return combined data (would be from a backend service in production)
+    // First, try to get the latest valid rates from the database
+    const { data: ratesData, error: ratesError } = await supabase
+      .from("rates")
+      .select("*")
+      .eq("valid", true)
+      .order("date", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (ratesError || !ratesData) {
+      console.error("No valid rates found:", ratesError);
+      return {
+        conventionalInterestRate: TEST_DATA.conventionalInterestRate,
+        fhaInterestRate: TEST_DATA.fhaInterestRate,
+        propertyTax: TEST_DATA.propertyTax,
+        propertyInsurance: TEST_DATA.propertyInsurance
+      };
+    }
+
     return {
-      conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-      fhaInterestRate: TEST_DATA.fhaInterestRate,
+      conventionalInterestRate: ratesData.conventional,
+      fhaInterestRate: ratesData.fha,
       propertyTax: TEST_DATA.propertyTax,
       propertyInsurance: TEST_DATA.propertyInsurance,
       upfrontMIP: TEST_DATA.upfrontMIP,
@@ -78,7 +105,6 @@ export const fetchAllMortgageData = async (
     
   } catch (error) {
     console.error(`Error in fetchAllMortgageData:`, error);
-    toast.error("Error retrieving mortgage data.");
     return null;
   }
 };
