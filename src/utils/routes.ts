@@ -3,12 +3,10 @@
 export const ROUTES = {
   root: "/",
   dashboard: "/dashboard",
-  mortgage: "/mortgage-planning", // Updated to match what's used in navigation
+  mortgage: "/mortgage-planning",
   goals: "/financial-goals",
   auth: "/auth",
-  onboarding: "/onboarding",
   expenses: "/expenses",
   income: "/income",
   savings: "/savings",
-  // Add any future routes here
 };

@@ -12,7 +12,6 @@ import { MortgageProvider } from '@/context/MortgageContext';
 import { UserProvider } from '@/context/UserContext';
 import { HelmetProvider } from 'react-helmet-async';
 import AuthPage from './pages/AuthPage';
-import OnboardingPage from './pages/OnboardingPage';
 import ExpensesPage from './pages/ExpensesPage';
 import { ROUTES } from './utils/routes';
 import ScenarioMigration from './components/scenarios/ScenarioMigration';
@@ -31,7 +30,6 @@ function App() {
                 <Route path={ROUTES.mortgage} element={<MortgagePlanningPage />} />
                 <Route path={ROUTES.goals} element={<FinancialGoalsPage />} />
                 <Route path={ROUTES.auth} element={<AuthPage />} />
-                <Route path={ROUTES.onboarding} element={<OnboardingPage />} />
                 <Route path={ROUTES.expenses} element={<ExpensesPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
