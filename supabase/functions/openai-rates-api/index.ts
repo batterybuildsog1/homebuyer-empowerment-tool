@@ -33,7 +33,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini", // Using GPT-4o mini as recommended
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -44,7 +44,7 @@ serve(async (req) => {
             content: "What are today's current average 30-year fixed mortgage interest rates? I need rates for both conventional and FHA loans. Return ONLY a JSON object with two properties: conventionalInterestRate and fhaInterestRate (both as numbers with 2 decimal places)."
           }
         ],
-        response_format: { type: "json_object" } // Ensure JSON response
+        response_format: { type: "json_object" }
       })
     });
     

@@ -14,10 +14,10 @@ export interface MortgageDataResponse {
 const TEST_DATA = {
   conventionalInterestRate: 6.75,
   fhaInterestRate: 6.25,
-  propertyTax: 1.1, // National average property tax rate (%)
-  propertyInsurance: 1200, // Average annual insurance premium ($)
-  upfrontMIP: 1.75, // FHA upfront mortgage insurance premium (%)
-  ongoingMIP: 0.55 // FHA ongoing mortgage insurance premium (%)
+  propertyTax: 1.1,
+  propertyInsurance: 1200,
+  upfrontMIP: 1.75,
+  ongoingMIP: 0.55
 };
 
 /**
@@ -39,7 +39,7 @@ export const fetchMortgageRates = async (): Promise<{
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}), // No params needed for rates only
+      body: JSON.stringify({}),
     });
     
     if (!response.ok) {
