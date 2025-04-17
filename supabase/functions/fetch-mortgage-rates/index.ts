@@ -23,6 +23,78 @@ function logError(message: string, error?: any) {
   console.error(`[ERROR][${new Date().toISOString()}] ${message}`, error ? JSON.stringify(error) : "");
 }
 
+/**
+ * Checks if rate data exists in the database.
+ * Unlike the previous version, this function only checks if data exists,
+ * it does NOT create seed data automatically.
+ */
+async function checkDataExists(): Promise<boolean> {
+  try {
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Check if we have any data in the rates table
+    const { count, error } = await supabase
+      .from("daily_mortgage_rates")
+      .select("*", { count: "exact", head: true });
+    
+    if (error) {
+      logError("Error checking existing rates", error);
+      return false;
+    }
+    
+    // Return true if we have data, false otherwise
+    return !!(count && count > 0);
+  } catch (error) {
+    logError("Error in checkDataExists", error);
+    return false;
+  }
+}
+
+/**
+ * Explicitly seed the database with initial data.
+ * This should only be called when explicitly requested.
+ */
+async function seedInitialData(): Promise<boolean> {
+  try {
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Check if we already have data
+    const hasData = await checkDataExists();
+    if (hasData) {
+      logInfo("Database already has rate entries, no need to seed");
+      return true;
+    }
+    
+    // No data, insert a seed entry
+    logInfo("No rates found in database. Adding seed data...");
+    
+    const today = new Date();
+    const seedData = {
+      rate_date: today.toISOString().split("T")[0],
+      conventional: 6.89,
+      fha: 7.24
+    };
+    
+    const { data, error: insertError } = await supabase
+      .from("daily_mortgage_rates")
+      .insert(seedData)
+      .select();
+    
+    if (insertError) {
+      logError("Error inserting seed data", insertError);
+      return false;
+    }
+    
+    logInfo("Successfully added seed mortgage rate data", data);
+    return true;
+  } catch (error) {
+    logError("Error in seedInitialData", error);
+    return false;
+  }
+}
+
 async function fetchMortgageRatesWithOpenAI(): Promise<{ 
   conventional: number | null; 
   fha: number | null;
@@ -83,55 +155,6 @@ async function fetchMortgageRatesWithOpenAI(): Promise<{
   } catch (error) {
     logError("Error fetching mortgage rates from OpenAI", error);
     throw error;
-  }
-}
-
-async function ensureDataExists(): Promise<boolean> {
-  try {
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Check if we have any data in the rates table
-    const { count, error } = await supabase
-      .from("daily_mortgage_rates")
-      .select("*", { count: "exact", head: true });
-    
-    if (error) {
-      logError("Error checking existing rates", error);
-      return false;
-    }
-    
-    // If we have data, we're good
-    if (count && count > 0) {
-      logInfo(`Database already has ${count} rate entries`);
-      return true;
-    }
-    
-    // No data, insert a seed entry
-    logInfo("No rates found in database. Adding seed data...");
-    
-    const today = new Date();
-    const seedData = {
-      rate_date: today.toISOString().split("T")[0],
-      conventional: 6.89,
-      fha: 7.24
-    };
-    
-    const { data, error: insertError } = await supabase
-      .from("daily_mortgage_rates")
-      .insert(seedData)
-      .select();
-    
-    if (insertError) {
-      logError("Error inserting seed data", insertError);
-      return false;
-    }
-    
-    logInfo("Successfully added seed mortgage rate data", data);
-    return true;
-  } catch (error) {
-    logError("Error in ensureDataExists", error);
-    return false;
   }
 }
 
@@ -205,8 +228,51 @@ serve(async (req) => {
   try {
     logInfo(`Starting mortgage rate fetch (source: ${source})`);
     
-    // First, make sure we have at least some data in our database
-    await ensureDataExists();
+    // Parse request body if it exists
+    let requestParams = {};
+    if (req.method === "POST") {
+      try {
+        requestParams = await req.json();
+      } catch (e) {
+        // If JSON parsing fails, just use empty object
+        requestParams = {};
+      }
+    }
+    
+    // Check if this is an explicit initialization request
+    if (requestParams && (requestParams as any).initialize === true) {
+      logInfo("Explicit initialization requested");
+      const seedSuccess = await seedInitialData();
+      
+      if (!seedSuccess) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to initialize database with seed data"
+          }),
+          { status: 500, headers }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Database initialized with seed data"
+        }),
+        { status: 200, headers }
+      );
+    }
+    
+    // Check if we have any data before trying to fetch new rates
+    const hasExistingData = await checkDataExists();
+    if (!hasExistingData) {
+      logInfo("No existing rate data found and this is not an initialization request");
+      return new Response(
+        JSON.stringify({ 
+          error: "No rate data exists in the database. Please initialize first."
+        }),
+        { status: 404, headers }
+      );
+    }
     
     // 1. Fetch the latest mortgage rates from OpenAI
     const rates = await fetchMortgageRatesWithOpenAI();

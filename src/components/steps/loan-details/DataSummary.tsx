@@ -5,7 +5,7 @@ import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { formatPercentage, formatCurrency } from "@/utils/formatters";
 import { useMortgage } from "@/context/MortgageContext";
 import { getRelativeTimeString } from "@/utils/formatters";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
@@ -14,6 +14,9 @@ interface DataSummaryProps {
   propertyTax: number | null;
   propertyInsurance: number | null;
   hasAttemptedFetch: boolean;
+  isError: boolean; // Add isError prop to explicitly track error state
+  errorMessage: string | null; // Add error message prop
+  isLoading: boolean; // Add loading state prop
   onFetchData: () => Promise<any>;
 }
 
@@ -24,6 +27,9 @@ const DataSummary: React.FC<DataSummaryProps> = ({
   propertyTax,
   propertyInsurance,
   hasAttemptedFetch,
+  isError,
+  errorMessage,
+  isLoading,
   onFetchData
 }) => {
   const { userData } = useMortgage();
@@ -61,17 +67,38 @@ const DataSummary: React.FC<DataSummaryProps> = ({
             size="sm" 
             className="ml-2"
             onClick={onFetchData}
+            disabled={isLoading}
           >
-            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" /> Loading...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+              </>
+            )}
           </Button>
         </div>
       </div>
 
-      {!hasData && hasAttemptedFetch && (
+      {/* Display error alert when there's an error */}
+      {isError && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            Failed to retrieve mortgage rate data. Please ensure your location is set correctly and try refreshing.
+            {errorMessage || "Failed to retrieve mortgage rate data. Please ensure your location is set correctly and try refreshing."}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Display missing data alert when attempted fetch but no data */}
+      {!hasData && hasAttemptedFetch && !isError && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Some mortgage data is not available. Please ensure your location is set correctly and try refreshing.
           </AlertDescription>
         </Alert>
       )}
@@ -81,30 +108,58 @@ const DataSummary: React.FC<DataSummaryProps> = ({
           <div className="text-sm">
             <p className="text-muted-foreground">Current {loanType === 'conventional' ? 'Conventional' : 'FHA'} Rate:</p>
             <p className="font-medium">
-              {interestRate ? formatPercentage(interestRate) : (
-                <span className="text-destructive">Not available</span>
+              {isLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Loading...
+                </span>
+              ) : interestRate ? (
+                formatPercentage(interestRate)
+              ) : (
+                <span className={isError ? "text-destructive" : "text-amber-500"}>
+                  {isError ? "Error loading rate" : "Not available"}
+                </span>
               )}
             </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Property Tax Rate:</p>
             <p className="font-medium">
-              {propertyTax ? formatPercentage(propertyTax) : (
-                <span className="text-destructive">Not available</span>
+              {isLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Loading...
+                </span>
+              ) : propertyTax ? (
+                formatPercentage(propertyTax)
+              ) : (
+                <span className={isError ? "text-destructive" : "text-amber-500"}>
+                  {isError ? "Error loading rate" : "Not available"}
+                </span>
               )}
             </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Annual Insurance:</p>
             <p className="font-medium">
-              {propertyInsurance ? formatCurrency(propertyInsurance) : (
-                <span className="text-destructive">Not available</span>
+              {isLoading ? (
+                <span className="flex items-center">
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Loading...
+                </span>
+              ) : propertyInsurance ? (
+                formatCurrency(propertyInsurance)
+              ) : (
+                <span className={isError ? "text-destructive" : "text-amber-500"}>
+                  {isError ? "Error loading amount" : "Not available"}
+                </span>
               )}
             </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Data Updated:</p>
-            <p className="font-medium">{timeString}</p>
+            <p className="font-medium">
+              {dataTimestamp > 0 ? timeString : (
+                <span className="text-amber-500">Never</span>
+              )}
+            </p>
           </div>
         </div>
       </div>

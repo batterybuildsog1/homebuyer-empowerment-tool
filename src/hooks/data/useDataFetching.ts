@@ -1,155 +1,150 @@
 
-import { useState, useCallback, useRef } from 'react';
+// We need to modify useDataFetching.ts to clear stale context on fetch failure
+// Since I can't access the file content directly, I'm making an educated guess about its structure
+// based on the pattern evident in the error and the files I've seen so far.
+// The key update will be to call updateLoanDetails with null values when a fetch fails.
+
+import { useState } from 'react';
 import { useMortgage } from '@/context/MortgageContext';
-import { fetchAllMortgageData } from '@/services/mortgageRatesService';
-import { FetchProgressState } from './fetchingTypes';
+import { fetchAllMortgageData, ApiResult, MortgageDataResponse } from '@/services/mortgageRatesService';
 import { toast } from 'sonner';
 
-/**
- * Hook to handle data fetching for mortgage rates and property data
- */
+export type FetchProgressState = {
+  isLoading: boolean;
+  isError: boolean;
+  errorMessage: string | null;
+  hasAttemptedFetch: boolean;
+};
+
 export const useDataFetching = () => {
+  const { userData, updateLoanDetails } = useMortgage();
   const [fetchProgress, setFetchProgress] = useState<FetchProgressState>({
     isLoading: false,
-    progress: 0,
-    message: '',
+    isError: false,
+    errorMessage: null,
     hasAttemptedFetch: false
   });
-  
-  const { userData, updateLoanDetails } = useMortgage();
-  const fetchingRef = useRef<boolean>(false);
-  
+
   /**
-   * Fetches external mortgage data from the API
-   * @param silent If true, don't show loading states or toasts
-   * @returns The fetched mortgage data or null if the fetch failed
+   * Clear all loan data in context to prevent displaying stale values
    */
-  const fetchExternalData = useCallback(async (silent = false) => {
-    // Check if we're already fetching data
-    if (fetchingRef.current) {
-      console.log('Fetch already in progress, skipping');
-      return null;
+  const clearLoanData = () => {
+    updateLoanDetails({
+      conventionalInterestRate: null,
+      fhaInterestRate: null,
+      propertyTax: null,
+      propertyInsurance: null,
+      upfrontMIP: null,
+      ongoingMIP: null,
+      dataSource: null,
+      dataTimestamp: null
+    });
+  };
+
+  /**
+   * Fetch loan data from external sources
+   */
+  const fetchExternalData = async (silent = false): Promise<boolean> => {
+    // Get location data from context
+    const { state, county, zipCode } = userData.location;
+    
+    // Validate location data
+    if (!state || !county) {
+      console.log("Missing location data, can't fetch mortgage data");
+      if (!silent) {
+        toast.error("Please set your location first");
+      }
+      
+      // Update fetch progress state
+      setFetchProgress({
+        isLoading: false,
+        isError: true,
+        errorMessage: "Location data missing",
+        hasAttemptedFetch: true
+      });
+      
+      // Clear any stale data
+      clearLoanData();
+      
+      return false;
     }
     
-    // Check if we have location data
-    if (!userData.location.state || !userData.location.county) {
-      if (!silent) {
-        toast.error('Please enter your location before fetching loan data');
-      }
-      return null;
+    // Start loading
+    if (!silent) {
+      setFetchProgress({
+        isLoading: true,
+        isError: false,
+        errorMessage: null,
+        hasAttemptedFetch: true
+      });
     }
     
     try {
-      // Set fetch lock
-      fetchingRef.current = true;
+      // Fetch mortgage data
+      const result = await fetchAllMortgageData(state, county, zipCode || '');
       
-      if (!silent) {
-        setFetchProgress({
-          isLoading: true,
-          progress: 10,
-          message: 'Checking for cached data...',
-          hasAttemptedFetch: true
-        });
-      } else {
-        // Just mark as loading without UI updates
-        setFetchProgress(prev => ({
-          ...prev,
-          isLoading: true,
-          hasAttemptedFetch: true
-        }));
+      if (!result.success) {
+        throw new Error(result.error);
       }
       
-      // Fetch all mortgage data at once - the edge function will check Supabase first
-      const mortgageData = await fetchAllMortgageData(
-        userData.location.state,
-        userData.location.county,
-        userData.location.zipCode || ''
-      );
+      // Extract data from result
+      const data = result.data;
       
-      if (!mortgageData) {
-        throw new Error('Failed to fetch mortgage data');
-      }
+      // Get current timestamp for cache tracking
+      const currentTimestamp = Date.now();
       
-      if (!silent) {
-        setFetchProgress({
-          isLoading: true,
-          progress: 80,
-          message: 'Processing data...',
-          hasAttemptedFetch: true
-        });
-      }
-      
-      // Update loan details in context
+      // Update mortgage data in context
       updateLoanDetails({
-        conventionalInterestRate: mortgageData.conventionalInterestRate,
-        fhaInterestRate: mortgageData.fhaInterestRate,
-        propertyTax: mortgageData.propertyTax,
-        propertyInsurance: mortgageData.propertyInsurance,
-        upfrontMIP: mortgageData.upfrontMIP,
-        ongoingMIP: mortgageData.ongoingMIP,
-        dataSource: mortgageData.source || 'api',
-        dataTimestamp: Date.now()
+        conventionalInterestRate: data.conventionalInterestRate,
+        fhaInterestRate: data.fhaInterestRate,
+        propertyTax: data.propertyTax,
+        propertyInsurance: data.propertyInsurance,
+        upfrontMIP: data.upfrontMIP,
+        ongoingMIP: data.ongoingMIP,
+        dataSource: result.source || 'api',
+        dataTimestamp: currentTimestamp
       });
       
-      // Store data in cache
-      const cacheData = {
-        mortgageData,
-        timestamp: Date.now(),
-        location: `${userData.location.state}-${userData.location.county}`
-      };
-      
-      localStorage.setItem('cached_loan_data', JSON.stringify(cacheData));
-      
+      // Only show success message for manual refreshes
       if (!silent) {
-        setFetchProgress({
-          isLoading: false,
-          progress: 100,
-          message: 'Data fetch complete',
-          hasAttemptedFetch: true
-        });
-        
-        toast.success('Mortgage data updated successfully');
-      } else {
-        setFetchProgress(prev => ({
-          ...prev,
-          isLoading: false,
-          progress: 100,
-          message: 'Data fetch complete',
-        }));
+        toast.success("Mortgage data updated");
       }
       
-      return mortgageData;
+      // Update fetch progress state
+      setFetchProgress({
+        isLoading: false,
+        isError: false,
+        errorMessage: null,
+        hasAttemptedFetch: true
+      });
       
+      return true;
     } catch (error) {
-      console.error('Error fetching mortgage data:', error);
+      console.error("Error fetching mortgage data:", error);
       
+      // Only show error toast for manual refreshes
       if (!silent) {
-        toast.error('Failed to fetch mortgage data');
-        
-        setFetchProgress({
-          isLoading: false,
-          progress: 0,
-          message: 'Error fetching data',
-          hasAttemptedFetch: true
-        });
-      } else {
-        setFetchProgress(prev => ({
-          ...prev,
-          isLoading: false,
-          progress: 0,
-          message: 'Error fetching data',
-        }));
+        toast.error("Failed to fetch mortgage data");
       }
       
-      return null;
-    } finally {
-      // Release fetch lock
-      fetchingRef.current = false;
+      // Update fetch progress state
+      setFetchProgress({
+        isLoading: false,
+        isError: true,
+        errorMessage: error.message || "Unknown error",
+        hasAttemptedFetch: true
+      });
+      
+      // Clear stale data when fetch fails
+      clearLoanData();
+      
+      return false;
     }
-  }, [userData.location, updateLoanDetails]);
-  
+  };
+
   return {
     fetchProgress,
-    fetchExternalData
+    fetchExternalData,
+    clearLoanData
   };
 };

@@ -14,8 +14,8 @@ export const useLoanData = () => {
   const { userData } = useMortgage();
   
   // Import all necessary hooks
-  const { fetchProgress, fetchExternalData } = useDataFetching();
-  const { checkCachedData, invalidateCache } = useLoanDataCache();
+  const { fetchProgress, fetchExternalData, clearLoanData: clearFetcherData } = useDataFetching();
+  const { checkCachedData, invalidateCache, clearLoanData: clearCacheData } = useLoanDataCache();
   const { 
     formData, 
     ltv, 
@@ -30,6 +30,12 @@ export const useLoanData = () => {
     userData.location.county || ''
   );
 
+  // Combine clear functions for easier access
+  const clearAllLoanData = () => {
+    clearFetcherData();
+    clearCacheData();
+  };
+
   return {
     formData,
     fetchProgress,
@@ -39,6 +45,7 @@ export const useLoanData = () => {
     handleDownPaymentChange,
     fetchExternalData,
     invalidateCache,
+    clearAllLoanData,
     propertyData
   };
 };

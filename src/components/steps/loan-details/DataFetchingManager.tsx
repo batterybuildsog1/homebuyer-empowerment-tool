@@ -15,8 +15,8 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
   cachedDataExists
 }) => {
   const { userData } = useMortgage();
-  const { checkCachedData } = useLoanDataCache();
-  const { fetchExternalData } = useDataFetching();
+  const { checkCachedData, clearLoanData } = useLoanDataCache();
+  const { fetchExternalData, clearLoanData: fetcherClearLoanData } = useDataFetching();
   const [isInitialized, setIsInitialized] = useState(false);
   const initializingRef = useRef(false);
 
@@ -33,6 +33,8 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
       // Only proceed if we have location data
       if (!userData.location.state || !userData.location.county) {
         console.log("Location data missing, skipping data fetch");
+        // Clear any stale data when location is missing
+        clearLoanData();
         initializingRef.current = false;
         return;
       }
@@ -40,6 +42,9 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
       console.log("Checking for cached loan data");
       
       try {
+        // Clear any stale data before attempting to load cache or fetch
+        clearLoanData();
+        
         // First try to load from local cache
         const localCacheLoaded = await checkCachedData();
         
@@ -53,16 +58,19 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
         
         // If no local cache, try to fetch from Supabase via edge function
         console.log("No valid local cache, fetching from backend");
-        const data = await fetchExternalData(true); // Silent mode
+        // Use false for silent mode on initial load to show loading states
+        const data = await fetchExternalData(false);
         
         if (data) {
           console.log("Successfully fetched loan data");
-          // Only show toast on manual refresh, not on auto-initialization
+          // Toast message already shown by fetchExternalData
         } else {
           console.log("Failed to fetch loan data or no data needed");
+          // Error toast already shown by fetchExternalData
         }
       } catch (error) {
         console.error("Error during data initialization:", error);
+        clearLoanData(); // Ensure data is cleared on error
       } finally {
         checkDataReadiness();
         setIsInitialized(true);
@@ -79,13 +87,19 @@ const DataFetchingManager: React.FC<DataFetchingManagerProps> = ({
     checkCachedData, 
     fetchExternalData, 
     checkDataReadiness, 
-    isInitialized
+    isInitialized,
+    clearLoanData,
+    fetcherClearLoanData
   ]);
 
-  // Initial data readiness check
+  // Handle location changes to clear stale data
   useEffect(() => {
+    // Clear loan data when location changes
+    clearLoanData();
+    
+    // Initial data readiness check
     checkDataReadiness();
-  }, []); 
+  }, [userData.location.state, userData.location.county, clearLoanData, checkDataReadiness]); 
 
   return null; // This is a non-visual component
 };
