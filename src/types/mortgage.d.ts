@@ -4,6 +4,8 @@ export interface MortgageDataResponse {
   fhaInterestRate: number;
   propertyTax: number;
   propertyInsurance: number;
+  upfrontMIP?: number | null;
+  ongoingMIP?: number | null;
 }
 
 export interface ApiResult<T> {
@@ -12,4 +14,5 @@ export interface ApiResult<T> {
   error?: string;
   source?: string;
   fromCache?: boolean;
+  errorCode?: string;
 }

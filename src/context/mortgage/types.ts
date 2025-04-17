@@ -81,6 +81,7 @@ export interface UserData {
     ongoingMIP: number | null;
     dataSource?: string;
     dataTimestamp?: number;
+    downPayment?: number;
   };
   goals: {
     renovations: number;

@@ -22,6 +22,8 @@ export interface MortgageDataResponse {
   fhaInterestRate: number;
   propertyTax: number;
   propertyInsurance: number;
+  upfrontMIP?: number | null;
+  ongoingMIP?: number | null;
 }
 
 export interface DataSummaryProps {

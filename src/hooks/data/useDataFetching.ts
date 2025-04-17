@@ -1,20 +1,9 @@
 
-// We need to modify useDataFetching.ts to clear stale context on fetch failure
-// Since I can't access the file content directly, I'm making an educated guess about its structure
-// based on the pattern evident in the error and the files I've seen so far.
-// The key update will be to call updateLoanDetails with null values when a fetch fails.
-
 import { useState } from 'react';
 import { useMortgage } from '@/context/MortgageContext';
-import { fetchAllMortgageData, ApiResult, MortgageDataResponse } from '@/services/mortgageRatesService';
+import { fetchAllMortgageData } from '@/services/mortgageRatesService';
 import { toast } from 'sonner';
-
-export type FetchProgressState = {
-  isLoading: boolean;
-  isError: boolean;
-  errorMessage: string | null;
-  hasAttemptedFetch: boolean;
-};
+import { FetchProgressState } from './fetchingTypes';
 
 export const useDataFetching = () => {
   const { userData, updateLoanDetails } = useMortgage();
@@ -22,7 +11,9 @@ export const useDataFetching = () => {
     isLoading: false,
     isError: false,
     errorMessage: null,
-    hasAttemptedFetch: false
+    hasAttemptedFetch: false,
+    progress: 0,
+    message: ''
   });
 
   /**
@@ -60,7 +51,9 @@ export const useDataFetching = () => {
         isLoading: false,
         isError: true,
         errorMessage: "Location data missing",
-        hasAttemptedFetch: true
+        hasAttemptedFetch: true,
+        progress: 0,
+        message: "Location data missing"
       });
       
       // Clear any stale data
@@ -75,7 +68,9 @@ export const useDataFetching = () => {
         isLoading: true,
         isError: false,
         errorMessage: null,
-        hasAttemptedFetch: true
+        hasAttemptedFetch: true,
+        progress: 10, 
+        message: "Fetching mortgage data..."
       });
     }
     
@@ -83,7 +78,7 @@ export const useDataFetching = () => {
       // Fetch mortgage data
       const result = await fetchAllMortgageData(state, county, zipCode || '');
       
-      if (!result.success) {
+      if (!result.success && 'error' in result) {
         throw new Error(result.error);
       }
       
@@ -115,7 +110,9 @@ export const useDataFetching = () => {
         isLoading: false,
         isError: false,
         errorMessage: null,
-        hasAttemptedFetch: true
+        hasAttemptedFetch: true,
+        progress: 100,
+        message: "Data successfully fetched"
       });
       
       return true;
@@ -132,7 +129,9 @@ export const useDataFetching = () => {
         isLoading: false,
         isError: true,
         errorMessage: error.message || "Unknown error",
-        hasAttemptedFetch: true
+        hasAttemptedFetch: true,
+        progress: 0,
+        message: `Error: ${error.message || "Unknown error"}`
       });
       
       // Clear stale data when fetch fails

@@ -115,6 +115,9 @@ const LoanDetailsForm: React.FC<LoanDetailsFormProps> = ({
         propertyTax={dataToDisplay.propertyTax}
         propertyInsurance={dataToDisplay.propertyInsurance}
         hasAttemptedFetch={fetchProgress.hasAttemptedFetch}
+        isError={fetchProgress.isError}
+        errorMessage={fetchProgress.errorMessage}
+        isLoading={fetchProgress.isLoading}
         onFetchData={fetchExternalData}
       />
       

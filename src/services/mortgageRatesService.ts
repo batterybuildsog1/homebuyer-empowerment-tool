@@ -2,23 +2,7 @@
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CountyPropertyData } from "@/hooks/data/usePropertyData";
-
-export interface MortgageDataResponse {
-  conventionalInterestRate: number | null;
-  fhaInterestRate: number | null;
-  propertyTax: number | null;
-  propertyInsurance: number | null;
-  upfrontMIP?: number | null;
-  ongoingMIP?: number | null;
-  rateDate?: string;
-  source?: string;
-  fromCache?: boolean;
-}
-
-// Define a discriminated union type for API responses
-export type ApiResult<T> = 
-  | { success: true; data: T; source?: string; fromCache?: boolean }
-  | { success: false; error: string; errorCode?: string };
+import { MortgageDataResponse, ApiResult } from "@/hooks/data/fetchingTypes";
 
 /**
  * Fetches mortgage interest rates from the get-mortgage-rates edge function
@@ -154,7 +138,10 @@ export const fetchAllMortgageData = async (
     
     // If rates fetch failed, propagate the error
     if (!ratesResult.success) {
-      return ratesResult;
+      return {
+        success: false,
+        error: ratesResult.error || "Failed to fetch rates"
+      };
     }
     
     // Then, get property data
@@ -162,17 +149,20 @@ export const fetchAllMortgageData = async (
     
     // If property data fetch failed, propagate the error
     if (!propertyResult.success) {
-      return propertyResult;
+      return {
+        success: false,
+        error: propertyResult.error || "Failed to fetch property data"
+      };
     }
     
     // Return combined data
     return {
       success: true,
       data: {
-        conventionalInterestRate: ratesResult.data.conventionalInterestRate,
-        fhaInterestRate: ratesResult.data.fhaInterestRate,
-        propertyTax: propertyResult.data.propertyTax,
-        propertyInsurance: propertyResult.data.propertyInsurance,
+        conventionalInterestRate: ratesResult.data.conventionalInterestRate || 0,
+        fhaInterestRate: ratesResult.data.fhaInterestRate || 0,
+        propertyTax: propertyResult.data.propertyTax || 0,
+        propertyInsurance: propertyResult.data.propertyInsurance || 0,
         // FHA mortgage insurance rates are standard and don't need to be fetched
         upfrontMIP: 1.75, // FHA upfront mortgage insurance is typically 1.75%
         ongoingMIP: 0.55, // FHA annual mortgage insurance is typically 0.55%

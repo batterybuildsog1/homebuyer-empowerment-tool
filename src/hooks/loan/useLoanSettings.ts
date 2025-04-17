@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect } from 'react';
 import { useMortgage } from '@/context/MortgageContext';
 
@@ -75,7 +76,7 @@ export const useLoanSettings = () => {
     
     updateLoanDetails({ 
       ltv: 100 - downPayment,
-      downPayment
+      downPayment // Now this is valid because we added it to the type
     });
   }, [updateLoanDetails]);
   
