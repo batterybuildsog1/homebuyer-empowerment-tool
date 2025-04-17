@@ -17,7 +17,6 @@ export interface FinancialFormErrors {
 export const useFinancialForm = () => {
   const { userData, updateFinancials, setCurrentStep } = useMortgage();
   
-  // Convert debt items between formats
   const convertDebtItemsToLegacy = (items: DebtItem[]): DebtItems => {
     const legacy: DebtItems = {
       carLoan: 0,
@@ -66,7 +65,6 @@ export const useFinancialForm = () => {
     return items;
   };
 
-  // Form state
   const [formData, setFormData] = useState<FinancialFormData>({
     annualIncome: userData.financials.annualIncome || 0,
     debtItems: userData.financials.debtItems || [],
@@ -76,14 +74,11 @@ export const useFinancialForm = () => {
   const [errors, setErrors] = useState<FinancialFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Handlers
   const handleIncomeChange = useCallback((value: number) => {
     setFormData(prev => ({ ...prev, annualIncome: value }));
   }, []);
 
   const handleDebtItemChange = useCallback((id: string, value: number) => {
-    // Here we assume we're getting updates for the DebtItems format
-    // We'll convert it to DebtItem[] format for internal state
     const currentLegacyItems = convertDebtItemsToLegacy(formData.debtItems);
     currentLegacyItems[id] = value;
     
@@ -95,22 +90,15 @@ export const useFinancialForm = () => {
     }));
   }, [formData.debtItems]);
 
-  const originalHandleFicoScoreChange = (value: number) => {
+  const handleFicoScoreChange = (value: number) => {
     setFormData(prev => ({
       ...prev,
       ficoScore: value
     }));
-  };
-
-  const handleFicoScoreChange = (value: number) => {
-    originalHandleFicoScoreChange(value);
     
-    // Add your additional logic here if needed
-    // For example:
     console.log("FICO score changed:", value);
   };
 
-  // Form validation
   const validateForm = (): boolean => {
     const newErrors: FinancialFormErrors = {};
     
@@ -126,7 +114,6 @@ export const useFinancialForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
@@ -138,13 +125,11 @@ export const useFinancialForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Calculate total monthly debts
       const totalMonthlyDebts = formData.debtItems.reduce(
         (sum, item) => sum + item.monthlyPayment, 
         0
       );
       
-      // Update financial data in context
       updateFinancials({
         annualIncome: formData.annualIncome,
         ficoScore: formData.ficoScore,
@@ -152,7 +137,6 @@ export const useFinancialForm = () => {
         monthlyDebts: totalMonthlyDebts
       });
       
-      // Navigate to next step
       setCurrentStep(2);
     } catch (error) {
       console.error("Error saving financial data:", error);
@@ -162,7 +146,6 @@ export const useFinancialForm = () => {
     }
   };
 
-  // For backward compatibility with existing code
   const annualIncome = formData.annualIncome;
   const monthlyDebts = formData.debtItems.reduce((sum, item) => sum + item.monthlyPayment, 0);
   const ficoScore = formData.ficoScore;
@@ -188,7 +171,6 @@ export const useFinancialForm = () => {
   const handleCurrentHousingPaymentChange = (value: number) => console.log("currentHousingPayment change not implemented");
 
   return {
-    // For backward compatibility with existing code
     annualIncome,
     monthlyDebts,
     ficoScore,
@@ -206,7 +188,6 @@ export const useFinancialForm = () => {
     handleSelectedFactorsChange,
     handleCurrentHousingPaymentChange,
     
-    // New interface for FinancialStepForm
     formData,
     errors,
     isSubmitting,
@@ -215,7 +196,6 @@ export const useFinancialForm = () => {
     handleFicoScoreChange,
     handleSubmit,
     
-    // Utility functions for conversions
     convertDebtItemsToLegacy,
     convertLegacyToDebtItems
   };
