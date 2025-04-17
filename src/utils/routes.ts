@@ -6,5 +6,6 @@ export const ROUTES = {
   mortgage: "/mortgage-planning", // Updated to match what's used in navigation
   goals: "/financial-goals",
   auth: "/auth",
+  onboarding: "/onboarding",
   // Add any future routes here
 };

@@ -30,6 +30,9 @@ const CompensatingFactorsForm = () => {
     setFactorUpdateKey(prev => prev + 1);
   }, [formData.selectedFactors]);
 
+  // Convert DebtItem[] to DebtItems format for the BorrowingPowerChart component
+  const debtItemsLegacy = convertDebtItemsToLegacy ? convertDebtItemsToLegacy(userData.financials.debtItems) : {};
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -47,7 +50,7 @@ const CompensatingFactorsForm = () => {
             key={factorUpdateKey}
             annualIncome={userData.financials.annualIncome}
             ficoScore={userData.financials.ficoScore}
-            debtItems={userData.financials.debtItems}
+            debtItems={debtItemsLegacy}
             selectedFactors={formData.selectedFactors}
           />
         </div>

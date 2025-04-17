@@ -54,7 +54,7 @@ const FinancialStepForm = () => {
           <BorrowingPowerChart 
             annualIncome={formData.annualIncome}
             ficoScore={formData.ficoScore}
-            debtItems={formData.debtItems}
+            debtItems={debtItemsLegacy}
             selectedFactors={userData.financials.selectedFactors || {}}
           />
         </div>
@@ -64,7 +64,7 @@ const FinancialStepForm = () => {
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => {}/* Will be handled by setCurrentStep(0) */}
+          onClick={() => {}}/* Will be handled by setCurrentStep(0) */
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back

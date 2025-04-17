@@ -16,20 +16,23 @@ export interface CompensatingFactorsFormData {
   currentHousingPayment: number;
 }
 
+// Create a function to ensure we always have a complete SelectedFactors object
+const createDefaultSelectedFactors = (): SelectedFactors => ({
+  cashReserves: "none",
+  residualIncome: "does not meet",
+  housingPaymentIncrease: ">20%",
+  employmentHistory: "<2 years",
+  creditUtilization: ">30%",
+  downPayment: "<5%"
+});
+
 export const useCompensatingFactorsForm = () => {
   const { userData, updateFinancials, setCurrentStep } = useMortgage();
   const { trackEvent } = useAnalytics();
   
-  // Form state
+  // Form state with proper typing
   const [formData, setFormData] = useState<CompensatingFactorsFormData>({
-    selectedFactors: userData.financials.selectedFactors || {
-      cashReserves: "none",
-      residualIncome: "does not meet",
-      housingPaymentIncrease: ">20%",
-      employmentHistory: "<2 years",
-      creditUtilization: ">30%",
-      downPayment: "<5%"
-    },
+    selectedFactors: userData.financials.selectedFactors || createDefaultSelectedFactors(),
     currentHousingPayment: userData.financials.currentHousingPayment || 0
   });
   
@@ -40,14 +43,7 @@ export const useCompensatingFactorsForm = () => {
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      selectedFactors: userData.financials.selectedFactors || {
-        cashReserves: "none",
-        residualIncome: "does not meet",
-        housingPaymentIncrease: ">20%",
-        employmentHistory: "<2 years",
-        creditUtilization: ">30%",
-        downPayment: "<5%"
-      },
+      selectedFactors: userData.financials.selectedFactors || createDefaultSelectedFactors(),
       currentHousingPayment: userData.financials.currentHousingPayment || 0
     }));
   }, [userData.financials.selectedFactors, userData.financials.currentHousingPayment]);
@@ -56,6 +52,7 @@ export const useCompensatingFactorsForm = () => {
   const handleFactorOptionChange = (id: string, value: string) => {
     console.log(`Changing factor ${id} to ${value}`);
     setFormData(prev => {
+      // Create a copy of the previous selectedFactors
       const updatedFactors: SelectedFactors = { 
         ...prev.selectedFactors, 
         [id]: value 
