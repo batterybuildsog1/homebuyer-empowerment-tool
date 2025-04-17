@@ -9,7 +9,7 @@ import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
 const FinancialStepForm = () => {
-  const { setCurrentStep } = useMortgage();
+  const { setCurrentStep, userData } = useMortgage();
   const { 
     formData,
     errors,
@@ -47,12 +47,11 @@ const FinancialStepForm = () => {
         </div>
         
         <div className="space-y-6">
-          {/* Removed CompensatingFactorsSection from here - it belongs on the next page */}
           <BorrowingPowerChart 
             annualIncome={formData.annualIncome}
             ficoScore={formData.ficoScore}
             debtItems={formData.debtItems}
-            selectedFactors={formData.selectedFactors}
+            selectedFactors={userData.financials.selectedFactors || {}}
           />
         </div>
       </div>

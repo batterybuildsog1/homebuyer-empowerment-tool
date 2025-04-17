@@ -38,15 +38,20 @@ const BorrowingPowerChart = ({
   const [maxDTI, setMaxDTI] = useState<number>(0);
   const [strongFactorCount, setStrongFactorCount] = useState<number>(0);
 
-  // Default values if not yet fetched
-  const defaultInterestRate = 7.5;
-  const defaultLoanType = userData.loanDetails.loanType || 'conventional';
-  const defaultLTV = 80; // Assuming 80% LTV for calculations on this page
+  // Get the current loan type from context
+  const loanType = userData.loanDetails.loanType || 'conventional';
+  const ltv = userData.loanDetails.ltv || 80; // Use context LTV if available
+
+  // Get interest rate based on current loan type
+  const interestRate = loanType === 'conventional' 
+    ? (userData.loanDetails.conventionalInterestRate || 7.5)
+    : (userData.loanDetails.fhaInterestRate || 7.5);
 
   useEffect(() => {
     if (annualIncome <= 0) return;
     
     console.log("BorrowingPowerChart: Recalculating with factors:", selectedFactors);
+    console.log("Current loan type:", loanType, "LTV:", ltv, "Interest Rate:", interestRate);
 
     // Calculate monthly income and total debt
     const monthly = annualIncome / 12;
@@ -64,17 +69,17 @@ const BorrowingPowerChart = ({
     
     console.log("Enhanced factors for DTI calculation:", enhancedFactors);
     
-    // Calculate the maximum DTI based on FICO score and compensating factors
+    // Calculate the maximum DTI based on FICO score, loan type and compensating factors
     const calculatedMaxDTI = calculateMaxDTI(
       ficoScore,
-      defaultLTV,
-      defaultLoanType,
+      ltv,
+      loanType,
       enhancedFactors,
       totalDebt,
       monthly
     );
     
-    console.log("Calculated Max DTI:", calculatedMaxDTI);
+    console.log("Calculated Max DTI:", calculatedMaxDTI, "for loan type:", loanType);
     setMaxDTI(calculatedMaxDTI);
     
     // Calculate and set strong factor count
@@ -91,8 +96,8 @@ const BorrowingPowerChart = ({
       annualIncome,
       0, // No debts
       calculatedMaxDTI,
-      defaultInterestRate,
-      defaultLoanType
+      interestRate,
+      loanType
     );
     
     setMaxLoanAmount(maxLoan);
@@ -110,15 +115,15 @@ const BorrowingPowerChart = ({
       annualIncome,
       totalDebt,
       calculatedMaxDTI,
-      defaultInterestRate,
-      defaultLoanType
+      interestRate,
+      loanType
     );
     
     setAdjustedLoanAmount(adjustedLoan > 0 ? adjustedLoan : 0);
-  }, [annualIncome, ficoScore, debtItems, selectedFactors, defaultLoanType]);
+  }, [annualIncome, ficoScore, debtItems, selectedFactors, loanType, ltv, interestRate]);
   
   return (
-    <Card className="p-4 space-y-4 h-full overflow-auto max-h-[600px]">
+    <Card className="p-4 space-y-4 h-full overflow-auto" style={{ maxHeight: '600px' }}>
       <div className="text-center">
         <h3 className="text-lg font-medium flex items-center justify-center gap-2">
           <DollarSign className="h-5 w-5" />
@@ -126,6 +131,9 @@ const BorrowingPowerChart = ({
         </h3>
         <p className="text-sm text-muted-foreground">
           See how your income and debts affect your maximum loan amount
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Current loan type: {loanType.charAt(0).toUpperCase() + loanType.slice(1)}
         </p>
       </div>
       
@@ -151,10 +159,10 @@ const BorrowingPowerChart = ({
               maxLoanAmount={maxLoanAmount}
               annualIncome={annualIncome}
               ficoScore={ficoScore}
-              defaultInterestRate={defaultInterestRate}
-              defaultLoanType={defaultLoanType}
+              defaultInterestRate={interestRate}
+              defaultLoanType={loanType}
               selectedFactors={selectedFactors}
-              defaultLTV={defaultLTV}
+              defaultLTV={ltv}
             />
           </div>
         </div>

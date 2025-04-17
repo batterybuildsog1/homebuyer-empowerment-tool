@@ -22,6 +22,7 @@ const CompensatingFactorsForm = () => {
   
   // Update the key when factors change to force re-render of BorrowingPowerChart
   useEffect(() => {
+    console.log("Factors changed, updating chart");
     setFactorUpdateKey(prev => prev + 1);
   }, [formData.selectedFactors]);
 
@@ -43,7 +44,7 @@ const CompensatingFactorsForm = () => {
             annualIncome={userData.financials.annualIncome}
             ficoScore={userData.financials.ficoScore}
             debtItems={userData.financials.debtItems}
-            selectedFactors={userData.financials.selectedFactors || {}}
+            selectedFactors={formData.selectedFactors || {}}
           />
         </div>
       </div>

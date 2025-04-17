@@ -42,6 +42,8 @@ export const useLoanSettings = () => {
    * @param loanType The new loan type
    */
   const handleLoanTypeChange = (loanType: 'conventional' | 'fha') => {
+    console.log(`Changing loan type to ${loanType}`);
+    
     // If switching loan types, set appropriate default down payment
     let newDownPayment = formData.downPayment;
     
@@ -53,14 +55,17 @@ export const useLoanSettings = () => {
       newDownPayment = 3.5;
     }
     
+    // Calculate new LTV
+    const newLtv = 100 - newDownPayment;
+    
     // Update MIP rates when loan type changes
     if (loanType === 'fha') {
-      const newLtv = 100 - newDownPayment;
       const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
         1000, // Placeholder loan amount
         newLtv
       );
       
+      // Update form data
       setFormData(prev => ({
         ...prev,
         loanType,
@@ -76,6 +81,8 @@ export const useLoanSettings = () => {
         upfrontMIP: upfrontMipPercent,
         ongoingMIP: annualMipPercent
       });
+      
+      console.log("Updated to FHA with MIP rates:", upfrontMipPercent, annualMipPercent);
     } else {
       // For conventional loans, clear MIP values
       setFormData(prev => ({
@@ -89,10 +96,12 @@ export const useLoanSettings = () => {
       // Update context
       updateLoanDetails({
         loanType,
-        ltv: 100 - newDownPayment,
+        ltv: newLtv,
         upfrontMIP: null,
         ongoingMIP: null
       });
+      
+      console.log("Updated to Conventional, cleared MIP rates");
     }
   };
 
@@ -125,6 +134,8 @@ export const useLoanSettings = () => {
         upfrontMIP: upfrontMipPercent,
         ongoingMIP: annualMipPercent
       });
+      
+      console.log("Updated MIP rates for new LTV:", newLtv, upfrontMipPercent, annualMipPercent);
     }
   };
 
@@ -147,6 +158,15 @@ export const useLoanSettings = () => {
     userData.loanDetails.upfrontMIP,
     userData.loanDetails.ongoingMIP
   ]);
+
+  // Keep context updated with current loan type and LTV
+  useEffect(() => {
+    updateLoanDetails({ 
+      loanType: formData.loanType,
+      ltv: ltv
+    });
+    console.log("Updated context with loan type:", formData.loanType, "and LTV:", ltv);
+  }, [formData.loanType, ltv, updateLoanDetails]);
 
   return {
     formData,

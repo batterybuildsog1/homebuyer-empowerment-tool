@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 import { toast } from "sonner";
@@ -28,8 +28,18 @@ export const useCompensatingFactorsForm = () => {
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ensure we have the latest data from context
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      selectedFactors: userData.financials.selectedFactors || {},
+      currentHousingPayment: userData.financials.currentHousingPayment || 0
+    }));
+  }, [userData.financials.selectedFactors, userData.financials.currentHousingPayment]);
+
   // Handler for factor option changes
   const handleFactorOptionChange = (id: string, value: string) => {
+    console.log(`Changing factor ${id} to ${value}`);
     setFormData(prev => {
       const updatedFactors = { ...prev.selectedFactors, [id]: value };
       
@@ -50,6 +60,8 @@ export const useCompensatingFactorsForm = () => {
         monthlyDebts,
         monthlyIncome
       );
+      
+      console.log("Updating context with new factors:", enhancedFactors);
       
       // Update the context with the new factors
       updateFinancials({
@@ -96,6 +108,8 @@ export const useCompensatingFactorsForm = () => {
       monthlyDebts,
       monthlyIncome
     );
+    
+    console.log("Submitting with enhanced factors:", enhancedFactors);
     
     // Update financials in context
     updateFinancials({

@@ -13,7 +13,7 @@ export function calculateMaxDTI(
   monthlyDebts: number = 0,
   monthlyIncome: number = 0
 ): number {
-  console.log("calculateMaxDTI called with factors:", selectedFactors);
+  console.log("calculateMaxDTI called with factors:", selectedFactors, "loan type:", loanType);
   
   // Handle legacy array format
   if (Array.isArray(selectedFactors)) {
@@ -41,13 +41,6 @@ export function calculateMaxDTI(
     return maxDTI;
   }
 
-  // For conventional loans, use existing method
-  if (loanType === 'conventional') {
-    return calculateConventionalDTI(ficoScore, ltv, selectedFactors);
-  }
-  
-  // Use centralized service for FHA loans
-  
   // Ensure we have proper factors
   const enhancedFactors = typeof selectedFactors === 'object' && !Array.isArray(selectedFactors)
     ? selectedFactors
@@ -59,10 +52,15 @@ export function calculateMaxDTI(
   const strongFactorCount = countStrongFactors(enhancedFactors);
   console.log("Strong factor count:", strongFactorCount);
   
-  // Set base DTI from limits
-  const dtiLimits = DTI_LIMITS.FHA.BACK_END;
+  // Set base DTI from limits based on loan type
+  const dtiLimits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS].BACK_END;
   let baseDTI = dtiLimits.DEFAULT;
   
+  if (loanType === 'conventional') {
+    return calculateConventionalDTI(ficoScore, ltv, enhancedFactors);
+  }
+  
+  // For FHA loans
   // Apply FICO adjustments
   if (ficoScore >= 720) baseDTI += 5;
   else if (ficoScore >= 680) baseDTI += 3;
@@ -74,7 +72,7 @@ export function calculateMaxDTI(
     baseDTI = Math.min(50, baseDTI + 3); // Smaller increase with 1 strong factor
   }
   
-  console.log("Calculated DTI:", baseDTI);
+  console.log("Calculated DTI:", baseDTI, "for loan type:", loanType);
   return baseDTI;
 }
 
@@ -104,5 +102,6 @@ function calculateConventionalDTI(
     baseDTI = Math.min(50, baseDTI + 2); // Smaller boost with 1 strong factor
   }
   
+  console.log("Calculated conventional DTI:", baseDTI, "with strong factors:", strongFactorCount);
   return Math.min(baseDTI, DTI_LIMITS.CONVENTIONAL.BACK_END.HARD_CAP || 50);
 }
