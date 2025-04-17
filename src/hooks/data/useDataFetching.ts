@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useMortgage } from '@/context/MortgageContext';
 import { fetchAllMortgageData } from '@/services/mortgageRatesService';
 import { FetchProgressState } from './fetchingTypes';
@@ -17,6 +17,7 @@ export const useDataFetching = () => {
   });
   
   const { userData, updateLoanDetails } = useMortgage();
+  const fetchingRef = useRef<boolean>(false);
   
   /**
    * Fetches external mortgage data from the API
@@ -24,6 +25,12 @@ export const useDataFetching = () => {
    * @returns The fetched mortgage data or null if the fetch failed
    */
   const fetchExternalData = useCallback(async (silent = false) => {
+    // Check if we're already fetching data
+    if (fetchingRef.current) {
+      console.log('Fetch already in progress, skipping');
+      return null;
+    }
+    
     // Check if we have location data
     if (!userData.location.state || !userData.location.county) {
       if (!silent) {
@@ -33,6 +40,9 @@ export const useDataFetching = () => {
     }
     
     try {
+      // Set fetch lock
+      fetchingRef.current = true;
+      
       if (!silent) {
         setFetchProgress({
           isLoading: true,
@@ -132,6 +142,9 @@ export const useDataFetching = () => {
       }
       
       return null;
+    } finally {
+      // Release fetch lock
+      fetchingRef.current = false;
     }
   }, [userData.location, updateLoanDetails]);
   

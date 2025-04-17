@@ -15,16 +15,6 @@ export interface MortgageDataResponse {
   fromCache?: boolean;
 }
 
-// Fallback test values for development - used only if API calls fail
-const TEST_DATA = {
-  conventionalInterestRate: 6.75,
-  fhaInterestRate: 6.25,
-  propertyTax: 1.1,
-  propertyInsurance: 1200,
-  upfrontMIP: 1.75,
-  ongoingMIP: 0.55
-};
-
 /**
  * Fetches mortgage interest rates from the get-mortgage-rates edge function
  */
@@ -60,14 +50,8 @@ export const fetchMortgageRates = async (): Promise<{
     };
   } catch (error) {
     console.error("Error fetching mortgage rates:", error);
-    toast.error("Failed to fetch mortgage rates. Using test data.");
-    
-    // Return test values if the API call fails
-    return {
-      conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-      fhaInterestRate: TEST_DATA.fhaInterestRate,
-      source: 'test_data'
-    };
+    toast.error("Failed to fetch mortgage rates. No data available.");
+    throw error;
   }
 };
 
@@ -110,20 +94,14 @@ export const fetchPropertyData = async (
     return {
       propertyTax: countyData.primary_tax,
       propertyInsurance: countyData.insurance,
-      source: 'supabase',
+      source: data.source || 'supabase',
       fromCache: data.fromCache || false
     };
     
   } catch (error) {
     console.error(`Error fetching property data:`, error);
-    toast.error("Error retrieving property data. Using estimates.");
-    
-    // Return test values if the API call fails
-    return {
-      propertyTax: TEST_DATA.propertyTax,
-      propertyInsurance: TEST_DATA.propertyInsurance,
-      source: 'test_data'
-    };
+    toast.error("Error retrieving property data. No data available.");
+    throw error;
   }
 };
 
@@ -150,15 +128,15 @@ export const fetchAllMortgageData = async (
       fhaInterestRate: rates.fhaInterestRate,
       propertyTax: propertyData.propertyTax,
       propertyInsurance: propertyData.propertyInsurance,
-      upfrontMIP: TEST_DATA.upfrontMIP,
-      ongoingMIP: TEST_DATA.ongoingMIP,
+      upfrontMIP: rates.fromCache ? 1.75 : 1.75, // FHA upfront mortgage insurance is typically 1.75%
+      ongoingMIP: rates.fromCache ? 0.55 : 0.55, // FHA annual mortgage insurance is typically 0.55%
       source: propertyData.fromCache && rates.fromCache ? 'cache' : 'api',
       fromCache: propertyData.fromCache && rates.fromCache
     };
     
   } catch (error) {
     console.error(`Error in fetchAllMortgageData:`, error);
-    toast.error("Error retrieving mortgage data.");
+    toast.error("Error retrieving mortgage data. No data available.");
     return null;
   }
 };

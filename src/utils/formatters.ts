@@ -41,3 +41,41 @@ export const formatPercent = (
     maximumFractionDigits,
   }).format(value / 100);
 };
+
+/**
+ * Alias for formatPercent for backward compatibility
+ */
+export const formatPercentage = formatPercent;
+
+/**
+ * Returns a relative time string (e.g., "2 hours ago", "yesterday")
+ * @param date The date to format
+ * @returns Formatted relative time string
+ */
+export const getRelativeTimeString = (date: Date): string => {
+  try {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    
+    const diffInSeconds = Math.round(diffInMs / 1000);
+    const diffInMinutes = Math.round(diffInSeconds / 60);
+    const diffInHours = Math.round(diffInMinutes / 60);
+    const diffInDays = Math.round(diffInHours / 24);
+    
+    if (diffInSeconds < 60) {
+      return 'just now';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays !== 1 ? 's' : ''} ago`;
+    } else {
+      // Format the date as MM/DD/YYYY
+      return date.toLocaleDateString();
+    }
+  } catch (error) {
+    console.error('Error formatting relative time:', error);
+    return 'unknown';
+  }
+};

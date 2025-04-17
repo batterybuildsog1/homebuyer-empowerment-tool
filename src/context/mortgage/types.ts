@@ -1,82 +1,56 @@
-/**
- * Types for the mortgage calculator context
- */
+import { ReactNode } from 'react';
+
+export interface DebtItem {
+  description: string;
+  monthlyPayment: number;
+}
+
+export interface SelectedFactors {
+  cashReserves: string;
+  residualIncome: string;
+  housingPaymentIncrease: string;
+  employmentHistory: string;
+  creditUtilization: string;
+  downPayment: string;
+}
+
 export interface UserData {
   location: {
     city: string;
     state: string;
-    zipCode: string;
     county: string;
+    zipCode: string;
   };
   financials: {
-    annualIncome: number;
-    monthlyDebts: number;
     ficoScore: number;
-    downPayment: number;
-    downPaymentPercent: number;
-    mitigatingFactors: string[]; // Legacy field for backward compatibility
-    selectedFactors: Record<string, string>; // New field for detailed compensating factors
-    currentHousingPayment: number; // Current housing payment for payment shock calculation
-    debtItems: {
-      carLoan: number;
-      studentLoan: number;
-      creditCard: number;
-      personalLoan: number;
-      otherDebt: number;
-    };
+    annualIncome: number;
+    debtItems: DebtItem[];
+    monthlyDebts: number;
+    mitigatingFactors?: string[];
+    selectedFactors?: SelectedFactors;
   };
   loanDetails: {
     loanType: 'conventional' | 'fha';
     ltv: number;
-    calculatedDTI: number | null;
-    propertyTax: number | null;
-    propertyInsurance: number | null;
-    interestRate: number | null;
-    conventionalInterestRate: number | null;
-    fhaInterestRate: number | null;
-    upfrontMIP: number | null;
-    ongoingMIP: number | null;
-  };
-  results: {
-    maxHomePrice: number | null;
-    monthlyPayment: number | null;
-    scenarios: {
-      loanType: 'conventional' | 'fha';
-      ficoChange: number;
-      ltvChange: number;
-      maxHomePrice: number;
-      monthlyPayment: number;
-    }[];
-    financialDetails?: {
-      maxDTI: number;
-      monthlyIncome: number;
-      maxMonthlyDebtPayment: number;
-      availableForMortgage: number;
-      adjustedRate: number;
-      strongFactorCount?: number;
-      frontEndDTI?: number;
-      backEndDTI?: number;
-      frontEndDTIStatus?: {
-        value: number;
-        status: 'normal' | 'caution' | 'warning' | 'exceeded';
-        message: string;
-        helpText: string;
-      };
-      backEndDTIStatus?: {
-        value: number;
-        status: 'normal' | 'caution' | 'warning' | 'exceeded';
-        message: string;
-        helpText: string;
-      };
-    };
+    calculatedDTI: number;
+    propertyTax: number;
+    propertyInsurance: number;
+    interestRate: number;
+    conventionalInterestRate: number;
+    fhaInterestRate: number;
+    upfrontMIP: number;
+    ongoingMIP: number;
+    dataSource?: string;
+    dataTimestamp?: number;
   };
   goals: {
-    targetFICO: number | null;
-    targetDownPayment: number | null;
-    monthlyExpenses: Record<string, number>;
-    savingRate: number | null;
+    renovations: number;
+    additionalCash: number;
   };
-  workflowCompleted?: boolean; // Add this property to fix the TypeScript error
+  results: {
+    maxHomePrice: number;
+    monthlyPayment: number;
+  };
 }
 
 export interface MortgageContextType {
@@ -84,10 +58,10 @@ export interface MortgageContextType {
   currentStep: number;
   isLoadingData: boolean;
   workflowCompleted: boolean;
-  setUserData: (data: UserData) => void;
-  setCurrentStep: (step: number) => void;
-  setIsLoadingData: (loading: boolean) => void;
-  setWorkflowCompleted: (completed: boolean) => void;
+  setUserData: React.Dispatch<React.SetStateAction<UserData>>;
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
+  setIsLoadingData: React.Dispatch<React.SetStateAction<boolean>>;
+  setWorkflowCompleted: React.Dispatch<React.SetStateAction<boolean>>;
   updateLocation: (location: Partial<UserData['location']>) => void;
   updateFinancials: (financials: Partial<UserData['financials']>) => void;
   updateLoanDetails: (loanDetails: Partial<UserData['loanDetails']>) => void;

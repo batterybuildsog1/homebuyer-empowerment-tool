@@ -13,16 +13,6 @@ const supabaseUrl = 'https://thcmyhermklehzjdmhio.supabase.co'
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Fallback test values - used only if no data available in database
-const TEST_DATA = {
-  conventionalInterestRate: 6.75,
-  fhaInterestRate: 6.25,
-  propertyTax: 1.1,
-  propertyInsurance: 1200,
-  upfrontMIP: 1.75,
-  ongoingMIP: 0.55
-}
-
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -45,26 +35,16 @@ Deno.serve(async (req) => {
     }
     
     if (!latestRates || latestRates.length === 0) {
-      console.log("No rates found in database, returning test data")
+      console.log("No rates found in database")
       
-      // Return test data if no rates found
+      // Return error response if no data found
       return new Response(
         JSON.stringify({
-          success: true,
-          message: "No rates found in database, returning test data",
-          data: {
-            conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-            fhaInterestRate: TEST_DATA.fhaInterestRate,
-            propertyTax: TEST_DATA.propertyTax,
-            propertyInsurance: TEST_DATA.propertyInsurance,
-            upfrontMIP: TEST_DATA.upfrontMIP,
-            ongoingMIP: TEST_DATA.ongoingMIP,
-            rateDate: new Date().toISOString().split('T')[0],
-            source: "test_data",
-            fromCache: false
-          }
+          success: false,
+          message: "No mortgage rates available in the database",
+          error: "No data found"
         }),
-        { headers: corsHeaders }
+        { status: 404, headers: corsHeaders }
       )
     }
     
@@ -79,10 +59,6 @@ Deno.serve(async (req) => {
       data: {
         conventionalInterestRate: latestRates[0].conventional,
         fhaInterestRate: latestRates[0].fha,
-        propertyTax: TEST_DATA.propertyTax,
-        propertyInsurance: TEST_DATA.propertyInsurance,
-        upfrontMIP: TEST_DATA.upfrontMIP,
-        ongoingMIP: TEST_DATA.ongoingMIP,
         rateDate: latestRates[0].rate_date,
         source: "database",
         fromCache: true,
