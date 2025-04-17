@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 export interface MortgageDataResponse {
@@ -20,6 +19,9 @@ const TEST_DATA = {
   ongoingMIP: 0.55
 };
 
+// Cache duration in milliseconds (4 hours)
+const CACHE_DURATION_MS = 4 * 60 * 60 * 1000;
+
 /**
  * Fetches mortgage interest rates using OpenAI API
  */
@@ -29,6 +31,25 @@ export const fetchMortgageRates = async (): Promise<{
 }> => {
   try {
     console.log("Fetching mortgage rates from OpenAI...");
+    
+    // Check for cached rates
+    const cachedRatesStr = localStorage.getItem("cached_mortgage_rates");
+    const cachedTimestampStr = localStorage.getItem("cached_mortgage_rates_timestamp");
+    
+    if (cachedRatesStr && cachedTimestampStr) {
+      const cachedTimestamp = parseInt(cachedTimestampStr);
+      const now = Date.now();
+      
+      // If cache is still valid (within the last 4 hours), use it
+      if (now - cachedTimestamp < CACHE_DURATION_MS) {
+        console.log("Using cached mortgage rates (within 4 hours)");
+        const cachedRates = JSON.parse(cachedRatesStr);
+        return {
+          conventionalInterestRate: cachedRates.conventionalInterestRate,
+          fhaInterestRate: cachedRates.fhaInterestRate
+        };
+      }
+    }
     
     // Get the Supabase URL from the environment
     const supabaseUrl = "https://thcmyhermklehzjdmhio.supabase.co";
@@ -42,6 +63,25 @@ export const fetchMortgageRates = async (): Promise<{
       body: JSON.stringify({}),
     });
     
+    // Check for rate limiting (429)
+    if (response.status === 429) {
+      console.warn("Rate limit exceeded for mortgage rate API");
+      toast.warning("Rate limit reached for mortgage data. Using cached data if available.");
+      
+      // If rate limited but we have cache, use it regardless of age
+      if (cachedRatesStr) {
+        console.log("Using older cached mortgage rates due to rate limiting");
+        return JSON.parse(cachedRatesStr);
+      }
+      
+      // Otherwise fall back to test data
+      console.log("No cached rates available, using test data due to rate limiting");
+      return {
+        conventionalInterestRate: TEST_DATA.conventionalInterestRate,
+        fhaInterestRate: TEST_DATA.fhaInterestRate
+      };
+    }
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to fetch mortgage rates');
@@ -49,6 +89,22 @@ export const fetchMortgageRates = async (): Promise<{
     
     const data = await response.json();
     console.log("Received mortgage rates:", data);
+    
+    // Get rate limit information from headers if available
+    const rateLimit = {
+      limit: response.headers.get("X-RateLimit-Limit"),
+      remaining: response.headers.get("X-RateLimit-Remaining"),
+      reset: response.headers.get("X-RateLimit-Reset")
+    };
+    
+    if (rateLimit.remaining) {
+      console.log(`Rate limit remaining: ${rateLimit.remaining}/${rateLimit.limit || 'unknown'}`);
+      
+      // Warn user if approaching rate limit
+      if (parseInt(rateLimit.remaining) <= 1) {
+        toast.warning("Rate limit for mortgage data nearly reached. Data will refresh in a few hours.");
+      }
+    }
     
     // Validate the rates to ensure they're reasonable (between 3% and 10%)
     const conventional = data.conventionalInterestRate;
@@ -68,6 +124,15 @@ export const fetchMortgageRates = async (): Promise<{
         conventionalInterestRate: TEST_DATA.conventionalInterestRate,
         fhaInterestRate: TEST_DATA.fhaInterestRate
       };
+    }
+    
+    // Cache the valid results with timestamp
+    if (conventional !== null || fha !== null) {
+      localStorage.setItem("cached_mortgage_rates", JSON.stringify({
+        conventionalInterestRate: conventional,
+        fhaInterestRate: fha
+      }));
+      localStorage.setItem("cached_mortgage_rates_timestamp", Date.now().toString());
     }
     
     return {
