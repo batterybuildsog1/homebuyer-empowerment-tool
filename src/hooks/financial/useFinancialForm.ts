@@ -1,4 +1,3 @@
-
 import { useState, useCallback, FormEvent } from 'react';
 import { DebtItem, DebtItems, SelectedFactors } from '@/context/mortgage/types';
 import { useMortgage } from '@/context/MortgageContext';
@@ -96,9 +95,20 @@ export const useFinancialForm = () => {
     }));
   }, [formData.debtItems]);
 
-  const handleFicoScoreChange = useCallback((value: number) => {
-    setFormData(prev => ({ ...prev, ficoScore: value }));
-  }, []);
+  const originalHandleFicoScoreChange = (value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      ficoScore: value
+    }));
+  };
+
+  const handleFicoScoreChange = (value: number) => {
+    originalHandleFicoScoreChange(value);
+    
+    // Add your additional logic here if needed
+    // For example:
+    console.log("FICO score changed:", value);
+  };
 
   // Form validation
   const validateForm = (): boolean => {

@@ -61,43 +61,54 @@ const OnboardingSteps = () => {
     switch (steps[currentStep].id) {
       case "welcome":
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Center aligned welcome content */}
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Home className="h-8 w-8 text-primary" />
+              {/* Improved icon styling with gradient background */}
+              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-primary-500 to-finance-purple rounded-full flex items-center justify-center mb-6">
+                <Home className="h-10 w-10 text-white" />
               </div>
-              <Heading as="h2" size="xl" className="mb-2">Welcome to Finance Empowerment</Heading>
-              <p className="text-muted-foreground">We'll help you understand your finances and plan for your future home.</p>
+              <Heading as="h2" size="2xl" className="mb-4">Welcome to Finance Empowerment</Heading>
+              <p className="text-muted-foreground text-lg max-w-md mx-auto">
+                We'll help you understand your finances and plan for your future home.
+              </p>
             </div>
             
-            <div className="space-y-4 mt-6">
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-1 rounded-full">
-                  <Check className="h-4 w-4 text-primary" />
+            {/* Feature list with improved styling */}
+            <div className="max-w-md mx-auto space-y-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <Check className="h-4 w-4 text-primary" />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-medium">Understand your finances</h3>
-                  <p className="text-sm text-muted-foreground">Get insights into your income, expenses, and savings</p>
+                  <h3 className="font-medium text-lg">Understand your finances</h3>
+                  <p className="text-muted-foreground">Get insights into your income, expenses, and savings</p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-1 rounded-full">
-                  <Check className="h-4 w-4 text-primary" />
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <Check className="h-4 w-4 text-primary" />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-medium">Plan for homeownership</h3>
-                  <p className="text-sm text-muted-foreground">Discover your buying power and mortgage options</p>
+                  <h3 className="font-medium text-lg">Plan for homeownership</h3>
+                  <p className="text-muted-foreground">Discover your buying power and mortgage options</p>
                 </div>
               </div>
               
-              <div className="flex items-start space-x-3">
-                <div className="bg-primary/10 p-1 rounded-full">
-                  <Check className="h-4 w-4 text-primary" />
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="bg-primary/10 p-2 rounded-full">
+                    <Check className="h-4 w-4 text-primary" />
+                  </div>
                 </div>
                 <div>
-                  <h3 className="font-medium">Set financial goals</h3>
-                  <p className="text-sm text-muted-foreground">Create measurable targets to improve your finances</p>
+                  <h3 className="font-medium text-lg">Set financial goals</h3>
+                  <p className="text-muted-foreground">Create measurable targets to improve your finances</p>
                 </div>
               </div>
             </div>
@@ -168,10 +179,10 @@ const OnboardingSteps = () => {
         </div>
       </header>
       
-      {/* Main content */}
+      {/* Main content with improved card styling */}
       <main className="flex-1 flex items-center justify-center p-6">
-        <Card className="w-full max-w-3xl">
-          <CardHeader>
+        <Card className="w-full max-w-3xl shadow-md border-primary/10">
+          <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
               {React.createElement(steps[currentStep].icon, { className: "h-5 w-5 text-primary" })}
               <CardTitle>{steps[currentStep].title}</CardTitle>
@@ -179,23 +190,24 @@ const OnboardingSteps = () => {
             <CardDescription>{steps[currentStep].description}</CardDescription>
           </CardHeader>
           
-          <CardContent>
+          <CardContent className="pb-8">
             {renderStepContent()}
           </CardContent>
           
-          <CardFooter className="flex justify-between">
+          <CardFooter className="flex justify-between py-4 border-t bg-muted/20">
             <Button 
               variant="outline" 
               onClick={() => navigate("/dashboard")}
               disabled={currentStep === 0}
+              className="text-muted-foreground hover:text-foreground"
             >
               Skip for now
             </Button>
-            <Button onClick={handleNextStep}>
+            <Button onClick={handleNextStep} className="gap-1 px-6">
               {currentStep < steps.length - 1 ? (
-                <>Next <ChevronRight className="h-4 w-4 ml-1" /></>
+                <>Next <ChevronRight className="h-4 w-4" /></>
               ) : (
-                <>Complete <Check className="h-4 w-4 ml-1" /></>
+                <>Complete <Check className="h-4 w-4" /></>
               )}
             </Button>
           </CardFooter>
