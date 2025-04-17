@@ -10,6 +10,7 @@ import { useMortgage } from "@/context/MortgageContext";
 import { useUser } from "@/context/UserContext";
 import PageLayout from "@/components/layouts/PageLayout";
 import { formatCurrency } from "@/utils/formatters";
+import { ROUTES } from "@/utils/routes";
 
 const DashboardPage = () => {
   const { isLoggedIn, userName } = useUser();
@@ -34,7 +35,7 @@ const DashboardPage = () => {
             
             <div className="flex gap-3">
               <Button asChild variant="outline" className="gap-2">
-                <Link to="/financial-goals">
+                <Link to={ROUTES.goals}>
                   <PlusCircle className="h-4 w-4" />
                   <span>Add Goal</span>
                 </Link>
@@ -42,7 +43,7 @@ const DashboardPage = () => {
               
               {!isWorkflowCompleted && (
                 <Button asChild className="gap-2">
-                  <Link to="/mortgage-planning">
+                  <Link to={ROUTES.mortgage}>
                     <Home className="h-4 w-4" />
                     <span>Complete Mortgage Planning</span>
                   </Link>
@@ -66,7 +67,7 @@ const DashboardPage = () => {
                     Finish setting up your mortgage details to get personalized recommendations and maximize your buying power.
                   </p>
                   <Button asChild size="sm" variant="outline" className="gap-1">
-                    <Link to="/mortgage-planning">
+                    <Link to={ROUTES.mortgage}>
                       Continue Setup <ChevronRight className="h-3 w-3" />
                     </Link>
                   </Button>
@@ -114,7 +115,7 @@ const DashboardPage = () => {
                     Complete your mortgage planning to view your financial summary
                   </div>
                   <Button asChild>
-                    <Link to="/mortgage-planning">Complete Mortgage Planning</Link>
+                    <Link to={ROUTES.mortgage}>Complete Mortgage Planning</Link>
                   </Button>
                 </div>
               )}
@@ -145,7 +146,7 @@ const DashboardPage = () => {
                   </div>
                   
                   <Button asChild variant="outline" size="sm" className="w-full mt-4">
-                    <Link to="/mortgage-planning">
+                    <Link to={ROUTES.mortgage}>
                       View Details <ChevronRight className="h-4 w-4 ml-1" />
                     </Link>
                   </Button>
@@ -156,7 +157,7 @@ const DashboardPage = () => {
                     Complete your mortgage planning to view your buying power
                   </div>
                   <Button asChild size="sm">
-                    <Link to="/mortgage-planning">Start Now</Link>
+                    <Link to={ROUTES.mortgage}>Start Now</Link>
                   </Button>
                 </div>
               )}

@@ -3,8 +3,8 @@
 export const ROUTES = {
   root: "/",
   dashboard: "/dashboard",
-  mortgage: "/mortgage",
-  goals: "/goals",
+  mortgage: "/mortgage-planning", // Updated to match what's used in navigation
+  goals: "/financial-goals",
   auth: "/auth",
   // Add any future routes here
 };
