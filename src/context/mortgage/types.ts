@@ -1,4 +1,3 @@
-
 import { ReactNode } from 'react';
 import { DTIStatus } from '@/utils/mortgage/types/dtiTypes';
 
@@ -7,14 +6,13 @@ export interface DebtItem {
   monthlyPayment: number;
 }
 
-// For backward compatibility with existing code
 export interface DebtItems {
   carLoan: number;
   studentLoan: number;
   creditCard: number;
   personalLoan: number;
   otherDebt: number;
-  [key: string]: number; // Allow string indexing for dynamic access
+  [key: string]: number;
 }
 
 export interface SelectedFactors {
@@ -24,7 +22,18 @@ export interface SelectedFactors {
   employmentHistory: string;
   creditUtilization: string;
   downPayment: string;
-  [key: string]: string; // Allow string indexing for dynamic access
+  [key: string]: string;
+}
+
+export interface ImprovementScenario {
+  name: string;
+  description: string;
+  increase: number;
+  maxHomePrice: number;
+  monthlyPayment: number;
+  loanType: 'conventional' | 'fha';
+  ficoChange: number;
+  ltvChange: number;
 }
 
 export interface FinancialDetails {
@@ -38,13 +47,6 @@ export interface FinancialDetails {
   backEndDTI?: number;
   frontEndDTIStatus?: DTIStatus;
   backEndDTIStatus?: DTIStatus;
-}
-
-export interface ImprovementScenario {
-  name: string;
-  description: string;
-  increase: number;
-  maxHomePrice: number;
 }
 
 export interface UserData {

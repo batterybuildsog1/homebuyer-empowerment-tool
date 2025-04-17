@@ -1,4 +1,3 @@
-
 import { UserData } from './types';
 
 /**
@@ -27,7 +26,7 @@ export const defaultUserData: UserData = {
       downPayment: "<5%",
     },
     currentHousingPayment: 0,
-    debtItems: [], // Initialize as empty array to match the type
+    debtItems: [],
   },
   loanDetails: {
     loanType: 'conventional',
