@@ -1,3 +1,4 @@
+
 import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
@@ -59,7 +60,7 @@ export const useResultsCalculation = () => {
         ltv: userData.loanDetails.ltv,
         ficoScore: userData.financials.ficoScore,
         maxHomePrice: results.maxHomePrice,
-        // Track compensating factors data for analytics using the locally calculated count
+        // Track compensating factors data for analytics
         hasStrongFactors: strongFactorCount >= 2
       });
       

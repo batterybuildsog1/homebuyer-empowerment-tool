@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { getFhaMipRates } from "@/utils/mortgageCalculations";
