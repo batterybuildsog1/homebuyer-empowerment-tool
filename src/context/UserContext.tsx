@@ -5,6 +5,7 @@ interface UserContextType {
   isLoggedIn: boolean;
   userName: string | null;
   login: (name: string) => void;
+  signOut: () => void; // Add missing signOut function
   logout: () => void;
 }
 
@@ -37,8 +38,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserName(null);
   };
   
+  // Add signOut as an alias of logout for consistency with auth providers
+  const signOut = logout;
+  
   return (
-    <UserContext.Provider value={{ isLoggedIn, userName, login, logout }}>
+    <UserContext.Provider value={{ isLoggedIn, userName, login, logout, signOut }}>
       {children}
     </UserContext.Provider>
   );

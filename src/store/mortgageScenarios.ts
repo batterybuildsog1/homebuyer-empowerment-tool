@@ -36,6 +36,9 @@ interface MortgageScenariosState {
   createScenarioFromCurrent: (name: string) => Promise<string | null>;
 }
 
+// Helper types for Supabase JSON conversion
+type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
+
 // Create the store with persistence
 export const useMortgageScenarios = create<MortgageScenariosState>()(
   persist(
@@ -94,17 +97,19 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
             
           if (error) throw error;
           
-          // Get the mortgage context functions directly (without getState)
+          // Get the mortgage context functions directly
           const mortgageContext = useMortgage();
           
-          // Safely cast the data with type checking
-          if (data.data && typeof data.data === 'object' && 
-              'location' in data.data && 
-              'financials' in data.data &&
-              'loanDetails' in data.data &&
-              'results' in data.data) {
+          // Safely cast the data with type checking and assertion
+          const scenarioData = data.data as unknown;
+          
+          if (typeof scenarioData === 'object' && scenarioData !== null &&
+              'location' in scenarioData && 
+              'financials' in scenarioData &&
+              'loanDetails' in scenarioData &&
+              'results' in scenarioData) {
             // Set the user data from the loaded scenario
-            mortgageContext.setUserData(data.data as UserData);
+            mortgageContext.setUserData(scenarioData as UserData);
             mortgageContext.completeWorkflow();
             
             // Update current scenario ID
@@ -124,18 +129,21 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Save current mortgage data as a new scenario
       saveScenario: async (name: string) => {
-        // Get the mortgage context data directly (without getState)
+        // Get the mortgage context data directly
         const mortgageContext = useMortgage();
         const { userData } = mortgageContext;
         
         set({ isLoading: true });
         
         try {
+          // Convert userData to a JSON-compatible format
+          const jsonData = JSON.parse(JSON.stringify(userData)) as Json;
+          
           const { data, error } = await supabase
             .from('mortgage_scenarios')
             .insert([{ 
               name, 
-              data: userData 
+              data: jsonData
             }])
             .select('id')
             .single();
@@ -161,15 +169,18 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Update an existing scenario
       updateScenario: async (id: string, updates = {}) => {
-        // Get the mortgage context data directly (without getState)
+        // Get the mortgage context data directly
         const mortgageContext = useMortgage();
         const { userData } = mortgageContext;
         
         set({ isLoading: true });
         
         try {
+          // Convert userData to a JSON-compatible format
+          const jsonData = JSON.parse(JSON.stringify(userData)) as Json;
+          
           const updateData: any = { 
-            data: userData, 
+            data: jsonData, 
             updated_at: new Date().toISOString()
           };
           

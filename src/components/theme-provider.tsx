@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import { useTheme as useNextTheme } from "next-themes";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
@@ -25,7 +24,7 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "finance-theme",
 }: ThemeProviderProps) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useNextTheme();
 
   return (
     <ThemeProviderContext.Provider value={{ theme: theme || defaultTheme, setTheme }}>
@@ -34,11 +33,15 @@ export function ThemeProvider({
   );
 }
 
-export function useThemeProvider() {
+export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
   
   if (context === undefined)
-    throw new Error("useThemeProvider must be used within a ThemeProvider");
+    throw new Error("useTheme must be used within a ThemeProvider");
   
   return context;
+};
+
+export function useThemeProvider() {
+  return useTheme();
 }
