@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { formatCurrency } from '@/utils/formatters';
 import { useMortgage } from '@/context/MortgageContext';
+import { defaultUserData } from '@/context/mortgage/defaultData';
 
 interface MortgageScenariosListProps {
   readOnly?: boolean;
@@ -21,7 +22,7 @@ const MortgageScenariosList: React.FC<MortgageScenariosListProps> = ({
 }) => {
   const { isLoggedIn } = useUser();
   const { scenarios, isLoadingList, fetchScenarios, loadScenario } = useMortgageScenarios();
-  const { setUserData, completeWorkflow } = useMortgage();
+  const { setUserData, completeWorkflow, setWorkflowCompleted } = useMortgage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +33,13 @@ const MortgageScenariosList: React.FC<MortgageScenariosListProps> = ({
 
   const handleLoadScenario = async (id: string) => {
     await loadScenario(id, setUserData, completeWorkflow);
+    navigate(ROUTES.mortgage);
+  };
+
+  const handleNewScenario = () => {
+    // Reset user data and workflow completion status for new scenario
+    setUserData(defaultUserData);
+    setWorkflowCompleted(false);
     navigate(ROUTES.mortgage);
   };
 
@@ -110,7 +118,7 @@ const MortgageScenariosList: React.FC<MortgageScenariosListProps> = ({
           variant="outline" 
           size="sm" 
           className="gap-2"
-          onClick={() => navigate(ROUTES.mortgage)}
+          onClick={handleNewScenario}
           disabled={readOnly}
         >
           <Plus className="h-4 w-4" />

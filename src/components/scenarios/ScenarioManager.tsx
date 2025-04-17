@@ -1,8 +1,6 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { FileText, FilePlus, Save } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
 import { useMortgageScenarios } from '@/store/mortgageScenarios';
@@ -11,9 +9,13 @@ import SaveScenarioDialog from './dialogs/SaveScenarioDialog';
 import RenameScenarioDialog from './dialogs/RenameScenarioDialog';
 import DuplicateScenarioDialog from './dialogs/DuplicateScenarioDialog';
 import ScenarioList from './ScenarioList';
+import { defaultUserData } from '@/context/mortgage/defaultData';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
 
 const ScenarioManager: React.FC = () => {
-  const { userData, setUserData, completeWorkflow } = useMortgage();
+  const navigate = useNavigate();
+  const { userData, setUserData, completeWorkflow, setWorkflowCompleted } = useMortgage();
   const {
     scenarios,
     currentScenarioId,
@@ -38,6 +40,13 @@ const ScenarioManager: React.FC = () => {
   const [duplicateScenarioId, setDuplicateScenarioId] = useState<string | null>(null);
   const [duplicateScenarioName, setDuplicateScenarioName] = useState('');
   const [newScenarioName, setNewScenarioName] = useState('');
+
+  // Handle create new scenario
+  const handleCreateNewScenario = () => {
+    setUserData(defaultUserData);
+    setWorkflowCompleted(false);
+    navigate(ROUTES.mortgage);
+  };
 
   // Handle save scenario
   const handleSaveScenario = async () => {
@@ -112,6 +121,12 @@ const ScenarioManager: React.FC = () => {
         <Button variant="default" className="gap-2" onClick={() => setSaveDialogOpen(true)}>
           <Save className="w-4 h-4" />
           {currentScenarioId ? 'Update Scenario' : 'Save Scenario'}
+        </Button>
+
+        {/* New Scenario Button */}
+        <Button variant="outline" className="gap-2" onClick={handleCreateNewScenario}>
+          <FilePlus className="w-4 h-4" />
+          New Scenario
         </Button>
 
         {/* Load/View Scenarios */}

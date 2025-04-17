@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useMortgageScenarios } from '@/store/mortgageScenarios';
 import { useUser } from '@/context/UserContext';
@@ -13,6 +14,7 @@ import { FilePlus, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { useMortgage } from '@/context/MortgageContext';
+import { defaultUserData } from '@/context/mortgage/defaultData';
 
 const ScenarioSwitcher: React.FC = () => {
   const { isLoggedIn } = useUser();
@@ -23,7 +25,7 @@ const ScenarioSwitcher: React.FC = () => {
     loadScenario 
   } = useMortgageScenarios();
   const navigate = useNavigate();
-  const { setUserData, completeWorkflow } = useMortgage();
+  const { setUserData, completeWorkflow, setWorkflowCompleted } = useMortgage();
 
   // Fetch scenarios when component mounts
   useEffect(() => {
@@ -35,6 +37,9 @@ const ScenarioSwitcher: React.FC = () => {
   // Handle scenario change
   const handleScenarioChange = (id: string) => {
     if (id === 'new') {
+      // Reset user data and workflow completion status for new scenario
+      setUserData(defaultUserData);
+      setWorkflowCompleted(false);
       navigate(ROUTES.mortgage);
     } else {
       loadScenario(id, setUserData, completeWorkflow).then(() => {
@@ -50,7 +55,12 @@ const ScenarioSwitcher: React.FC = () => {
         variant="outline" 
         size="sm" 
         className="gap-2"
-        onClick={() => navigate(ROUTES.mortgage)}
+        onClick={() => {
+          // Reset user data and workflow completion status for new scenario
+          setUserData(defaultUserData);
+          setWorkflowCompleted(false);
+          navigate(ROUTES.mortgage);
+        }}
       >
         <FilePlus className="h-4 w-4" />
         New Scenario
