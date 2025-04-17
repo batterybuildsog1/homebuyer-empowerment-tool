@@ -14,6 +14,7 @@ export const defaultUserData: UserData = {
   financials: {
     annualIncome: 0,
     monthlyDebts: 0,
+    debtItems: [], // Ensure an empty array by default
     ficoScore: 680,
     downPayment: 0,
     downPaymentPercent: 20,
@@ -27,7 +28,6 @@ export const defaultUserData: UserData = {
       downPayment: "<5%",
     },
     currentHousingPayment: 0,
-    debtItems: [],
   },
   loanDetails: {
     loanType: 'conventional',

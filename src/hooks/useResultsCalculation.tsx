@@ -1,10 +1,9 @@
-
 import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
 import { validateMortgageData, calculateMortgageResults, MortgageResults } from "@/utils/mortgageResultsCalculator";
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { SelectedFactors } from "@/context/mortgage/types";
+import { SelectedFactors, DebtItem } from "@/context/mortgage/types";
 
 export const useResultsCalculation = () => {
   const { userData, updateResults } = useMortgage();
@@ -30,7 +29,7 @@ export const useResultsCalculation = () => {
       
       setValidationError(null);
       
-      // Ensure we have selectedFactors data before calculation
+      // Default factors definition
       const defaultFactors: SelectedFactors = {
         cashReserves: "none",
         residualIncome: "does not meet",
@@ -40,11 +39,17 @@ export const useResultsCalculation = () => {
         downPayment: "<5%"
       };
       
+      // Ensure debt items is an array, fallback to empty array
+      const safeDebtItems: DebtItem[] = Array.isArray(userData.financials.debtItems)
+        ? userData.financials.debtItems
+        : [];
+      
+      // Create enriched user data with safe default values
       const enrichedUserData = {
         ...userData,
         financials: {
           ...userData.financials,
-          // Make sure selectedFactors exists, use default values as fallback
+          debtItems: safeDebtItems,
           selectedFactors: userData.financials.selectedFactors || defaultFactors
         }
       };
