@@ -9,7 +9,7 @@ import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
 const FinancialStepForm = () => {
-  const { userData } = useMortgage();
+  const { userData, setCurrentStep } = useMortgage();
   const { 
     formData,
     errors,
@@ -27,6 +27,11 @@ const FinancialStepForm = () => {
   // Ensure debtItems is an array and then convert it
   const safeDebtItems = Array.isArray(formData.debtItems) ? formData.debtItems : [];
   const debtItemsLegacy = convertDebtItemsToLegacy(safeDebtItems);
+
+  // Handle back button click
+  const handleBackClick = () => {
+    setCurrentStep(0);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -65,7 +70,7 @@ const FinancialStepForm = () => {
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => {}}/* Will be handled by setCurrentStep(0) */
+          onClick={handleBackClick}
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back
