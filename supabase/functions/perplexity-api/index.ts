@@ -39,19 +39,7 @@ serve(async (req) => {
     
     console.log(`Processing request for ${state}, ${county || "Unknown County"}, ${zipCode}`);
 
-    // In a real implementation, this would call the Perplexity API
-    // For now, we'll return hardcoded test data similar to what's in the frontend
-    const testData: MortgageDataResponse = {
-      conventionalInterestRate: 6.75,
-      fhaInterestRate: 6.25,
-      propertyTax: 1.1, // National average property tax rate (%)
-      propertyInsurance: 1200, // Average annual insurance premium ($)
-      upfrontMIP: 1.75, // FHA upfront mortgage insurance premium (%)
-      ongoingMIP: 0.55 // FHA ongoing mortgage insurance premium (%)
-    };
-
-    // In a production version, we would make API calls like this:
-    /*
+    // Make the actual API call to Perplexity
     const perplexityResponse = await fetch("https://api.perplexity.ai/chat/completions", {
       method: "POST",
       headers: {
@@ -76,14 +64,38 @@ serve(async (req) => {
       })
     });
 
-    const perplexityData = await perplexityResponse.json();
-    // Process and extract data from the response
-    */
+    if (!perplexityResponse.ok) {
+      throw new Error(`Perplexity API error: ${perplexityResponse.status}`);
+    }
 
-    // Return the data with CORS headers
-    return new Response(JSON.stringify(testData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const perplexityData = await perplexityResponse.json();
+    
+    // Extract the content from the response
+    const content = perplexityData.choices[0].message.content;
+    
+    // Parse the content to extract the mortgage data
+    // The content might be a JSON string or might have explanatory text
+    // We need to extract just the JSON part
+    let jsonMatch;
+    try {
+      // First try to parse the entire content as JSON
+      const mortgageData = JSON.parse(content);
+      return new Response(JSON.stringify(mortgageData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      // If that fails, try to extract a JSON object from the text
+      jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Could not extract JSON data from Perplexity response");
+      }
+      
+      // Try to parse the extracted JSON
+      const extractedData = JSON.parse(jsonMatch[0]);
+      return new Response(JSON.stringify(extractedData), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
   } catch (error) {
     console.error("Error in perplexity-api function:", error);
     

@@ -123,46 +123,34 @@ Return only valid JSON.
     }
 
     const aiResult = await aiResponse.json();
-    let countyData;
     
-    try {
-      // Parse the JSON response from OpenAI
-      const content = aiResult.choices[0].message.content;
-      countyData = JSON.parse(content);
-      
-      // Validate the data
-      if (typeof countyData.primary_tax !== 'number' || 
-          typeof countyData.general_tax !== 'number' || 
-          typeof countyData.insurance !== 'number') {
-        throw new Error('Invalid data types in OpenAI response');
-      }
-      
-      // Ensure values are within reasonable ranges
-      countyData.primary_tax = Math.max(MIN_TAX_RATE, Math.min(MAX_TAX_RATE, countyData.primary_tax));
-      countyData.general_tax = Math.max(MIN_TAX_RATE, Math.min(MAX_TAX_RATE, countyData.general_tax));
-      countyData.insurance = Math.max(MIN_INSURANCE, Math.min(MAX_INSURANCE, countyData.insurance));
-      
-      console.log(`Successfully parsed data: ${JSON.stringify(countyData)}`);
-    } catch (error) {
-      console.error('Error parsing OpenAI response:', error);
-      console.error('Raw content:', aiResult.choices[0].message.content);
-      
-      // Fallback to default values if parsing fails
-      countyData = {
-        primary_tax: 1.1,  // National average-ish
-        general_tax: 1.35, // Slightly higher for non-primary
-        insurance: 1200    // Reasonable default
-      };
-      console.log(`Using fallback data: ${JSON.stringify(countyData)}`);
+    // Parse the JSON response from OpenAI
+    const content = aiResult.choices[0].message.content;
+    const countyData = JSON.parse(content);
+    
+    // Validate the data
+    if (typeof countyData.primary_tax !== 'number' || 
+        typeof countyData.general_tax !== 'number' || 
+        typeof countyData.insurance !== 'number') {
+      throw new Error('Invalid data types in OpenAI response');
     }
+    
+    // Ensure values are within reasonable ranges
+    const validatedData = {
+      primary_tax: Math.max(MIN_TAX_RATE, Math.min(MAX_TAX_RATE, countyData.primary_tax)),
+      general_tax: Math.max(MIN_TAX_RATE, Math.min(MAX_TAX_RATE, countyData.general_tax)),
+      insurance: Math.max(MIN_INSURANCE, Math.min(MAX_INSURANCE, countyData.insurance))
+    };
+    
+    console.log(`Successfully parsed data: ${JSON.stringify(validatedData)}`);
 
     // 3. Upsert data to the database
     const upsertData = {
       state,
       county,
-      primary_tax: countyData.primary_tax,
-      general_tax: countyData.general_tax,
-      insurance: countyData.insurance,
+      primary_tax: validatedData.primary_tax,
+      general_tax: validatedData.general_tax,
+      insurance: validatedData.insurance,
       last_fetched: new Date().toISOString()
     };
 
@@ -172,7 +160,7 @@ Return only valid JSON.
 
     if (upsertError) {
       console.error('Error upserting data to Supabase:', upsertError);
-      // Continue, as we still want to return the data even if upsert fails
+      throw new Error(`Error storing data: ${upsertError.message}`);
     } else {
       console.log(`Successfully stored data for ${county}, ${state}`);
     }
