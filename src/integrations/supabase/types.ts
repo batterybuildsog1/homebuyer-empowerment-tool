@@ -63,6 +63,36 @@ export type Database = {
         }
         Relationships: []
       }
+      mortgage_scenarios: {
+        Row: {
+          created_at: string | null
+          data: Json
+          id: string
+          is_archived: boolean | null
+          name: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data: Json
+          id?: string
+          is_archived?: boolean | null
+          name: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json
+          id?: string
+          is_archived?: boolean | null
+          name?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       rates: {
         Row: {
           conventional: number

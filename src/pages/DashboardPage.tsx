@@ -11,6 +11,7 @@ import { useUser } from "@/context/UserContext";
 import PageLayout from "@/components/layouts/PageLayout";
 import { formatCurrency } from "@/utils/formatters";
 import { ROUTES } from "@/utils/routes";
+import MortgageScenariosList from "@/components/dashboard/MortgageScenariosList";
 
 const DashboardPage = () => {
   const { isLoggedIn, userName } = useUser();
@@ -164,7 +165,10 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
           
-          {/* More dashboard cards can be added here */}
+          {/* Mortgage Scenarios List */}
+          <Card className="col-span-1 md:col-span-3">
+            <MortgageScenariosList />
+          </Card>
         </div>
       </div>
     </PageLayout>

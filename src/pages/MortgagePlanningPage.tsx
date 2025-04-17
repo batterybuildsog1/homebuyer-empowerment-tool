@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, RefreshCw } from "lucide-react";
 import { ROUTES } from "@/utils/routes";
+import ScenarioManager from "@/components/scenarios/ScenarioManager";
 
 // Main MortgagePlanningPage component
 const MortgagePlanningPage = () => {
@@ -20,17 +21,19 @@ const MortgagePlanningPage = () => {
   // If workflow is completed, show completion message with option to reset or view dashboard
   const renderCompletedView = () => (
     <Card className="mb-8">
-      <CardContent className="p-8 text-center">
+      <CardContent className="p-8">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <div className="w-8 h-8 text-green-600">✓</div>
         </div>
-        <Heading as="h2" size="xl" className="mb-4">Mortgage Planning Completed</Heading>
-        <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+        <Heading as="h2" size="xl" className="text-center mb-4">Mortgage Planning Completed</Heading>
+        <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-center">
           You've successfully completed the mortgage planning workflow. 
-          You can view your financial dashboard or reset the calculator to start over.
+          You can save your scenario, view your financial dashboard, or reset the calculator to start over.
         </p>
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <ScenarioManager />
+          
           <Button 
             variant="outline" 
             onClick={resetCalculator}

@@ -13,6 +13,7 @@ import { UserProvider } from '@/context/UserContext';
 import { HelmetProvider } from 'react-helmet-async';
 import AuthPage from './pages/AuthPage';
 import { ROUTES } from './utils/routes';
+import ScenarioMigration from './components/scenarios/ScenarioMigration';
 import './App.css';
 
 function App() {
@@ -30,8 +31,9 @@ function App() {
                 <Route path={ROUTES.auth} element={<AuthPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <ScenarioMigration />
+              <Toaster />
             </Router>
-            <Toaster />
           </MortgageProvider>
         </UserProvider>
       </ThemeProvider>
