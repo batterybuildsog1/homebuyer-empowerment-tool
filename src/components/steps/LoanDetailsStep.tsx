@@ -8,11 +8,13 @@ import LoadingIndicator from "./loan-details/LoadingIndicator";
 import DataFetchingManager from "./loan-details/DataFetchingManager";
 import BorrowingPowerChart from "./financial/BorrowingPowerChart";
 import { useMortgage } from "@/context/MortgageContext";
+import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 
 const LoanDetailsStep: React.FC = () => {
   const [isDataReady, setIsDataReady] = useState(false);
   const { fetchProgress, formData } = useLoanData();
   const { userData, updateLoanDetails } = useMortgage();
+  const { convertDebtItemsToLegacy } = useFinancialForm();
   
   // Function to check if we have all necessary data to proceed
   const checkDataReadiness = useCallback(() => {

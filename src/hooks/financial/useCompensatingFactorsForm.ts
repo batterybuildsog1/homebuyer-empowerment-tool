@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
+import { SelectedFactors } from "@/context/mortgage/types";
 import { useAnalytics, AnalyticsEvents } from "@/hooks/useAnalytics";
 import { toast } from "sonner";
 import { 
@@ -11,7 +12,7 @@ import {
 
 // Define types for the form data
 export interface CompensatingFactorsFormData {
-  selectedFactors: Record<string, string>;
+  selectedFactors: SelectedFactors;
   currentHousingPayment: number;
 }
 
@@ -21,7 +22,14 @@ export const useCompensatingFactorsForm = () => {
   
   // Form state
   const [formData, setFormData] = useState<CompensatingFactorsFormData>({
-    selectedFactors: userData.financials.selectedFactors || {},
+    selectedFactors: userData.financials.selectedFactors || {
+      cashReserves: "none",
+      residualIncome: "does not meet",
+      housingPaymentIncrease: ">20%",
+      employmentHistory: "<2 years",
+      creditUtilization: ">30%",
+      downPayment: "<5%"
+    },
     currentHousingPayment: userData.financials.currentHousingPayment || 0
   });
   
@@ -32,7 +40,14 @@ export const useCompensatingFactorsForm = () => {
   useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      selectedFactors: userData.financials.selectedFactors || {},
+      selectedFactors: userData.financials.selectedFactors || {
+        cashReserves: "none",
+        residualIncome: "does not meet",
+        housingPaymentIncrease: ">20%",
+        employmentHistory: "<2 years",
+        creditUtilization: ">30%",
+        downPayment: "<5%"
+      },
       currentHousingPayment: userData.financials.currentHousingPayment || 0
     }));
   }, [userData.financials.selectedFactors, userData.financials.currentHousingPayment]);
@@ -41,7 +56,10 @@ export const useCompensatingFactorsForm = () => {
   const handleFactorOptionChange = (id: string, value: string) => {
     console.log(`Changing factor ${id} to ${value}`);
     setFormData(prev => {
-      const updatedFactors = { ...prev.selectedFactors, [id]: value };
+      const updatedFactors: SelectedFactors = { 
+        ...prev.selectedFactors, 
+        [id]: value 
+      };
       
       // Track the factor option selection event
       trackEvent(AnalyticsEvents.FACTOR_SELECTED, {

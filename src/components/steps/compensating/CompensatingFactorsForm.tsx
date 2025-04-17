@@ -6,6 +6,7 @@ import BorrowingPowerChart from "../financial/BorrowingPowerChart";
 import { useCompensatingFactorsForm } from "@/hooks/financial/useCompensatingFactorsForm";
 import { useMortgage } from "@/context/MortgageContext";
 import { useEffect, useState } from "react";
+import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 
 const CompensatingFactorsForm = () => {
   const { setCurrentStep, userData } = useMortgage();
@@ -16,6 +17,9 @@ const CompensatingFactorsForm = () => {
     handleCurrentHousingPaymentChange,
     handleSubmit
   } = useCompensatingFactorsForm();
+  
+  // Get the conversion utility from useFinancialForm
+  const { convertDebtItemsToLegacy } = useFinancialForm();
   
   // Used to force re-render of BorrowingPowerChart when factors change
   const [factorUpdateKey, setFactorUpdateKey] = useState(0);
@@ -44,7 +48,7 @@ const CompensatingFactorsForm = () => {
             annualIncome={userData.financials.annualIncome}
             ficoScore={userData.financials.ficoScore}
             debtItems={userData.financials.debtItems}
-            selectedFactors={formData.selectedFactors || {}}
+            selectedFactors={formData.selectedFactors}
           />
         </div>
       </div>

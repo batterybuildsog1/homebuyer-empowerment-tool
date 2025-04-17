@@ -1,5 +1,6 @@
+
 import { UserData } from "@/context/MortgageContext";
-import { MortgageResults } from "./mortgageResultsCalculator";
+import { ImprovementScenario } from "@/context/mortgage/types";
 import { 
   calculateAdjustedRate, 
   calculateMaxDTI, 
@@ -22,9 +23,9 @@ export function calculateAlternativeScenarios(
   userData: UserData,
   maxDTI: number,
   baseMaxPrice: number
-): MortgageResults['scenarios'] {
+): ImprovementScenario[] {
   const { financials, loanDetails } = userData;
-  const scenarios = [];
+  const scenarios: ImprovementScenario[] = [];
   
   // Create safe selectedFactors with defaults
   const userSelectedFactors = financials.selectedFactors || {};
@@ -99,7 +100,12 @@ export function calculateAlternativeScenarios(
     altPmiRate
   );
   
+  const altLoanTypeIncrease = altMaxPrice - baseMaxPrice;
+  
   scenarios.push({
+    name: `Switch to ${alternativeLoanType.toUpperCase()} loan`,
+    description: `Using a ${alternativeLoanType.toUpperCase()} loan could ${altLoanTypeIncrease > 0 ? 'increase' : 'decrease'} your buying power`,
+    increase: altLoanTypeIncrease,
     loanType: alternativeLoanType,
     ficoChange: 0,
     ltvChange: 0,
@@ -149,9 +155,15 @@ export function calculateAlternativeScenarios(
       pmiRate
     );
     
+    const ficoIncrease = betterFicoPrice - baseMaxPrice;
+    const ficoChange = nextFicoBand - financials.ficoScore;
+    
     scenarios.push({
+      name: `Improve your FICO score by ${ficoChange} points`,
+      description: `Increasing your FICO score to ${nextFicoBand} could ${ficoIncrease > 0 ? 'increase' : 'decrease'} your buying power`,
+      increase: ficoIncrease,
       loanType: loanDetails.loanType,
-      ficoChange: nextFicoBand - financials.ficoScore,
+      ficoChange: ficoChange,
       ltvChange: 0,
       maxHomePrice: betterFicoPrice,
       monthlyPayment: betterFicoPayment,
@@ -202,7 +214,13 @@ export function calculateAlternativeScenarios(
       lowerLtvPmiRate
     );
     
+    const ltvIncrease = lowerLtvPrice - baseMaxPrice;
+    const downPaymentChange = loanDetails.ltv - lowerLtv;
+    
     scenarios.push({
+      name: `Increase down payment by ${downPaymentChange}%`,
+      description: `A ${100 - lowerLtv}% down payment could ${ltvIncrease > 0 ? 'increase' : 'decrease'} your buying power`,
+      increase: ltvIncrease,
       loanType: loanDetails.loanType,
       ficoChange: 0,
       ltvChange: lowerLtv - loanDetails.ltv,

@@ -2,8 +2,9 @@
 import { useCallback, useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { toast } from "sonner";
-import { validateMortgageData, calculateMortgageResults } from "@/utils/mortgageResultsCalculator";
+import { validateMortgageData, calculateMortgageResults, MortgageResults } from "@/utils/mortgageResultsCalculator";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { SelectedFactors } from "@/context/mortgage/types";
 
 export const useResultsCalculation = () => {
   const { userData, updateResults } = useMortgage();
@@ -30,12 +31,21 @@ export const useResultsCalculation = () => {
       setValidationError(null);
       
       // Ensure we have selectedFactors data before calculation
+      const defaultFactors: SelectedFactors = {
+        cashReserves: "none",
+        residualIncome: "does not meet",
+        housingPaymentIncrease: ">20%",
+        employmentHistory: "<2 years",
+        creditUtilization: ">30%",
+        downPayment: "<5%"
+      };
+      
       const enrichedUserData = {
         ...userData,
         financials: {
           ...userData.financials,
-          // Make sure selectedFactors exists, use empty object as fallback
-          selectedFactors: userData.financials.selectedFactors || {}
+          // Make sure selectedFactors exists, use default values as fallback
+          selectedFactors: userData.financials.selectedFactors || defaultFactors
         }
       };
       
@@ -52,7 +62,14 @@ export const useResultsCalculation = () => {
       console.log("Calculation completed successfully:", results);
 
       // Calculate strong factor count locally for analytics
-      const strongFactorCount = Object.values(userData.financials.selectedFactors || {}).filter(Boolean).length;
+      const strongFactorCount = Object.values(userData.financials.selectedFactors || {}).filter(value => 
+        value !== 'none' && 
+        value !== 'does not meet' && 
+        value !== '>20%' &&
+        value !== '<2 years' &&
+        value !== '>30%' &&
+        value !== '<5%'
+      ).length;
       
       // Track the calculation event
       trackEvent('results_calculated', {
@@ -65,7 +82,13 @@ export const useResultsCalculation = () => {
       });
       
       // Update results in context
-      updateResults(results);
+      updateResults({
+        maxHomePrice: results.maxHomePrice,
+        monthlyPayment: results.monthlyPayment,
+        financialDetails: results.financialDetails,
+        scenarios: results.scenarios
+      });
+      
       toast.success("Mortgage calculation completed!");
     } catch (error) {
       console.error("Calculation error:", error);

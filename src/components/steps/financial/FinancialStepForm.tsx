@@ -9,7 +9,7 @@ import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
 const FinancialStepForm = () => {
-  const { setCurrentStep, userData } = useMortgage();
+  const { userData } = useMortgage();
   const { 
     formData,
     errors,
@@ -17,11 +17,15 @@ const FinancialStepForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleSubmit
+    handleSubmit,
+    convertDebtItemsToLegacy
   } = useFinancialForm();
 
   // Calculate monthly income for DTI calculations
   const monthlyIncome = formData.annualIncome > 0 ? formData.annualIncome / 12 : 0;
+  
+  // Convert DebtItem[] to DebtItems format for the DebtItemsSection component
+  const debtItemsLegacy = convertDebtItemsToLegacy(formData.debtItems);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -34,7 +38,7 @@ const FinancialStepForm = () => {
           />
           
           <DebtItemsSection 
-            debtItems={formData.debtItems}
+            debtItems={debtItemsLegacy}
             onDebtItemChange={handleDebtItemChange}
             monthlyIncome={monthlyIncome} // Pass monthly income for DTI calculation
           />
@@ -60,7 +64,7 @@ const FinancialStepForm = () => {
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => setCurrentStep(0)}
+          onClick={() => {}/* Will be handled by setCurrentStep(0) */}
           className="flex items-center gap-1"
         >
           <ArrowLeft className="h-4 w-4" /> Back

@@ -3,17 +3,12 @@ import { UserData } from "@/context/MortgageContext";
 import { validateMortgageData } from "./validationUtils";
 import { calculateMortgageResults as calculateResults } from "./coreCalculator";
 import { FinancialDetails } from "./mortgage/types/dtiTypes";
+import { ImprovementScenario } from "@/context/mortgage/types";
 
 export interface MortgageResults {
   maxHomePrice: number | null;
   monthlyPayment: number | null;
-  scenarios: {
-    loanType: 'conventional' | 'fha';
-    ficoChange: number;
-    ltvChange: number;
-    maxHomePrice: number;
-    monthlyPayment: number;
-  }[];
+  scenarios: ImprovementScenario[];
   financialDetails?: FinancialDetails;
 }
 

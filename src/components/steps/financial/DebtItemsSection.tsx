@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -8,14 +9,7 @@ import {
   CollapsibleTrigger 
 } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
-export interface DebtItems {
-  carLoan: number;
-  studentLoan: number;
-  creditCard: number;
-  personalLoan: number;
-  otherDebt: number;
-}
+import { DebtItems } from "@/context/mortgage/types";
 
 export const debtCategories = [
   { id: "carLoan", label: "Car Loans" },
@@ -113,7 +107,7 @@ const DebtItemsSection = ({
                   type="number"
                   placeholder="0"
                   className="pl-10"
-                  value={(debtItems as any)[category.id] || 0}
+                  value={debtItems[category.id] || 0}
                   onChange={(e) => onDebtItemChange(category.id, parseFloat(e.target.value) || 0)}
                 />
               </div>
