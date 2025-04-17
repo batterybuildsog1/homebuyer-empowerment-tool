@@ -1,21 +1,9 @@
-
-// Since I can't see the current content of useLoanDataCache.ts, I'm making an educated guess
-// about its structure based on the other files and implementing the needed changes to clear context
-// when cache is invalid or expired.
-
 import { useMortgage } from '@/context/MortgageContext';
-import { MortgageDataResponse } from '@/services/mortgageRatesService';
+import type { MortgageDataResponse, CachedMortgageData } from '@/types';
 
 // Cache keys
 const MORTGAGE_DATA_CACHE_KEY = 'mortgage_data_cache';
 const CACHE_EXPIRY_TIME = 4 * 60 * 60 * 1000; // 4 hours in milliseconds
-
-export interface CachedMortgageData extends MortgageDataResponse {
-  state: string;
-  county: string;
-  zipCode?: string;
-  timestamp: number;
-}
 
 export const useLoanDataCache = () => {
   const { userData, updateLoanDetails } = useMortgage();

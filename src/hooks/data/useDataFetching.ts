@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { useMortgage } from '@/context/MortgageContext';
 import { fetchAllMortgageData } from '@/services/mortgageRatesService';
 import { toast } from 'sonner';
-import { FetchProgressState } from './fetchingTypes';
+import type { FetchProgressState } from '@/types';
 
 export const useDataFetching = () => {
   const { userData, updateLoanDetails } = useMortgage();

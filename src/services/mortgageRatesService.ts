@@ -1,8 +1,6 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { CountyPropertyData } from "@/hooks/data/usePropertyData";
-import { MortgageDataResponse, ApiResult } from "@/hooks/data/fetchingTypes";
+import type { CountyPropertyData, MortgageDataResponse, ApiResult } from "@/types";
 
 /**
  * Fetches mortgage interest rates from the get-mortgage-rates edge function

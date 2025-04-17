@@ -1,16 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-export interface CountyPropertyData {
-  state: string;
-  county: string;
-  primary_tax: number;
-  general_tax: number;
-  insurance: number;
-  last_fetched: string;
-}
+import type { CountyPropertyData } from '@/types';
 
 export interface PropertyDataState {
   isLoading: boolean;
