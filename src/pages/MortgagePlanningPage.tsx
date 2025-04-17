@@ -6,11 +6,7 @@ import { Heading } from "@/components/ui/Heading";
 import MortgageCalculator from "@/components/MortgageCalculator";
 import PageLayout from "@/components/layouts/PageLayout";
 import { useMortgage } from "@/context/MortgageContext";
-import { Button } from "@/components/ui/button";
-import { BarChart3 } from "lucide-react";
 import { ROUTES } from "@/utils/routes";
-import ScenarioManager from "@/components/scenarios/ScenarioManager";
-import { useAutoSaveScenario } from "@/hooks/useAutoSaveScenario";
 
 const MortgagePlanningPage = () => {
   const { isMortgageWorkflowCompleted } = useMortgage();
@@ -29,13 +25,8 @@ const MortgagePlanningPage = () => {
           Mortgage Planning Completed
         </Heading>
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-center">
-          You've successfully completed the mortgage planning workflow. 
-          You can save your scenario.
+          You've successfully completed the mortgage planning workflow.
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <ScenarioManager />
-        </div>
       </CardContent>
     </Card>
   );
@@ -64,4 +55,3 @@ const MortgagePlanningPage = () => {
 };
 
 export default MortgagePlanningPage;
-
