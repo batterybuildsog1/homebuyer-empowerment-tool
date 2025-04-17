@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +7,6 @@ import MortgageCalculator from "@/components/MortgageCalculator";
 import PageLayout from "@/components/layouts/PageLayout";
 import { useMortgage } from "@/context/MortgageContext";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import { BarChart3 } from "lucide-react";
 import { ROUTES } from "@/utils/routes";
 import ScenarioManager from "@/components/scenarios/ScenarioManager";
@@ -14,7 +14,6 @@ import { useAutoSaveScenario } from "@/hooks/useAutoSaveScenario";
 
 const MortgagePlanningPage = () => {
   const { isMortgageWorkflowCompleted } = useMortgage();
-  const navigate = useNavigate();
   const isCompleted = isMortgageWorkflowCompleted();
 
   // Initialize auto-save functionality
@@ -31,19 +30,11 @@ const MortgagePlanningPage = () => {
         </Heading>
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-center">
           You've successfully completed the mortgage planning workflow. 
-          You can save your scenario or view your financial dashboard.
+          You can save your scenario.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <ScenarioManager />
-          
-          <Button 
-            onClick={() => navigate(ROUTES.dashboard)}
-            className="gap-2"
-          >
-            <BarChart3 className="h-4 w-4" /> 
-            View Dashboard
-          </Button>
         </div>
       </CardContent>
     </Card>
@@ -73,3 +64,4 @@ const MortgagePlanningPage = () => {
 };
 
 export default MortgagePlanningPage;
+
