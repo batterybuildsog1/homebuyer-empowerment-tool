@@ -24,8 +24,9 @@ const FinancialStepForm = () => {
   // Calculate monthly income for DTI calculations
   const monthlyIncome = formData.annualIncome > 0 ? formData.annualIncome / 12 : 0;
   
-  // Convert DebtItem[] to DebtItems format for the DebtItemsSection component
-  const debtItemsLegacy = convertDebtItemsToLegacy(formData.debtItems);
+  // Ensure debtItems is an array and then convert it
+  const safeDebtItems = Array.isArray(formData.debtItems) ? formData.debtItems : [];
+  const debtItemsLegacy = convertDebtItemsToLegacy(safeDebtItems);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

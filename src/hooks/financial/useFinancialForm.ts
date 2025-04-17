@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { DebtItem, DebtItems, SelectedFactors } from '@/context/mortgage/types';
 import { useMortgage } from '@/context/MortgageContext';
@@ -10,6 +11,9 @@ export const useFinancialForm = () => {
   const formState = useFinancialFormState();
   
   const convertDebtItemsToLegacy = (items: DebtItem[]): DebtItems => {
+    // Ensure items is an array before processing
+    const validItems = Array.isArray(items) ? items : [];
+    
     const legacy: DebtItems = {
       carLoan: 0,
       studentLoan: 0,
@@ -18,7 +22,7 @@ export const useFinancialForm = () => {
       otherDebt: 0
     };
     
-    items.forEach(item => {
+    validItems.forEach(item => {
       if (item.description.toLowerCase().includes('car')) {
         legacy.carLoan += item.monthlyPayment;
       } else if (item.description.toLowerCase().includes('student')) {
@@ -58,20 +62,35 @@ export const useFinancialForm = () => {
   };
 
   const handleDebtItemChange = useCallback((id: string, value: number) => {
-    const currentLegacyItems = convertDebtItemsToLegacy(formState.formData.debtItems);
+    // Ensure formState.formData.debtItems is an array before using it
+    const safeDebtItems = Array.isArray(formState.formData.debtItems) 
+      ? formState.formData.debtItems 
+      : [];
+    
+    const currentLegacyItems = convertDebtItemsToLegacy(safeDebtItems);
     currentLegacyItems[id] = value;
     
     const updatedDebtItems = convertLegacyToDebtItems(currentLegacyItems);
     formState.handleDebtItemsChange(updatedDebtItems);
   }, [formState]);
 
-  // Computed values for backward compatibility
+  // Computed values for backward compatibility with proper type checking
   const annualIncome = formState.formData.annualIncome;
-  const monthlyDebts = formState.formData.debtItems.reduce((sum, item) => sum + item.monthlyPayment, 0);
+  
+  // Ensure debtItems is an array before calling reduce
+  const safeDebtItems = Array.isArray(formState.formData.debtItems) 
+    ? formState.formData.debtItems 
+    : [];
+  
+  const monthlyDebts = safeDebtItems.reduce(
+    (sum, item) => sum + (item.monthlyPayment || 0), 
+    0
+  );
+  
   const ficoScore = formState.formData.ficoScore;
   const downPayment = userData.financials.downPayment || 0;
   const downPaymentPercent = userData.financials.downPaymentPercent || 20;
-  const debtItems = formState.formData.debtItems;
+  const debtItems = safeDebtItems;
   const selectedFactors = userData.financials.selectedFactors || {
     cashReserves: "none",
     residualIncome: "does not meet",

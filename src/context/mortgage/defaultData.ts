@@ -14,7 +14,7 @@ export const defaultUserData: UserData = {
   financials: {
     annualIncome: 0,
     monthlyDebts: 0,
-    debtItems: [], // Ensure an empty array by default
+    debtItems: [], // Ensure this is explicitly initialized as an empty array
     ficoScore: 680,
     downPayment: 0,
     downPaymentPercent: 20,

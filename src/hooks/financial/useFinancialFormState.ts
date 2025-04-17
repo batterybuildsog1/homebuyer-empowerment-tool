@@ -1,4 +1,3 @@
-
 import { useState, useCallback, FormEvent } from 'react';
 import { DebtItem, DebtItems } from '@/context/mortgage/types';
 import { useMortgage } from '@/context/MortgageContext';
@@ -18,9 +17,13 @@ export interface FinancialFormErrors {
 export const useFinancialFormState = () => {
   const { userData, updateFinancials, setCurrentStep } = useMortgage();
   
+  const initialDebtItems = Array.isArray(userData.financials.debtItems) 
+    ? userData.financials.debtItems 
+    : [];
+  
   const [formData, setFormData] = useState<FinancialFormData>({
     annualIncome: userData.financials.annualIncome || 0,
-    debtItems: userData.financials.debtItems || [],
+    debtItems: initialDebtItems,
     ficoScore: userData.financials.ficoScore || 680
   });
   
@@ -40,7 +43,8 @@ export const useFinancialFormState = () => {
   }, []);
 
   const handleDebtItemsChange = useCallback((items: DebtItem[]) => {
-    setFormData(prev => ({ ...prev, debtItems: items }));
+    const validItems = Array.isArray(items) ? items : [];
+    setFormData(prev => ({ ...prev, debtItems: validItems }));
   }, []);
 
   const validateForm = (): boolean => {
@@ -69,7 +73,9 @@ export const useFinancialFormState = () => {
     setIsSubmitting(true);
     
     try {
-      const totalMonthlyDebts = formData.debtItems.reduce(
+      const validDebtItems = Array.isArray(formData.debtItems) ? formData.debtItems : [];
+      
+      const totalMonthlyDebts = validDebtItems.reduce(
         (sum, item) => sum + item.monthlyPayment, 
         0
       );
@@ -77,7 +83,7 @@ export const useFinancialFormState = () => {
       updateFinancials({
         annualIncome: formData.annualIncome,
         ficoScore: formData.ficoScore,
-        debtItems: formData.debtItems,
+        debtItems: validDebtItems,
         monthlyDebts: totalMonthlyDebts
       });
       
