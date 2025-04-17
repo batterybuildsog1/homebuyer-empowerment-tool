@@ -11,3 +11,6 @@ verify_jwt = false
 verify_jwt = true
 schedule = "@daily"
 
+[functions.get-mortgage-rates]
+verify_jwt = false
+

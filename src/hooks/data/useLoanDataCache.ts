@@ -1,89 +1,137 @@
 
-import { useEffect } from "react";
-import { useMortgage } from "@/context/MortgageContext";
+import { useCallback } from 'react';
+import { useMortgage } from '@/context/MortgageContext';
+import { fetchAllMortgageData, MortgageDataResponse } from '@/services/mortgageRatesService';
+import { toast } from 'sonner';
+
+// Cache duration in milliseconds (4 hours)
+const CACHE_DURATION_MS = 4 * 60 * 60 * 1000;
 
 /**
- * Hook for managing loan data caching functionality
+ * Hook to manage loan data caching
  */
 export const useLoanDataCache = () => {
-  const { updateLoanDetails } = useMortgage();
-
-  // Initialize from localStorage on mount
-  useEffect(() => {
-    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
-    const cachedData = localStorage.getItem("cached_loan_data");
-    
-    if (lastFetchTime && cachedData) {
-      try {
-        const parsedData = JSON.parse(cachedData);
-        
-        // Only use cached data if it's valid (not all null values)
-        const hasValidData = parsedData.conventionalInterestRate !== null || 
-                              parsedData.fhaInterestRate !== null || 
-                              parsedData.propertyTax !== null || 
-                              parsedData.propertyInsurance !== null;
-        
-        if (hasValidData) {
-          console.log("Using cached loan data from localStorage", parsedData);
-          
-          // Update context with cached data
-          updateLoanDetails({
-            conventionalInterestRate: parsedData.conventionalInterestRate,
-            fhaInterestRate: parsedData.fhaInterestRate,
-            propertyTax: parsedData.propertyTax, 
-            propertyInsurance: parsedData.propertyInsurance,
-            upfrontMIP: parsedData.upfrontMIP,
-            ongoingMIP: parsedData.ongoingMIP
-          });
-        }
-      } catch (e) {
-        console.error("Error parsing cached loan data", e);
-      }
-    }
-  }, [updateLoanDetails]);
-
+  const { userData, updateLoanDetails } = useMortgage();
+  
   /**
-   * Check for valid cached data
-   * @returns The cached data object or null if no valid cache exists
+   * Checks if there's valid cached data and loads it if available
+   * @returns Boolean indicating if valid data was loaded from cache
    */
-  const checkCachedData = () => {
-    // Check if we have data in localStorage
-    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
-    const cachedData = localStorage.getItem("cached_loan_data");
+  const checkCachedData = useCallback(async (): Promise<boolean> => {
+    // Check for cached loan data
+    const cachedDataString = localStorage.getItem('cached_loan_data');
     
-    if (lastFetchTime && cachedData) {
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    if (!cachedDataString) {
+      console.log('No cached loan data found');
+      return false;
+    }
+    
+    try {
+      // Parse and validate cached data
+      const cachedData = JSON.parse(cachedDataString);
+      const now = Date.now();
+      const dataAge = now - cachedData.timestamp;
       
-      // Check if cache is still valid (less than 1 hour old)
-      if (parseInt(lastFetchTime) > oneHourAgo) {
-        try {
-          const parsedData = JSON.parse(cachedData);
-          
-          // Verify we have some valid data
-          if (parsedData.conventionalInterestRate !== null || 
-              parsedData.fhaInterestRate !== null || 
-              parsedData.propertyTax !== null || 
-              parsedData.propertyInsurance !== null) {
-            
-            return parsedData;
-          }
-        } catch (e) {
-          console.error("Error parsing cached loan data", e);
-        }
+      // Check if data is for current location
+      const currentLocation = `${userData.location.state}-${userData.location.county}`;
+      const isSameLocation = cachedData.location === currentLocation;
+      
+      // If data is recent (within 4 hours) and for same location, use it
+      if (dataAge < CACHE_DURATION_MS && isSameLocation) {
+        console.log('Using cached loan data (within 4 hours)');
+        
+        // Apply cached mortgage data to context
+        const mortgageData: MortgageDataResponse = cachedData.mortgageData;
+        
+        updateLoanDetails({
+          conventionalInterestRate: mortgageData.conventionalInterestRate,
+          fhaInterestRate: mortgageData.fhaInterestRate,
+          propertyTax: mortgageData.propertyTax,
+          propertyInsurance: mortgageData.propertyInsurance,
+          upfrontMIP: mortgageData.upfrontMIP,
+          ongoingMIP: mortgageData.ongoingMIP
+        });
+        
+        return true;
       }
+      
+      // If location changed, fetch new data
+      if (!isSameLocation) {
+        console.log('Location changed, cached data invalid');
+        return false;
+      }
+      
+      // If data is old but location hasn't changed, refresh in background
+      if (dataAge >= CACHE_DURATION_MS) {
+        console.log('Cached data expired, refreshing in background');
+        toast.info('Refreshing mortgage rate data...');
+        
+        // Still use cached data immediately
+        const mortgageData: MortgageDataResponse = cachedData.mortgageData;
+        
+        updateLoanDetails({
+          conventionalInterestRate: mortgageData.conventionalInterestRate,
+          fhaInterestRate: mortgageData.fhaInterestRate,
+          propertyTax: mortgageData.propertyTax,
+          propertyInsurance: mortgageData.propertyInsurance,
+          upfrontMIP: mortgageData.upfrontMIP,
+          ongoingMIP: mortgageData.ongoingMIP
+        });
+        
+        // Fetch new data in background
+        try {
+          const freshData = await fetchAllMortgageData(
+            userData.location.state,
+            userData.location.county,
+            userData.location.zipCode || ''
+          );
+          
+          if (freshData) {
+            // Update with fresh data
+            updateLoanDetails({
+              conventionalInterestRate: freshData.conventionalInterestRate,
+              fhaInterestRate: freshData.fhaInterestRate,
+              propertyTax: freshData.propertyTax,
+              propertyInsurance: freshData.propertyInsurance,
+              upfrontMIP: freshData.upfrontMIP,
+              ongoingMIP: freshData.ongoingMIP
+            });
+            
+            // Update cache
+            const newCacheData = {
+              mortgageData: freshData,
+              timestamp: Date.now(),
+              location: currentLocation
+            };
+            
+            localStorage.setItem('cached_loan_data', JSON.stringify(newCacheData));
+            toast.success('Mortgage data updated');
+          }
+        } catch (error) {
+          console.error('Error refreshing data in background:', error);
+          // Still return true since we're using the cached data
+        }
+        
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error parsing cached loan data:', error);
+      return false;
     }
-    
-    return null;
-  };
-
+  }, [userData.location, updateLoanDetails]);
+  
   /**
-   * Forces cache invalidation
+   * Invalidates the loan data cache
    */
-  const invalidateCache = () => {
-    localStorage.removeItem("data_fetch_timestamp");
-    localStorage.removeItem("cached_loan_data");
-  };
-
+  const invalidateCache = useCallback(() => {
+    localStorage.removeItem('cached_loan_data');
+    localStorage.removeItem('cached_mortgage_rates');
+    localStorage.removeItem('cached_mortgage_rates_timestamp');
+    toast.success('Mortgage data cache cleared');
+  }, []);
+  
   return {
     checkCachedData,
     invalidateCache

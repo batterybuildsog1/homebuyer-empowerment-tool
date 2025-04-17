@@ -1,179 +1,103 @@
 
-import { useState, useCallback } from "react";
-import { toast } from "sonner";
-import { fetchAllMortgageData } from "@/services/perplexityService";
-import { useMortgage } from "@/context/MortgageContext";
-import { FetchProgressState, CachedLoanData } from "./fetchingTypes";
+import { useState, useCallback } from 'react';
+import { useMortgage } from '@/context/MortgageContext';
+import { fetchAllMortgageData } from '@/services/mortgageRatesService';
+import { FetchProgress } from './fetchingTypes';
+import { toast } from 'sonner';
 
 /**
- * Hook for handling all external data fetching operations
+ * Hook to handle data fetching for mortgage rates and property data
  */
 export const useDataFetching = () => {
-  const { userData, setIsLoadingData, updateLoanDetails } = useMortgage();
-  
-  const [fetchProgress, setFetchProgress] = useState<FetchProgressState>({
+  const [fetchProgress, setFetchProgress] = useState<FetchProgress>({
     isLoading: false,
     progress: 0,
-    message: "Initializing...",
-    hasAttemptedFetch: false,
+    message: '',
+    hasAttemptedFetch: false
   });
-
+  
+  const { userData, updateLoanDetails } = useMortgage();
+  
   /**
-   * Fetches mortgage data from service
-   * @param isBackgroundFetch Whether this is a background fetch (no UI feedback)
-   * @returns The fetched data or null if fetch failed
+   * Fetches external mortgage data from the API
    */
-  const fetchExternalData = useCallback(async (isBackgroundFetch = false) => {
-    // Check for recent fetch in localStorage
-    const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
-    const cachedData = localStorage.getItem("cached_loan_data");
-    
-    // Only use cached data if it's less than 1 hour old
-    if (lastFetchTime && cachedData) {
-      const oneHourAgo = Date.now() - (60 * 60 * 1000);
-      if (parseInt(lastFetchTime) > oneHourAgo) {
-        try {
-          const parsedData = JSON.parse(cachedData);
-          
-          // Only use cached data if it's valid (not all null values)
-          const hasValidData = parsedData.conventionalInterestRate !== null || 
-                              parsedData.fhaInterestRate !== null || 
-                              parsedData.propertyTax !== null || 
-                              parsedData.propertyInsurance !== null;
-          
-          if (hasValidData) {
-            console.log("Using cached loan data within the last hour", parsedData);
-            
-            // Mark that we've attempted a fetch
-            setFetchProgress(prev => ({
-              ...prev,
-              hasAttemptedFetch: true
-            }));
-            
-            // Update context
-            updateLoanDetails(parsedData);
-            
-            return parsedData;
-          }
-        } catch (e) {
-          console.error("Error parsing cached data", e);
-        }
-      }
-    }
-    
-    // Ensure we have location data before attempting fetch
-    if (!userData.location.state || !userData.location.city || !userData.location.zipCode) {
-      if (!isBackgroundFetch) {
-        toast.error("Location information is incomplete. Please go back and complete it.");
-      }
+  const fetchExternalData = useCallback(async () => {
+    // Check if we have location data
+    if (!userData.location.state || !userData.location.county) {
+      toast.error('Please enter your location before fetching loan data');
       return null;
     }
     
-    // Set loading state only if this is not a background fetch
-    if (!isBackgroundFetch) {
-      setIsLoadingData(true);
-      setFetchProgress(prev => ({ 
-        ...prev, 
-        isLoading: true, 
-        progress: 20,
-        message: "Fetching mortgage data...",
-      }));
-    }
-    
-    // Always mark that we've attempted a fetch
-    setFetchProgress(prev => ({
-      ...prev,
-      hasAttemptedFetch: true
-    }));
-    
     try {
-      // Fetch all mortgage data
-      const result = await fetchAllMortgageData(
+      setFetchProgress({
+        isLoading: true,
+        progress: 10,
+        message: 'Fetching mortgage rates...',
+        hasAttemptedFetch: true
+      });
+      
+      // Fetch all mortgage data at once
+      const mortgageData = await fetchAllMortgageData(
         userData.location.state,
-        userData.location.county || userData.location.city,
-        userData.location.zipCode
+        userData.location.county,
+        userData.location.zipCode || ''
       );
-
-      if (!result) {
-        throw new Error("Failed to fetch data");
+      
+      if (!mortgageData) {
+        throw new Error('Failed to fetch mortgage data');
       }
-
-      // Update progress
-      if (!isBackgroundFetch) {
-        setFetchProgress(prev => ({ 
-          ...prev, 
-          progress: 80, 
-          message: "Processing data..." 
-        }));
-      }
-
-      // Log the fetched data
-      console.log("Fetched mortgage data:", result);
-
-      // Check if at least some data was fetched successfully
-      const anyDataReceived = result.conventionalInterestRate !== null || 
-                            result.fhaInterestRate !== null || 
-                            result.propertyTax !== null || 
-                            result.propertyInsurance !== null;
-                            
-      if (!anyDataReceived) {
-        throw new Error("No data was successfully fetched");
-      }
-
-      // Transform the result data to match the expected structure
-      const fetchedData: CachedLoanData = {
-        conventionalInterestRate: result.conventionalInterestRate,
-        fhaInterestRate: result.fhaInterestRate,
-        propertyTax: result.propertyTax,
-        propertyInsurance: result.propertyInsurance,
-        upfrontMIP: result.upfrontMIP || null,
-        ongoingMIP: result.ongoingMIP || null
+      
+      setFetchProgress({
+        isLoading: true,
+        progress: 80,
+        message: 'Processing data...',
+        hasAttemptedFetch: true
+      });
+      
+      // Update loan details in context
+      updateLoanDetails({
+        conventionalInterestRate: mortgageData.conventionalInterestRate,
+        fhaInterestRate: mortgageData.fhaInterestRate,
+        propertyTax: mortgageData.propertyTax,
+        propertyInsurance: mortgageData.propertyInsurance,
+        upfrontMIP: mortgageData.upfrontMIP,
+        ongoingMIP: mortgageData.ongoingMIP
+      });
+      
+      // Store data in cache
+      const cacheData = {
+        mortgageData,
+        timestamp: Date.now(),
+        location: `${userData.location.state}-${userData.location.county}`
       };
       
-      // Cache the results in localStorage with a timestamp
-      localStorage.setItem("data_fetch_timestamp", Date.now().toString());
-      localStorage.setItem("cached_loan_data", JSON.stringify(fetchedData));
-
-      // Update the context with the fetched data
-      updateLoanDetails(fetchedData);
-
-      // Only show success if all necessary data was fetched and this is not a background fetch
-      if (!isBackgroundFetch) {
-        if (result.conventionalInterestRate !== null && result.fhaInterestRate !== null && 
-            result.propertyTax !== null && result.propertyInsurance !== null) {
-          toast.success("Successfully processed mortgage data!");
-        } else if (anyDataReceived) {
-          toast.warning("Some data could not be fetched. You may proceed, but results might be inaccurate.");
-        } else {
-          toast.error("Failed to fetch any data. Please check your location information and try again.");
-        }
-        
-        // Complete the progress
-        setFetchProgress(prev => ({ 
-          ...prev, 
-          progress: 100, 
-          message: "Data processing complete" 
-        }));
-      }
+      localStorage.setItem('cached_loan_data', JSON.stringify(cacheData));
       
-      // Return the fetched data
-      return fetchedData;
-
+      setFetchProgress({
+        isLoading: false,
+        progress: 100,
+        message: 'Data fetch complete',
+        hasAttemptedFetch: true
+      });
+      
+      toast.success('Mortgage data updated successfully');
+      return mortgageData;
+      
     } catch (error) {
-      console.error("Error fetching data:", error);
-      if (!isBackgroundFetch) {
-        toast.error("An error occurred while fetching mortgage data. Please try again later.");
-      }
-      return null; // Return null on error
-    } finally {
-      // Only update loading state if this is not a background fetch
-      if (!isBackgroundFetch) {
-        setIsLoadingData(false);
-        setFetchProgress(prev => ({ ...prev, isLoading: false }));
-      }
+      console.error('Error fetching mortgage data:', error);
+      toast.error('Failed to fetch mortgage data');
+      
+      setFetchProgress({
+        isLoading: false,
+        progress: 0,
+        message: 'Error fetching data',
+        hasAttemptedFetch: true
+      });
+      
+      return null;
     }
-  }, [userData.location, setIsLoadingData, updateLoanDetails]);
-
+  }, [userData.location, updateLoanDetails]);
+  
   return {
     fetchProgress,
     fetchExternalData
