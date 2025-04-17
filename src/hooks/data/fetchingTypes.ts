@@ -17,7 +17,7 @@ export interface CachedLoanData {
   ongoingMIP?: number | null;
 }
 
-export interface MortgageApiResponse {
+export interface MortgageDataResponse {
   conventionalInterestRate: number;
   fhaInterestRate: number;
   propertyTax: number;

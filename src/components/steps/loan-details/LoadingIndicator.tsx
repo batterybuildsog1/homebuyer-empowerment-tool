@@ -1,18 +1,19 @@
 
-import { Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface LoadingIndicatorProps {
-  progress: number;
   message: string;
+  progress: number;
 }
 
-const LoadingIndicator = ({ progress, message }: LoadingIndicatorProps) => {
+const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ message, progress }) => {
   return (
-    <div className="flex flex-col items-center justify-center py-10 space-y-4">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <p className="text-center font-medium">{message}</p>
-      <Progress value={progress} className="w-full" />
+    <div className="flex flex-col items-center justify-center py-12 space-y-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#8b76e0] border-t-transparent" />
+      <div className="w-full max-w-xs space-y-2">
+        <Progress value={progress} className="h-1.5" />
+        <p className="text-sm text-muted-foreground text-center">{message}</p>
+      </div>
     </div>
   );
 };

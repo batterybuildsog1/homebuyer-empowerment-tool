@@ -78,8 +78,8 @@ const AnnualIncomeInput = ({
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
-        <div className="bg-finance-purple/10 p-2 rounded-full flex-shrink-0">
-          <TrendingUp className="h-5 w-5 text-finance-purple" />
+        <div className="bg-[#8b76e0]/10 p-2 rounded-full flex-shrink-0">
+          <TrendingUp className="h-5 w-5 text-[#8b76e0]" />
         </div>
         <div>
           <Label htmlFor="annualIncome" className="text-base font-medium">Annual Income</Label>
@@ -94,19 +94,21 @@ const AnnualIncomeInput = ({
         <Input
           id="annualIncome"
           type="text"
-          className="pl-10 font-medium text-base"
+          className="pl-10 font-medium text-base border-muted/30 focus:border-[#8b76e0] transition-colors"
           value={displayValue}
           onChange={handleInputChange}
           placeholder="75000"
         />
       </div>
       
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive font-medium">{error}</p>
+      )}
       
       {annualIncome > 0 && (
-        <div className="bg-secondary/50 p-3 rounded-md border border-border flex justify-between items-center">
+        <div className="bg-[#8b76e0]/5 p-3 rounded-md border border-[#8b76e0]/20 flex justify-between items-center">
           <span className="text-sm text-muted-foreground">Monthly Income</span>
-          <span className="text-finance-purple font-semibold">
+          <span className="text-[#8b76e0] font-semibold">
             {formatCurrency(annualIncome / 12, 0)}/month
           </span>
         </div>
