@@ -1,4 +1,6 @@
+
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface MortgageDataResponse {
   conventionalInterestRate: number | null;
@@ -23,14 +25,14 @@ const TEST_DATA = {
 const CACHE_DURATION_MS = 4 * 60 * 60 * 1000;
 
 /**
- * Fetches mortgage interest rates using OpenAI API
+ * Fetches mortgage interest rates from the database or fallback to OpenAI API
  */
 export const fetchMortgageRates = async (): Promise<{
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
 }> => {
   try {
-    console.log("Fetching mortgage rates from OpenAI...");
+    console.log("Fetching mortgage rates...");
     
     // Check for cached rates
     const cachedRatesStr = localStorage.getItem("cached_mortgage_rates");
@@ -50,6 +52,36 @@ export const fetchMortgageRates = async (): Promise<{
         };
       }
     }
+    
+    // First try to get rates from the database
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Query the database for the latest rates
+    const { data: latestRates, error } = await supabase
+      .from('daily_mortgage_rates')
+      .select('rate_date, conventional, fha')
+      .order('rate_date', { ascending: false })
+      .limit(1);
+    
+    if (!error && latestRates && latestRates.length > 0) {
+      const dbRates = latestRates[0];
+      console.log("Retrieved rates from database:", dbRates);
+      
+      // Cache the results with timestamp
+      localStorage.setItem("cached_mortgage_rates", JSON.stringify({
+        conventionalInterestRate: dbRates.conventional,
+        fhaInterestRate: dbRates.fha
+      }));
+      localStorage.setItem("cached_mortgage_rates_timestamp", Date.now().toString());
+      
+      return {
+        conventionalInterestRate: dbRates.conventional,
+        fhaInterestRate: dbRates.fha
+      };
+    }
+    
+    // If database fetch fails or no data available, fall back to the OpenAI API
+    console.log("No rates found in database, falling back to OpenAI API");
     
     // Get the Supabase URL from the environment
     const supabaseUrl = "https://thcmyhermklehzjdmhio.supabase.co";
@@ -88,7 +120,7 @@ export const fetchMortgageRates = async (): Promise<{
     }
     
     const data = await response.json();
-    console.log("Received mortgage rates:", data);
+    console.log("Received mortgage rates from API:", data);
     
     // Get rate limit information from headers if available
     const rateLimit = {

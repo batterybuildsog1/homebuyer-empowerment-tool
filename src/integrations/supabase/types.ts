@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      daily_mortgage_rates: {
+        Row: {
+          conventional: number
+          created_at: string
+          fha: number
+          id: number
+          rate_date: string
+        }
+        Insert: {
+          conventional: number
+          created_at?: string
+          fha: number
+          id?: number
+          rate_date: string
+        }
+        Update: {
+          conventional?: number
+          created_at?: string
+          fha?: number
+          id?: number
+          rate_date?: string
+        }
+        Relationships: []
+      }
       rates: {
         Row: {
           conventional: number

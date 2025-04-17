@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.openai-rates-api]
 verify_jwt = false
+
+[functions.fetch-mortgage-rates]
+verify_jwt = true
