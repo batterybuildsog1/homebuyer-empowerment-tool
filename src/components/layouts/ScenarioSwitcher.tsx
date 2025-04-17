@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useMortgageScenarios } from '@/store/mortgageScenarios';
 import { useUser } from '@/context/UserContext';
@@ -13,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { FilePlus, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
+import { useMortgage } from '@/store/mortgage';
 
 const ScenarioSwitcher: React.FC = () => {
   const { isLoggedIn } = useUser();
@@ -23,6 +23,7 @@ const ScenarioSwitcher: React.FC = () => {
     loadScenario 
   } = useMortgageScenarios();
   const navigate = useNavigate();
+  const { setUserData, completeWorkflow } = useMortgage();
 
   // Fetch scenarios when component mounts
   useEffect(() => {
@@ -36,7 +37,7 @@ const ScenarioSwitcher: React.FC = () => {
     if (id === 'new') {
       navigate(ROUTES.mortgage);
     } else {
-      loadScenario(id).then(() => {
+      loadScenario(id, setUserData, completeWorkflow).then(() => {
         navigate(ROUTES.mortgage);
       });
     }
