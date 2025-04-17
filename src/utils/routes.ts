@@ -7,5 +7,8 @@ export const ROUTES = {
   goals: "/financial-goals",
   auth: "/auth",
   onboarding: "/onboarding",
+  expenses: "/expenses",
+  income: "/income",
+  savings: "/savings",
   // Add any future routes here
 };

@@ -31,7 +31,7 @@ const CompensatingFactorsForm = () => {
   }, [formData.selectedFactors]);
 
   // Convert DebtItem[] to DebtItems format for the BorrowingPowerChart component
-  const debtItemsLegacy = convertDebtItemsToLegacy ? convertDebtItemsToLegacy(userData.financials.debtItems) : {};
+  const debtItemsLegacy = convertDebtItemsToLegacy(userData.financials.debtItems || []);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

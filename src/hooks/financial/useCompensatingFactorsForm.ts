@@ -74,7 +74,7 @@ export const useCompensatingFactorsForm = () => {
         userData.financials.ficoScore,
         monthlyDebts,
         monthlyIncome
-      );
+      ) as SelectedFactors;
       
       console.log("Updating context with new factors:", enhancedFactors);
       
@@ -122,7 +122,7 @@ export const useCompensatingFactorsForm = () => {
       userData.financials.ficoScore,
       monthlyDebts,
       monthlyIncome
-    );
+    ) as SelectedFactors;
     
     console.log("Submitting with enhanced factors:", enhancedFactors);
     

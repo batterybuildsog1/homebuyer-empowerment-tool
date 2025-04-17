@@ -152,48 +152,30 @@ export const useFinancialForm = () => {
     }
   };
 
-  const {
-    annualIncome,
-    monthlyDebts,
-    ficoScore,
-    downPayment,
-    downPaymentPercent,
-    debtItems,
-    selectedFactors,
-    currentHousingPayment,
-    handleAnnualIncomeChange,
-    handleMonthlyDebtsChange,
-    handleFicoScoreChange: originalHandleFicoScoreChange,
-    handleDownPaymentChange,
-    handleDownPaymentPercentChange,
-    handleDebtItemsChange,
-    handleSelectedFactorsChange,
-    handleCurrentHousingPaymentChange,
-  } = {
-    annualIncome: formData.annualIncome,
-    monthlyDebts: formData.debtItems.reduce((sum, item) => sum + item.monthlyPayment, 0),
-    ficoScore: formData.ficoScore,
-    downPayment: userData.financials.downPayment || 0,
-    downPaymentPercent: userData.financials.downPaymentPercent || 20,
-    debtItems: formData.debtItems,
-    selectedFactors: userData.financials.selectedFactors || {
-      cashReserves: "none",
-      residualIncome: "does not meet",
-      housingPaymentIncrease: ">20%",
-      employmentHistory: "<2 years",
-      creditUtilization: ">30%",
-      downPayment: "<5%",
-    },
-    currentHousingPayment: userData.financials.currentHousingPayment || 0,
-    handleAnnualIncomeChange: handleIncomeChange,
-    handleMonthlyDebtsChange: (value: number) => console.log("monthlyDebts change not implemented"),
-    handleFicoScoreChange: originalHandleFicoScoreChange,
-    handleDownPaymentChange: (value: number) => console.log("downPayment change not implemented"),
-    handleDownPaymentPercentChange: (value: number) => console.log("downPaymentPercent change not implemented"),
-    handleDebtItemsChange: (items: DebtItem[]) => setFormData(prev => ({ ...prev, debtItems: items })),
-    handleSelectedFactorsChange: (factors: SelectedFactors) => console.log("selectedFactors change not implemented"),
-    handleCurrentHousingPaymentChange: (value: number) => console.log("currentHousingPayment change not implemented"),
+  // For backward compatibility with existing code
+  const annualIncome = formData.annualIncome;
+  const monthlyDebts = formData.debtItems.reduce((sum, item) => sum + item.monthlyPayment, 0);
+  const ficoScore = formData.ficoScore;
+  const downPayment = userData.financials.downPayment || 0;
+  const downPaymentPercent = userData.financials.downPaymentPercent || 20;
+  const debtItems = formData.debtItems;
+  const selectedFactors = userData.financials.selectedFactors || {
+    cashReserves: "none",
+    residualIncome: "does not meet",
+    housingPaymentIncrease: ">20%",
+    employmentHistory: "<2 years",
+    creditUtilization: ">30%",
+    downPayment: "<5%",
   };
+  const currentHousingPayment = userData.financials.currentHousingPayment || 0;
+  
+  const handleAnnualIncomeChange = handleIncomeChange;
+  const handleMonthlyDebtsChange = (value: number) => console.log("monthlyDebts change not implemented");
+  const handleDownPaymentChange = (value: number) => console.log("downPayment change not implemented");
+  const handleDownPaymentPercentChange = (value: number) => console.log("downPaymentPercent change not implemented");
+  const handleDebtItemsChange = (items: DebtItem[]) => setFormData(prev => ({ ...prev, debtItems: items }));
+  const handleSelectedFactorsChange = (factors: SelectedFactors) => console.log("selectedFactors change not implemented");
+  const handleCurrentHousingPaymentChange = (value: number) => console.log("currentHousingPayment change not implemented");
 
   return {
     // For backward compatibility with existing code
@@ -220,7 +202,7 @@ export const useFinancialForm = () => {
     isSubmitting,
     handleIncomeChange,
     handleDebtItemChange,
-    handleFicoScoreChange: handleFicoScoreChange,
+    handleFicoScoreChange,
     handleSubmit,
     
     // Utility functions for conversions

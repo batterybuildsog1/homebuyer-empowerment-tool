@@ -56,6 +56,9 @@ const LoanDetailsStep: React.FC = () => {
   // Check if we have cached data
   const cachedDataExists = Boolean(localStorage.getItem("cached_loan_data"));
   
+  // Convert DebtItem[] to DebtItems format for the BorrowingPowerChart component
+  const debtItemsLegacy = convertDebtItemsToLegacy(userData.financials.debtItems || []);
+  
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
@@ -93,7 +96,7 @@ const LoanDetailsStep: React.FC = () => {
               <BorrowingPowerChart 
                 annualIncome={userData.financials.annualIncome}
                 ficoScore={userData.financials.ficoScore}
-                debtItems={userData.financials.debtItems}
+                debtItems={debtItemsLegacy}
                 selectedFactors={userData.financials.selectedFactors || {}}
               />
             </div>
