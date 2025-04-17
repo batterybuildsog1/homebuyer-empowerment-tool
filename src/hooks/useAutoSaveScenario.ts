@@ -6,8 +6,14 @@ import { toast } from 'sonner';
 
 export const useAutoSaveScenario = () => {
   const { workflowCompleted, userData } = useMortgage();
-  const { scenarios, createScenarioFromCurrent } = useMortgageScenarios();
+  const { scenarios, createScenarioFromCurrent, setCurrentUserData } = useMortgageScenarios();
 
+  // Ensure we have the current userData in the store
+  useEffect(() => {
+    setCurrentUserData(userData);
+  }, [userData, setCurrentUserData]);
+
+  // Auto-save scenario when workflow is completed
   useEffect(() => {
     const autoSaveScenario = async () => {
       // Only auto-save if workflow is completed and no scenarios exist

@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 
 const ScenarioManager: React.FC = () => {
   const { isLoggedIn } = useUser();
-  const { userData } = useMortgage();
+  const { userData, setUserData, completeWorkflow } = useMortgage();
   const {
     scenarios,
     currentScenarioId,
@@ -29,6 +29,7 @@ const ScenarioManager: React.FC = () => {
     duplicateScenario,
     archiveScenario,
     createScenarioFromCurrent,
+    setCurrentUserData,
   } = useMortgageScenarios();
 
   // Form state
@@ -43,6 +44,11 @@ const ScenarioManager: React.FC = () => {
   // UI state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [scenarioListOpen, setScenarioListOpen] = useState(false);
+
+  // Update the store's userData whenever it changes in the context
+  useEffect(() => {
+    setCurrentUserData(userData);
+  }, [userData, setCurrentUserData]);
 
   // Load scenarios when the component mounts
   useEffect(() => {
@@ -116,6 +122,12 @@ const ScenarioManager: React.FC = () => {
       setDuplicateScenarioId(null);
       setDuplicateScenarioName('');
     }
+  };
+
+  // Handle load scenario
+  const handleLoadScenario = (id: string) => {
+    loadScenario(id, setUserData, completeWorkflow);
+    setScenarioListOpen(false);
   };
 
   // If not logged in, show login prompt
@@ -269,10 +281,7 @@ const ScenarioManager: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              loadScenario(scenario.id);
-                              setScenarioListOpen(false);
-                            }}
+                            onClick={() => handleLoadScenario(scenario.id)}
                             title="Load Scenario"
                           >
                             <Upload className="h-4 w-4" />

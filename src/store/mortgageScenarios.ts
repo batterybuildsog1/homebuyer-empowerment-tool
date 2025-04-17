@@ -3,7 +3,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UserData } from '@/context/mortgage/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useMortgage } from '@/context/MortgageContext';
 import { toast } from 'sonner';
 
 // Metadata for a scenario in the list view
@@ -26,9 +25,13 @@ interface MortgageScenariosState {
   isLoading: boolean;
   isLoadingList: boolean;
   
+  // User data to use when saving scenarios
+  currentUserData: UserData | null;
+  
   // Actions
+  setCurrentUserData: (userData: UserData) => void;
   fetchScenarios: () => Promise<void>;
-  loadScenario: (id: string) => Promise<void>;
+  loadScenario: (id: string, setUserDataCallback: (data: UserData) => void, completeWorkflowCallback: () => void) => Promise<void>;
   saveScenario: (name: string) => Promise<string | null>;
   updateScenario: (id: string, updates?: { name?: string }) => Promise<void>;
   duplicateScenario: (id: string, newName: string) => Promise<string | null>;
@@ -47,6 +50,12 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
       scenarios: [],
       isLoading: false,
       isLoadingList: false,
+      currentUserData: null,
+      
+      // Set current user data for scenario operations
+      setCurrentUserData: (userData: UserData) => {
+        set({ currentUserData: userData });
+      },
 
       // Fetch all scenarios for the current user
       fetchScenarios: async () => {
@@ -85,7 +94,7 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
       },
 
       // Load a specific scenario into the mortgage context
-      loadScenario: async (id: string) => {
+      loadScenario: async (id: string, setUserDataCallback, completeWorkflowCallback) => {
         set({ isLoading: true });
         
         try {
@@ -97,9 +106,6 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
             
           if (error) throw error;
           
-          // Get the mortgage context functions directly
-          const mortgageContext = useMortgage();
-          
           // Safely cast the data with type checking and assertion
           const scenarioData = data.data as unknown;
           
@@ -108,9 +114,9 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
               'financials' in scenarioData &&
               'loanDetails' in scenarioData &&
               'results' in scenarioData) {
-            // Set the user data from the loaded scenario
-            mortgageContext.setUserData(scenarioData as UserData);
-            mortgageContext.completeWorkflow();
+            // Set the user data from the loaded scenario using the callback
+            setUserDataCallback(scenarioData as UserData);
+            completeWorkflowCallback();
             
             // Update current scenario ID
             set({ currentScenarioId: id });
@@ -129,9 +135,12 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Save current mortgage data as a new scenario
       saveScenario: async (name: string) => {
-        // Get the mortgage context data directly
-        const mortgageContext = useMortgage();
-        const { userData } = mortgageContext;
+        const userData = get().currentUserData;
+        
+        if (!userData) {
+          toast.error('No mortgage data available to save');
+          return null;
+        }
         
         set({ isLoading: true });
         
@@ -169,9 +178,12 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Update an existing scenario
       updateScenario: async (id: string, updates = {}) => {
-        // Get the mortgage context data directly
-        const mortgageContext = useMortgage();
-        const { userData } = mortgageContext;
+        const userData = get().currentUserData;
+        
+        if (!userData) {
+          toast.error('No mortgage data available to update');
+          return;
+        }
         
         set({ isLoading: true });
         
