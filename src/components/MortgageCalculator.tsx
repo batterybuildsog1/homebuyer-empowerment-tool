@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import LocationStep from "./steps/LocationStep";
@@ -7,6 +6,7 @@ import CompensatingFactorsStep from "./steps/CompensatingFactorsStep";
 import LoanDetailsStep from "./steps/LoanDetailsStep";
 import ResultsStep from "./steps/ResultsStep";
 import GoalSettingStep from "./steps/GoalSettingStep";
+import WelcomeStep from "./steps/welcome/WelcomeStep";
 import { Card, CardContent } from "./ui/card";
 import { StepIndicator } from "./ui/StepIndicator";
 import { motion } from "framer-motion";
@@ -17,23 +17,9 @@ import { toast } from "sonner";
 const MortgageCalculator: React.FC = () => {
   const { currentStep, setCurrentStep, userData, completeWorkflow } = useMortgage();
 
-  // Validate step progression
-  useEffect(() => {
-    if (currentStep === 1 && (!userData.location.city || !userData.location.state)) {
-      setCurrentStep(0);
-    } else if (currentStep === 2 && !userData.financials.annualIncome) {
-      setCurrentStep(1);
-    } else if (currentStep === 3 && (!userData.financials.selectedFactors || Object.keys(userData.financials.selectedFactors).length === 0)) {
-      setCurrentStep(2);
-    } else if (currentStep === 4 && (!userData.loanDetails.interestRate || !userData.loanDetails.propertyTax)) {
-      setCurrentStep(3);
-    } else if (currentStep === 5 && !userData.results.maxHomePrice) {
-      setCurrentStep(4);
-    }
-  }, [currentStep, userData, setCurrentStep]);
-
   // Map step components with their titles
   const steps = [
+    { component: <WelcomeStep />, title: "Welcome" },
     { component: <LocationStep />, title: "Location" },
     { component: <FinancialStep />, title: "Finances" },
     { component: <CompensatingFactorsStep />, title: "Factors" },
@@ -41,6 +27,22 @@ const MortgageCalculator: React.FC = () => {
     { component: <ResultsStep />, title: "Results" },
     { component: <GoalSettingStep />, title: "Goal Setting" },
   ];
+
+  // Validate step progression
+  useEffect(() => {
+    // Skip welcome step validation since it's informational only
+    if (currentStep === 2 && (!userData.location.city || !userData.location.state)) {
+      setCurrentStep(1);
+    } else if (currentStep === 3 && !userData.financials.annualIncome) {
+      setCurrentStep(2);
+    } else if (currentStep === 4 && (!userData.financials.selectedFactors || Object.keys(userData.financials.selectedFactors).length === 0)) {
+      setCurrentStep(3);
+    } else if (currentStep === 5 && (!userData.loanDetails.interestRate || !userData.loanDetails.propertyTax)) {
+      setCurrentStep(4);
+    } else if (currentStep === 6 && !userData.results.maxHomePrice) {
+      setCurrentStep(5);
+    }
+  }, [currentStep, userData, setCurrentStep]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
