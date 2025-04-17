@@ -1,10 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import AnnualIncomeInput from "./AnnualIncomeInput";
 import DebtItemsSection from "./DebtItemsSection";
 import FicoScoreSlider from "./FicoScoreSlider";
 import BorrowingPowerChart from "./BorrowingPowerChart";
-import CompensatingFactorsSection from "./CompensatingFactorsSection";
 import { useFinancialForm } from "@/hooks/financial/useFinancialForm";
 import { useMortgage } from "@/context/MortgageContext";
 
@@ -17,8 +17,6 @@ const FinancialStepForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleCompensatingFactorChange,
-    handleCurrentHousingPaymentChange,
     handleSubmit
   } = useFinancialForm();
 
@@ -49,13 +47,7 @@ const FinancialStepForm = () => {
         </div>
         
         <div className="space-y-6">
-          <CompensatingFactorsSection 
-            selectedFactors={formData.selectedFactors}
-            onFactorChange={handleCompensatingFactorChange}
-            currentHousingPayment={formData.currentHousingPayment}
-            onCurrentHousingPaymentChange={handleCurrentHousingPaymentChange}
-          />
-          
+          {/* Removed CompensatingFactorsSection from here - it belongs on the next page */}
           <BorrowingPowerChart 
             annualIncome={formData.annualIncome}
             ficoScore={formData.ficoScore}

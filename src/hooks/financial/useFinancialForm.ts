@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMortgage } from "@/context/MortgageContext";
 import { useDataFetching } from "@/hooks/data/useDataFetching";
@@ -78,24 +79,6 @@ export const useFinancialForm = () => {
     setFormData(prev => ({ ...prev, ficoScore: value }));
   };
   
-  // Handlers for compensating factors
-  const handleCompensatingFactorChange = (factor: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedFactors: {
-        ...prev.selectedFactors,
-        [factor]: value
-      }
-    }));
-  };
-
-  const handleCurrentHousingPaymentChange = (value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      currentHousingPayment: value
-    }));
-  };
-
   // Form validation
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -125,7 +108,7 @@ export const useFinancialForm = () => {
       const monthlyIncome = formData.annualIncome / 12;
       const nonHousingDTIOption = getNonHousingDTIOption(monthlyDebts, monthlyIncome);
       
-      // Combine all factors
+      // Combine all factors - only necessary calculations, not UI display
       const updatedFactors = {
         ...formData.selectedFactors,
         creditHistory: creditHistoryOption,
@@ -138,7 +121,6 @@ export const useFinancialForm = () => {
         debtItems: formData.debtItems,
         ficoScore: formData.ficoScore,
         selectedFactors: updatedFactors,
-        currentHousingPayment: formData.currentHousingPayment,
         downPaymentPercent: 20,
         downPayment: 0,
       });
@@ -170,8 +152,6 @@ export const useFinancialForm = () => {
     handleIncomeChange,
     handleDebtItemChange,
     handleFicoScoreChange,
-    handleCompensatingFactorChange,
-    handleCurrentHousingPaymentChange,
     handleSubmit,
     validateForm
   };

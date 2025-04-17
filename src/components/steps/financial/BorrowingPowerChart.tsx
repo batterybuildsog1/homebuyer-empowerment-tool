@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { DollarSign } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
@@ -109,7 +110,7 @@ const BorrowingPowerChart = ({
   }, [annualIncome, ficoScore, debtItems, selectedFactors, defaultLoanType]);
   
   return (
-    <Card className="p-4 space-y-4 h-full">
+    <Card className="p-4 space-y-4 h-full overflow-auto max-h-[600px]">
       <div className="text-center">
         <h3 className="text-lg font-medium flex items-center justify-center gap-2">
           <DollarSign className="h-5 w-5" />
@@ -136,16 +137,18 @@ const BorrowingPowerChart = ({
         
         <div className="space-y-2">
           <Label className="text-sm">Impact of Debts on Borrowing Power</Label>
-          <DebtImpactList 
-            debtImpacts={debtImpacts}
-            maxLoanAmount={maxLoanAmount}
-            annualIncome={annualIncome}
-            ficoScore={ficoScore}
-            defaultInterestRate={defaultInterestRate}
-            defaultLoanType={defaultLoanType}
-            selectedFactors={selectedFactors}
-            defaultLTV={defaultLTV}
-          />
+          <div className="max-h-[200px] overflow-y-auto pr-1">
+            <DebtImpactList 
+              debtImpacts={debtImpacts}
+              maxLoanAmount={maxLoanAmount}
+              annualIncome={annualIncome}
+              ficoScore={ficoScore}
+              defaultInterestRate={defaultInterestRate}
+              defaultLoanType={defaultLoanType}
+              selectedFactors={selectedFactors}
+              defaultLTV={defaultLTV}
+            />
+          </div>
         </div>
       </div>
     </Card>
