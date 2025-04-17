@@ -11,7 +11,13 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { formatCurrency } from '@/utils/formatters';
 
-const MortgageScenariosList = () => {
+interface MortgageScenariosListProps {
+  readOnly?: boolean;
+}
+
+const MortgageScenariosList: React.FC<MortgageScenariosListProps> = ({ 
+  readOnly = false 
+}) => {
   const { isLoggedIn } = useUser();
   const { scenarios, isLoadingList, fetchScenarios, loadScenario } = useMortgageScenarios();
   const navigate = useNavigate();
@@ -50,7 +56,11 @@ const MortgageScenariosList = () => {
           <FileText className="h-5 w-5 text-primary" />
           Mortgage Scenarios
         </CardTitle>
-        <CardDescription>Your saved mortgage planning scenarios</CardDescription>
+        <CardDescription>
+          {readOnly 
+            ? "View your saved mortgage planning scenarios (read-only mode)" 
+            : "Your saved mortgage planning scenarios"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoadingList ? (
@@ -99,6 +109,7 @@ const MortgageScenariosList = () => {
           size="sm" 
           className="gap-2"
           onClick={() => navigate(ROUTES.mortgage)}
+          disabled={readOnly}
         >
           <Plus className="h-4 w-4" />
           New Scenario

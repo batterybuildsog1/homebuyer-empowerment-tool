@@ -12,11 +12,17 @@ import PageLayout from "@/components/layouts/PageLayout";
 import { formatCurrency } from "@/utils/formatters";
 import { ROUTES } from "@/utils/routes";
 import MortgageScenariosList from "@/components/dashboard/MortgageScenariosList";
+import FeatureFlagsPanel from "@/components/admin/FeatureFlagsPanel";
+import { useFeatureFlags } from "@/utils/featureFlags";
 
 const DashboardPage = () => {
   const { isLoggedIn, userName } = useUser();
   const { userData, isMortgageWorkflowCompleted } = useMortgage();
   const isWorkflowCompleted = isMortgageWorkflowCompleted();
+  const featureFlags = useFeatureFlags();
+  
+  // Check if in development mode to show feature flags panel
+  const isDevelopment = import.meta.env.DEV;
   
   return (
     <PageLayout>
@@ -166,9 +172,18 @@ const DashboardPage = () => {
           </Card>
           
           {/* Mortgage Scenarios List */}
-          <Card className="col-span-1 md:col-span-3">
-            <MortgageScenariosList />
-          </Card>
+          {featureFlags.scenariosEnabled && (
+            <Card className="col-span-1 md:col-span-3">
+              <MortgageScenariosList readOnly={featureFlags.scenariosReadOnly} />
+            </Card>
+          )}
+          
+          {/* Feature Flags Panel (Development Only) */}
+          {isDevelopment && (
+            <div className="col-span-1 md:col-span-3 mt-8">
+              <FeatureFlagsPanel />
+            </div>
+          )}
         </div>
       </div>
     </PageLayout>

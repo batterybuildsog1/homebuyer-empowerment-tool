@@ -94,17 +94,26 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
             
           if (error) throw error;
           
-          // Get the mortgage context setter
-          const { setUserData, completeWorkflow } = useMortgage.getState();
+          // Get the mortgage context functions directly (without getState)
+          const mortgageContext = useMortgage();
           
-          // Set the user data from the loaded scenario
-          setUserData(data.data as UserData);
-          completeWorkflow();
-          
-          // Update current scenario ID
-          set({ currentScenarioId: id });
-          
-          toast.success('Scenario loaded successfully');
+          // Safely cast the data with type checking
+          if (data.data && typeof data.data === 'object' && 
+              'location' in data.data && 
+              'financials' in data.data &&
+              'loanDetails' in data.data &&
+              'results' in data.data) {
+            // Set the user data from the loaded scenario
+            mortgageContext.setUserData(data.data as UserData);
+            mortgageContext.completeWorkflow();
+            
+            // Update current scenario ID
+            set({ currentScenarioId: id });
+            
+            toast.success('Scenario loaded successfully');
+          } else {
+            throw new Error('Invalid scenario data format');
+          }
         } catch (error) {
           console.error('Error loading scenario:', error);
           toast.error('Failed to load scenario');
@@ -115,7 +124,10 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Save current mortgage data as a new scenario
       saveScenario: async (name: string) => {
-        const { userData } = useMortgage.getState();
+        // Get the mortgage context data directly (without getState)
+        const mortgageContext = useMortgage();
+        const { userData } = mortgageContext;
+        
         set({ isLoading: true });
         
         try {
@@ -149,7 +161,10 @@ export const useMortgageScenarios = create<MortgageScenariosState>()(
 
       // Update an existing scenario
       updateScenario: async (id: string, updates = {}) => {
-        const { userData } = useMortgage.getState();
+        // Get the mortgage context data directly (without getState)
+        const mortgageContext = useMortgage();
+        const { userData } = mortgageContext;
+        
         set({ isLoading: true });
         
         try {

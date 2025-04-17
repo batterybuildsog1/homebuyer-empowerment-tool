@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { useMortgageScenarios } from '@/store/mortgageScenarios';
 import { useMortgage } from '@/context/MortgageContext';
 import { toast } from 'sonner';
 import { loadFromLocalStorage } from '@/context/mortgage/storage';
-import { FileArrowUp } from 'lucide-react';
+import { ArrowUpFromLine } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const ScenarioMigration: React.FC = () => {
@@ -96,7 +97,7 @@ const ScenarioMigration: React.FC = () => {
             Skip
           </Button>
           <Button onClick={handleMigration} disabled={!scenarioName.trim()} className="gap-2">
-            <FileArrowUp className="h-4 w-4" />
+            <ArrowUpFromLine className="h-4 w-4" />
             Save to Account
           </Button>
         </DialogFooter>
