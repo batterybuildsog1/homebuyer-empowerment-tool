@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { CountyPropertyData, MortgageDataResponse, ApiResult } from "@/types";
@@ -136,9 +137,10 @@ export const fetchAllMortgageData = async (
     
     // If rates fetch failed, propagate the error
     if (!ratesResult.success) {
+      // Proper narrowing of the union type to access the error property
       return {
         success: false,
-        error: ratesResult.error || "Failed to fetch rates"
+        error: 'success' in ratesResult && !ratesResult.success && 'error' in ratesResult ? ratesResult.error : "Failed to fetch rates"
       };
     }
     
@@ -147,9 +149,10 @@ export const fetchAllMortgageData = async (
     
     // If property data fetch failed, propagate the error
     if (!propertyResult.success) {
+      // Proper narrowing of the union type to access the error property
       return {
         success: false,
-        error: propertyResult.error || "Failed to fetch property data"
+        error: 'success' in propertyResult && !propertyResult.success && 'error' in propertyResult ? propertyResult.error : "Failed to fetch property data"
       };
     }
     

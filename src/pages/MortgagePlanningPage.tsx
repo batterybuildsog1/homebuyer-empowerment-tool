@@ -12,9 +12,6 @@ const MortgagePlanningPage = () => {
   const { isMortgageWorkflowCompleted } = useMortgage();
   const isCompleted = isMortgageWorkflowCompleted();
 
-  // Initialize auto-save functionality
-  useAutoSaveScenario();
-
   const renderCompletedView = () => (
     <Card className="mb-8">
       <CardContent className="p-8">
