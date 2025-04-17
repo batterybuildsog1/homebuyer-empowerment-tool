@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,40 +7,35 @@ import PageLayout from "@/components/layouts/PageLayout";
 import { useMortgage } from "@/context/MortgageContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, RefreshCw } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { ROUTES } from "@/utils/routes";
 import ScenarioManager from "@/components/scenarios/ScenarioManager";
+import { useAutoSaveScenario } from "@/hooks/useAutoSaveScenario";
 
-// Main MortgagePlanningPage component
 const MortgagePlanningPage = () => {
-  const { isMortgageWorkflowCompleted, resetCalculator } = useMortgage();
+  const { isMortgageWorkflowCompleted } = useMortgage();
   const navigate = useNavigate();
   const isCompleted = isMortgageWorkflowCompleted();
 
-  // If workflow is completed, show completion message with option to reset or view dashboard
+  // Initialize auto-save functionality
+  useAutoSaveScenario();
+
   const renderCompletedView = () => (
     <Card className="mb-8">
       <CardContent className="p-8">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <div className="w-8 h-8 text-green-600">✓</div>
         </div>
-        <Heading as="h2" size="xl" className="text-center mb-4">Mortgage Planning Completed</Heading>
+        <Heading as="h2" size="xl" className="text-center mb-4">
+          Mortgage Planning Completed
+        </Heading>
         <p className="text-muted-foreground mb-8 max-w-lg mx-auto text-center">
           You've successfully completed the mortgage planning workflow. 
-          You can save your scenario, view your financial dashboard, or reset the calculator to start over.
+          You can save your scenario or view your financial dashboard.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <ScenarioManager />
-          
-          <Button 
-            variant="outline" 
-            onClick={resetCalculator}
-            className="gap-2"
-          >
-            <RefreshCw className="h-4 w-4" /> 
-            Reset Calculator
-          </Button>
           
           <Button 
             onClick={() => navigate(ROUTES.dashboard)}

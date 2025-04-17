@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { UserData, MortgageContextType } from './types';
 import { defaultUserData } from './defaultData';
@@ -136,6 +135,7 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }));
   };
 
+  /** @deprecated This function is no longer used in the UI and will be removed in a future version */
   const resetCalculator = () => {
     if (window.confirm('Are you sure you want to reset all your data?')) {
       setUserData(defaultUserData);
