@@ -5,17 +5,25 @@ import CompensatingFactorsSection from "../financial/CompensatingFactorsSection"
 import BorrowingPowerChart from "../financial/BorrowingPowerChart";
 import { useCompensatingFactorsForm } from "@/hooks/financial/useCompensatingFactorsForm";
 import { useMortgage } from "@/context/MortgageContext";
+import { useEffect, useState } from "react";
 
 const CompensatingFactorsForm = () => {
-  const { setCurrentStep } = useMortgage();
+  const { setCurrentStep, userData } = useMortgage();
   const { 
     formData,
     isSubmitting,
     handleFactorOptionChange,
     handleCurrentHousingPaymentChange,
-    handleSubmit,
-    userData
+    handleSubmit
   } = useCompensatingFactorsForm();
+  
+  // Used to force re-render of BorrowingPowerChart when factors change
+  const [factorUpdateKey, setFactorUpdateKey] = useState(0);
+  
+  // Update the key when factors change to force re-render of BorrowingPowerChart
+  useEffect(() => {
+    setFactorUpdateKey(prev => prev + 1);
+  }, [formData.selectedFactors]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -29,12 +37,13 @@ const CompensatingFactorsForm = () => {
           />
         </div>
         
-        <div>
+        <div className="max-h-[600px] overflow-auto">
           <BorrowingPowerChart 
+            key={factorUpdateKey}
             annualIncome={userData.financials.annualIncome}
             ficoScore={userData.financials.ficoScore}
             debtItems={userData.financials.debtItems}
-            selectedFactors={formData.selectedFactors}
+            selectedFactors={userData.financials.selectedFactors || {}}
           />
         </div>
       </div>

@@ -13,6 +13,8 @@ export function calculateMaxDTI(
   monthlyDebts: number = 0,
   monthlyIncome: number = 0
 ): number {
+  console.log("calculateMaxDTI called with factors:", selectedFactors);
+  
   // Handle legacy array format
   if (Array.isArray(selectedFactors)) {
     const dtiLimits = DTI_LIMITS[loanType.toUpperCase() as keyof typeof DTI_LIMITS];
@@ -45,20 +47,35 @@ export function calculateMaxDTI(
   }
   
   // Use centralized service for FHA loans
-  const enhancedFactors = createEnhancedFactors(
-    selectedFactors,
-    ficoScore,
-    monthlyDebts,
-    monthlyIncome
-  );
   
+  // Ensure we have proper factors
+  const enhancedFactors = typeof selectedFactors === 'object' && !Array.isArray(selectedFactors)
+    ? selectedFactors
+    : {};
+    
+  console.log("Enhanced factors for DTI calculation:", enhancedFactors);
+  
+  // Count strong factors
   const strongFactorCount = countStrongFactors(enhancedFactors);
-  const dtiCap = strongFactorCount >= 2 ? 57 : 50;
+  console.log("Strong factor count:", strongFactorCount);
   
-  // Base DTI for FHA
-  const baseDTI = DTI_LIMITS.FHA.BACK_END.DEFAULT;
+  // Set base DTI from limits
+  const dtiLimits = DTI_LIMITS.FHA.BACK_END;
+  let baseDTI = dtiLimits.DEFAULT;
   
-  return Math.min(baseDTI + 5, dtiCap);
+  // Apply FICO adjustments
+  if (ficoScore >= 720) baseDTI += 5;
+  else if (ficoScore >= 680) baseDTI += 3;
+  
+  // Apply strong factor adjustments
+  if (strongFactorCount >= 2) {
+    baseDTI = Math.min(57, baseDTI + 7); // Cap at 57% with strong factors
+  } else if (strongFactorCount === 1) {
+    baseDTI = Math.min(50, baseDTI + 3); // Smaller increase with 1 strong factor
+  }
+  
+  console.log("Calculated DTI:", baseDTI);
+  return baseDTI;
 }
 
 function calculateConventionalDTI(
@@ -76,6 +93,16 @@ function calculateConventionalDTI(
   // LTV-based adjustment
   if (ltv <= 75) baseDTI += 3;
   else if (ltv <= 80) baseDTI += 2;
+  
+  // Count strong factors for compensating factors boost
+  const strongFactorCount = countStrongFactors(selectedFactors);
+  
+  // Apply compensating factors adjustment
+  if (strongFactorCount >= 2) {
+    baseDTI = Math.min(50, baseDTI + 5); // Cap at 50% with 2+ strong factors
+  } else if (strongFactorCount === 1) {
+    baseDTI = Math.min(50, baseDTI + 2); // Smaller boost with 1 strong factor
+  }
   
   return Math.min(baseDTI, DTI_LIMITS.CONVENTIONAL.BACK_END.HARD_CAP || 50);
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { DollarSign } from 'lucide-react';
 import { useMortgage } from '@/context/MortgageContext';
-import { calculateMaxDTI, calculateMaxLoanAmount, countStrongFactors, getNonHousingDTIOption } from '@/utils/mortgageCalculations';
+import { calculateMaxDTI, calculateMaxLoanAmount, countStrongFactors, getNonHousingDTIOption, createEnhancedFactors } from '@/utils/mortgageCalculations';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import DebtImpactList, { createDebtImpactList } from './debt/DebtImpactList';
@@ -45,6 +45,8 @@ const BorrowingPowerChart = ({
 
   useEffect(() => {
     if (annualIncome <= 0) return;
+    
+    console.log("BorrowingPowerChart: Recalculating with factors:", selectedFactors);
 
     // Calculate monthly income and total debt
     const monthly = annualIncome / 12;
@@ -52,26 +54,32 @@ const BorrowingPowerChart = ({
     
     setMonthlyIncome(monthly);
     
-    // Prepare factors for DTI calculation with nonHousingDTI
-    const factorsWithNonHousingDTI = {
-      ...selectedFactors,
-      nonHousingDTI: getNonHousingDTIOption(totalDebt, monthly)
-    };
-
+    // Create enhanced factors with calculated values
+    const enhancedFactors = createEnhancedFactors(
+      selectedFactors,
+      ficoScore,
+      totalDebt,
+      monthly
+    );
+    
+    console.log("Enhanced factors for DTI calculation:", enhancedFactors);
+    
     // Calculate the maximum DTI based on FICO score and compensating factors
     const calculatedMaxDTI = calculateMaxDTI(
       ficoScore,
       defaultLTV,
       defaultLoanType,
-      factorsWithNonHousingDTI,
+      enhancedFactors,
       totalDebt,
       monthly
     );
     
+    console.log("Calculated Max DTI:", calculatedMaxDTI);
     setMaxDTI(calculatedMaxDTI);
     
     // Calculate and set strong factor count
-    const strongCount = countStrongFactors(factorsWithNonHousingDTI);
+    const strongCount = countStrongFactors(enhancedFactors);
+    console.log("Strong factor count:", strongCount);
     setStrongFactorCount(strongCount);
 
     // Calculate max monthly payment based on DTI

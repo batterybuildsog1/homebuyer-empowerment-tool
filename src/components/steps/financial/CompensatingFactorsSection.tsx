@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DollarSign, PiggyBank, Briefcase, CreditCard, Home, Info, Scale, Percent } from "lucide-react";
@@ -46,7 +47,7 @@ export const compensatingFactorOptions = [
       { value: "<10%", label: "Less than 10% increase" },
     ],
     description: "How much your new mortgage payment will increase compared to your current housing expense.",
-    isStrong: (value: string) => false
+    isStrong: (value: string) => value === "<10%"
   },
   {
     id: "employmentHistory",
@@ -58,7 +59,7 @@ export const compensatingFactorOptions = [
       { value: ">5 years", label: "More than 5 years" },
     ],
     description: "How long you've been in your current job or career field.",
-    isStrong: (value: string) => false
+    isStrong: (value: string) => value === ">5 years"
   },
   {
     id: "creditUtilization",
@@ -70,7 +71,7 @@ export const compensatingFactorOptions = [
       { value: "<10%", label: "Less than 10%" },
     ],
     description: "The percentage of your available credit you're currently using.",
-    isStrong: (value: string) => false
+    isStrong: (value: string) => value === "<10%"
   },
   {
     id: "downPayment",
@@ -82,7 +83,7 @@ export const compensatingFactorOptions = [
       { value: ">10%", label: "More than 10%" },
     ],
     description: "The percentage of the home price you plan to pay upfront.",
-    isStrong: (value: string) => false
+    isStrong: (value: string) => value === ">10%"
   },
 ];
 
@@ -171,7 +172,10 @@ const CompensatingFactorsSection = ({
           </div>
           <Select 
             value={selectedFactors[factor.id] || factor.options[0].value} 
-            onValueChange={(value) => onFactorChange(factor.id, value)}
+            onValueChange={(value) => {
+              console.log(`Changing factor ${factor.id} to ${value}`);
+              onFactorChange(factor.id, value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder={`Select ${factor.label}`} />
@@ -219,7 +223,11 @@ const CompensatingFactorsSection = ({
               type="number"
               className="pl-10"
               value={currentHousingPayment || ''}
-              onChange={(e) => onCurrentHousingPaymentChange(parseFloat(e.target.value) || 0)}
+              onChange={(e) => {
+                const value = parseFloat(e.target.value) || 0;
+                console.log("Changing housing payment to", value);
+                onCurrentHousingPaymentChange(value);
+              }}
               placeholder="0"
             />
           </div>
