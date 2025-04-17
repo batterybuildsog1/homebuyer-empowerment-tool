@@ -10,6 +10,8 @@ const openAiApiKey = Deno.env.get("OPENAI_API_KEY") || "";
 // Response headers
 const headers = {
   "Content-Type": "application/json",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 // Helper function for logging
@@ -84,6 +86,55 @@ async function fetchMortgageRatesWithOpenAI(): Promise<{
   }
 }
 
+async function ensureDataExists(): Promise<boolean> {
+  try {
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Check if we have any data in the rates table
+    const { count, error } = await supabase
+      .from("daily_mortgage_rates")
+      .select("*", { count: "exact", head: true });
+    
+    if (error) {
+      logError("Error checking existing rates", error);
+      return false;
+    }
+    
+    // If we have data, we're good
+    if (count && count > 0) {
+      logInfo(`Database already has ${count} rate entries`);
+      return true;
+    }
+    
+    // No data, insert a seed entry
+    logInfo("No rates found in database. Adding seed data...");
+    
+    const today = new Date();
+    const seedData = {
+      rate_date: today.toISOString().split("T")[0],
+      conventional: 6.89,
+      fha: 7.24
+    };
+    
+    const { data, error: insertError } = await supabase
+      .from("daily_mortgage_rates")
+      .insert(seedData)
+      .select();
+    
+    if (insertError) {
+      logError("Error inserting seed data", insertError);
+      return false;
+    }
+    
+    logInfo("Successfully added seed mortgage rate data", data);
+    return true;
+  } catch (error) {
+    logError("Error in ensureDataExists", error);
+    return false;
+  }
+}
+
 async function storeMortgageRates(rates: { 
   conventional: number | null; 
   fha: number | null;
@@ -142,12 +193,20 @@ async function storeMortgageRates(rates: {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers });
+  }
+  
   // Check if this is a scheduled invocation or manual
   const isScheduled = req.headers.get("x-scheduled") === "true";
   const source = isScheduled ? "scheduled" : "manual";
   
   try {
     logInfo(`Starting mortgage rate fetch (source: ${source})`);
+    
+    // First, make sure we have at least some data in our database
+    await ensureDataExists();
     
     // 1. Fetch the latest mortgage rates from OpenAI
     const rates = await fetchMortgageRatesWithOpenAI();

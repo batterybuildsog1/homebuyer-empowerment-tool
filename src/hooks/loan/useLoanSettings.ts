@@ -1,173 +1,113 @@
-import { useState, useEffect } from "react";
-import { useMortgage } from "@/context/MortgageContext";
-import { getFhaMipRates } from "@/utils/mortgageCalculations";
-import { LoanSettingsState } from "./loanTypes";
+import { useState, useCallback, useEffect } from 'react';
+import { useMortgage } from '@/context/MortgageContext';
+
+// Define the type for form data
+export interface LoanDetailsFormData {
+  loanType: 'conventional' | 'fha';
+  downPayment: number;
+  conventionalInterestRate: number | null;
+  fhaInterestRate: number | null;
+  propertyTax: number | null;
+  propertyInsurance: number | null;
+  upfrontMIP: number | null;
+  ongoingMIP: number | null;
+  dataSource?: string;
+  dataTimestamp?: number;
+}
 
 /**
- * Hook for managing loan settings and calculations
+ * Hook to manage loan settings form data and related operations
  */
 export const useLoanSettings = () => {
   const { userData, updateLoanDetails } = useMortgage();
   
-  // Set appropriate initial values based on loan type
-  const getInitialDownPayment = () => {
-    if (userData.loanDetails.ltv) {
-      return 100 - userData.loanDetails.ltv;
-    }
-    
-    return userData.loanDetails.loanType === 'conventional' ? 20 : 3.5;
-  };
-
-  const [formData, setFormData] = useState<LoanSettingsState>({
-    loanType: userData.loanDetails.loanType || 'conventional',
-    downPayment: getInitialDownPayment(),
-    conventionalInterestRate: userData.loanDetails.conventionalInterestRate || null,
-    fhaInterestRate: userData.loanDetails.fhaInterestRate || null,
-    propertyTax: userData.loanDetails.propertyTax || null,
-    propertyInsurance: userData.loanDetails.propertyInsurance || null,
-    upfrontMIP: userData.loanDetails.upfrontMIP || null,
-    ongoingMIP: userData.loanDetails.ongoingMIP || null,
+  // Initialize form data with null values for rates and property data
+  const [formData, setFormData] = useState<LoanDetailsFormData>({
+    loanType: 'conventional',
+    downPayment: 20,
+    conventionalInterestRate: null,
+    fhaInterestRate: null,
+    propertyTax: null,
+    propertyInsurance: null,
+    upfrontMIP: null,
+    ongoingMIP: null,
   });
   
-  // Calculate LTV from down payment
+  // Calculate loan-to-value (LTV) ratio
   const ltv = 100 - formData.downPayment;
-
-  // Get the current interest rate based on loan type
+  
+  // Get current interest rate based on selected loan type
   const currentInterestRate = formData.loanType === 'conventional' 
     ? formData.conventionalInterestRate 
     : formData.fhaInterestRate;
-
-  /**
-   * Handle loan type change
-   * @param loanType The new loan type
-   */
-  const handleLoanTypeChange = (loanType: 'conventional' | 'fha') => {
-    console.log(`Changing loan type to ${loanType}`);
+  
+  // Handle loan type change
+  const handleLoanTypeChange = useCallback((loanType: 'conventional' | 'fha') => {
+    console.info(`Changing loan type to ${loanType}`);
     
-    // If switching loan types, set appropriate default down payment
-    let newDownPayment = formData.downPayment;
-    
-    // If current down payment is outside the valid range for the new loan type,
-    // set it to a default value for that loan type
-    if (loanType === 'conventional' && (formData.downPayment < 3 || formData.downPayment > 20)) {
-      newDownPayment = 20;
-    } else if (loanType === 'fha' && (formData.downPayment < 3.5 || formData.downPayment > 10)) {
-      newDownPayment = 3.5;
-    }
-    
-    // Calculate new LTV
-    const newLtv = 100 - newDownPayment;
-    
-    // Update MIP rates when loan type changes
-    if (loanType === 'fha') {
-      const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(
-        1000, // Placeholder loan amount
-        newLtv
-      );
-      
-      // Update form data
-      setFormData(prev => ({
-        ...prev,
-        loanType,
-        downPayment: newDownPayment,
-        upfrontMIP: upfrontMipPercent,
-        ongoingMIP: annualMipPercent,
-      }));
-      
-      // Also update context with new values
-      updateLoanDetails({
-        loanType,
-        ltv: newLtv,
-        upfrontMIP: upfrontMipPercent,
-        ongoingMIP: annualMipPercent
-      });
-      
-      console.log("Updated to FHA with MIP rates:", upfrontMipPercent, annualMipPercent);
-    } else {
-      // For conventional loans, clear MIP values
-      setFormData(prev => ({
-        ...prev,
-        loanType,
-        downPayment: newDownPayment,
-        upfrontMIP: null,
-        ongoingMIP: null,
-      }));
-      
-      // Update context
-      updateLoanDetails({
-        loanType,
-        ltv: newLtv,
-        upfrontMIP: null,
-        ongoingMIP: null
-      });
-      
-      console.log("Updated to Conventional, cleared MIP rates");
-    }
-  };
-
-  /**
-   * Handle down payment change
-   * @param downPayment The new down payment percentage
-   */
-  const handleDownPaymentChange = (downPayment: number) => {
-    setFormData(prev => ({ ...prev, downPayment }));
-    
-    // Calculate new LTV
-    const newLtv = 100 - downPayment;
-    
-    // Update context with new LTV
-    updateLoanDetails({ ltv: newLtv });
-    
-    // If FHA loan, recalculate MIP rates based on new LTV
-    if (formData.loanType === 'fha') {
-      const { upfrontMipPercent, annualMipPercent } = getFhaMipRates(1000, newLtv);
-      
-      setFormData(prev => ({
-        ...prev,
-        downPayment,
-        upfrontMIP: upfrontMipPercent,
-        ongoingMIP: annualMipPercent,
-      }));
-      
-      // Update context with new MIP rates
-      updateLoanDetails({
-        upfrontMIP: upfrontMipPercent,
-        ongoingMIP: annualMipPercent
-      });
-      
-      console.log("Updated MIP rates for new LTV:", newLtv, upfrontMipPercent, annualMipPercent);
-    }
-  };
-
-  // Update form data when context data changes
-  useEffect(() => {
     setFormData(prev => ({
       ...prev,
-      conventionalInterestRate: userData.loanDetails.conventionalInterestRate,
-      fhaInterestRate: userData.loanDetails.fhaInterestRate,
-      propertyTax: userData.loanDetails.propertyTax,
-      propertyInsurance: userData.loanDetails.propertyInsurance,
-      upfrontMIP: userData.loanDetails.upfrontMIP,
-      ongoingMIP: userData.loanDetails.ongoingMIP,
+      loanType,
+      // For FHA loans, set minimum down payment of 3.5% if current is less
+      downPayment: loanType === 'fha' && prev.downPayment < 3.5 ? 3.5 : prev.downPayment
     }));
+    
+    // Reset MIP rates when switching to conventional
+    if (loanType === 'conventional') {
+      console.info('Updated to Conventional, cleared MIP rates');
+      updateLoanDetails({ 
+        loanType, 
+        upfrontMIP: null, 
+        ongoingMIP: null 
+      });
+    } else {
+      // Keep existing MIP rates when switching to FHA
+      updateLoanDetails({ loanType });
+    }
+  }, [updateLoanDetails]);
+  
+  // Handle down payment change
+  const handleDownPaymentChange = useCallback((downPayment: number) => {
+    setFormData(prev => ({
+      ...prev,
+      downPayment
+    }));
+    
+    updateLoanDetails({ 
+      ltv: 100 - downPayment,
+      downPayment
+    });
+  }, [updateLoanDetails]);
+  
+  // Sync form data with context when it changes
+  useEffect(() => {
+    // Only update if we have a loan type from context
+    if (userData.loanDetails.loanType) {
+      setFormData(prev => ({
+        ...prev,
+        loanType: userData.loanDetails.loanType as 'conventional' | 'fha',
+        conventionalInterestRate: userData.loanDetails.conventionalInterestRate,
+        fhaInterestRate: userData.loanDetails.fhaInterestRate,
+        propertyTax: userData.loanDetails.propertyTax,
+        propertyInsurance: userData.loanDetails.propertyInsurance,
+        upfrontMIP: userData.loanDetails.upfrontMIP,
+        ongoingMIP: userData.loanDetails.ongoingMIP,
+        dataSource: userData.loanDetails.dataSource,
+        dataTimestamp: userData.loanDetails.dataTimestamp
+      }));
+    }
   }, [
+    userData.loanDetails.loanType,
     userData.loanDetails.conventionalInterestRate,
     userData.loanDetails.fhaInterestRate,
     userData.loanDetails.propertyTax,
     userData.loanDetails.propertyInsurance,
     userData.loanDetails.upfrontMIP,
-    userData.loanDetails.ongoingMIP
+    userData.loanDetails.ongoingMIP,
+    userData.loanDetails.dataSource,
+    userData.loanDetails.dataTimestamp
   ]);
-
-  // Keep context updated with current loan type and LTV
-  useEffect(() => {
-    updateLoanDetails({ 
-      loanType: formData.loanType,
-      ltv: ltv
-    });
-    console.log("Updated context with loan type:", formData.loanType, "and LTV:", ltv);
-  }, [formData.loanType, ltv, updateLoanDetails]);
-
+  
   return {
     formData,
     ltv,

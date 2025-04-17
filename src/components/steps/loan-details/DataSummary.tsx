@@ -1,10 +1,11 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { formatPercentage, formatCurrency } from "@/utils/formatters";
 import { useMortgage } from "@/context/MortgageContext";
 import { getRelativeTimeString } from "@/utils/formatters";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
@@ -35,6 +36,9 @@ const DataSummary: React.FC<DataSummaryProps> = ({
     ? getRelativeTimeString(new Date(dataTimestamp)) 
     : 'unknown';
 
+  // Determine if we have data or not
+  const hasData = interestRate !== null && propertyTax !== null && propertyInsurance !== null;
+
   const renderDataSourceBadge = () => {
     if (dataSource === 'api') {
       return <Badge variant="default" className="ml-2">Live Data</Badge>;
@@ -63,19 +67,40 @@ const DataSummary: React.FC<DataSummaryProps> = ({
         </div>
       </div>
 
+      {!hasData && hasAttemptedFetch && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to retrieve mortgage rate data. Please ensure your location is set correctly and try refreshing.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-sm">
             <p className="text-muted-foreground">Current {loanType === 'conventional' ? 'Conventional' : 'FHA'} Rate:</p>
-            <p className="font-medium">{interestRate ? formatPercentage(interestRate) : 'Not available'}</p>
+            <p className="font-medium">
+              {interestRate ? formatPercentage(interestRate) : (
+                <span className="text-destructive">Not available</span>
+              )}
+            </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Property Tax Rate:</p>
-            <p className="font-medium">{propertyTax ? formatPercentage(propertyTax) : 'Not available'}</p>
+            <p className="font-medium">
+              {propertyTax ? formatPercentage(propertyTax) : (
+                <span className="text-destructive">Not available</span>
+              )}
+            </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Annual Insurance:</p>
-            <p className="font-medium">{propertyInsurance ? formatCurrency(propertyInsurance) : 'Not available'}</p>
+            <p className="font-medium">
+              {propertyInsurance ? formatCurrency(propertyInsurance) : (
+                <span className="text-destructive">Not available</span>
+              )}
+            </p>
           </div>
           <div className="text-sm">
             <p className="text-muted-foreground">Data Updated:</p>
