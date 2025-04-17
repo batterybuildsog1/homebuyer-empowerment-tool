@@ -10,6 +10,12 @@ import { loadFromLocalStorage } from '@/context/mortgage/storage';
 import { ArrowUpFromLine } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
+// Define the type that includes workflowCompleted
+interface StoredMortgageData {
+  workflowCompleted?: boolean;
+  [key: string]: any;
+}
+
 const ScenarioMigration: React.FC = () => {
   const { isLoggedIn } = useUser();
   const { saveScenario } = useMortgageScenarios();
@@ -23,7 +29,7 @@ const ScenarioMigration: React.FC = () => {
     // Only attempt migration if user is logged in and migration hasn't been completed yet
     if (isLoggedIn && !migrationCompleted) {
       // Check if there's local data to migrate
-      const localData = loadFromLocalStorage();
+      const localData = loadFromLocalStorage() as StoredMortgageData | null;
       
       if (localData && localData.workflowCompleted) {
         // Found completed local data, show migration dialog

@@ -1,8 +1,20 @@
+
 import { ReactNode } from 'react';
+import { DTIStatus } from '@/utils/mortgage/types/dtiTypes';
 
 export interface DebtItem {
   description: string;
   monthlyPayment: number;
+}
+
+// For backward compatibility with existing code
+export interface DebtItems {
+  carLoan: number;
+  studentLoan: number;
+  creditCard: number;
+  personalLoan: number;
+  otherDebt: number;
+  [key: string]: number; // Allow string indexing for dynamic access
 }
 
 export interface SelectedFactors {
@@ -12,6 +24,27 @@ export interface SelectedFactors {
   employmentHistory: string;
   creditUtilization: string;
   downPayment: string;
+  [key: string]: string; // Allow string indexing for dynamic access
+}
+
+export interface FinancialDetails {
+  maxDTI: number;
+  monthlyIncome: number;
+  maxMonthlyDebtPayment: number;
+  availableForMortgage: number;
+  adjustedRate: number;
+  strongFactorCount?: number;
+  frontEndDTI?: number;
+  backEndDTI?: number;
+  frontEndDTIStatus?: DTIStatus;
+  backEndDTIStatus?: DTIStatus;
+}
+
+export interface ImprovementScenario {
+  name: string;
+  description: string;
+  increase: number;
+  maxHomePrice: number;
 }
 
 export interface UserData {
@@ -28,28 +61,37 @@ export interface UserData {
     monthlyDebts: number;
     mitigatingFactors?: string[];
     selectedFactors?: SelectedFactors;
+    currentHousingPayment?: number;
+    downPayment?: number;
+    downPaymentPercent?: number;
   };
   loanDetails: {
     loanType: 'conventional' | 'fha';
     ltv: number;
-    calculatedDTI: number;
-    propertyTax: number;
-    propertyInsurance: number;
-    interestRate: number;
-    conventionalInterestRate: number;
-    fhaInterestRate: number;
-    upfrontMIP: number;
-    ongoingMIP: number;
+    calculatedDTI: number | null;
+    propertyTax: number | null;
+    propertyInsurance: number | null;
+    interestRate: number | null;
+    conventionalInterestRate: number | null;
+    fhaInterestRate: number | null;
+    upfrontMIP: number | null;
+    ongoingMIP: number | null;
     dataSource?: string;
     dataTimestamp?: number;
   };
   goals: {
     renovations: number;
     additionalCash: number;
+    targetFICO?: number | null;
+    targetDownPayment?: number | null;
+    monthlyExpenses?: Record<string, number>;
+    savingRate?: number | null;
   };
   results: {
-    maxHomePrice: number;
-    monthlyPayment: number;
+    maxHomePrice: number | null;
+    monthlyPayment: number | null;
+    financialDetails?: FinancialDetails;
+    scenarios?: ImprovementScenario[];
   };
 }
 

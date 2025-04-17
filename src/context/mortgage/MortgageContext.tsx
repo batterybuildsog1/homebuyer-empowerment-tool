@@ -1,7 +1,13 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { UserData, MortgageContextType } from './types';
 import { defaultUserData } from './defaultData';
 import { saveToLocalStorage, loadFromLocalStorage } from './storage';
+
+// Interface for the data we're actually saving to localStorage (UserData + workflow state)
+interface StoredMortgageData extends UserData {
+  workflowCompleted?: boolean;
+}
 
 /**
  * Helper function to get appropriate credit history option based on FICO score
@@ -73,16 +79,17 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [workflowCompleted, setWorkflowCompleted] = useState<boolean>(() => {
     // Check if workflow has been completed before
-    const savedData = loadFromLocalStorage();
+    const savedData = loadFromLocalStorage() as StoredMortgageData | null;
     return savedData?.workflowCompleted || false;
   });
 
   // Save data whenever it changes
   useEffect(() => {
-    saveToLocalStorage({
+    const dataToSave: StoredMortgageData = {
       ...userData,
       workflowCompleted
-    });
+    };
+    saveToLocalStorage(dataToSave);
   }, [userData, workflowCompleted]);
 
   const updateLocation = (location: Partial<UserData['location']>) => {
@@ -156,6 +163,7 @@ export const MortgageProvider: React.FC<{ children: ReactNode }> = ({ children }
       (userData.location.city && 
       userData.location.state && 
       userData.financials.annualIncome > 0 &&
+      userData.results.maxHomePrice !== null && 
       userData.results.maxHomePrice > 0)
     );
   };

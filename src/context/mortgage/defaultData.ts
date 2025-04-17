@@ -27,13 +27,7 @@ export const defaultUserData: UserData = {
       downPayment: "<5%",
     },
     currentHousingPayment: 0,
-    debtItems: {
-      carLoan: 0,
-      studentLoan: 0,
-      creditCard: 0,
-      personalLoan: 0,
-      otherDebt: 0
-    },
+    debtItems: [], // Initialize as empty array to match the type
   },
   loanDetails: {
     loanType: 'conventional',
@@ -51,12 +45,14 @@ export const defaultUserData: UserData = {
     maxHomePrice: null,
     monthlyPayment: null,
     scenarios: [],
+    financialDetails: undefined,
   },
   goals: {
+    renovations: 0,
+    additionalCash: 0,
     targetFICO: null,
     targetDownPayment: null,
     monthlyExpenses: {},
     savingRate: null,
   },
-  workflowCompleted: false // Add default value for workflowCompleted
 };
