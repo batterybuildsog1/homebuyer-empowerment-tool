@@ -1,17 +1,13 @@
 
-/**
- * The progress state for data fetching operations
- */
 export interface FetchProgressState {
   isLoading: boolean;
   progress: number;
   message: string;
   hasAttemptedFetch: boolean;
+  isError: boolean;
+  errorMessage: string | null;
 }
 
-/**
- * Cached loan data structure
- */
 export interface CachedLoanData {
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
@@ -19,4 +15,24 @@ export interface CachedLoanData {
   propertyInsurance: number | null;
   upfrontMIP?: number | null;
   ongoingMIP?: number | null;
+}
+
+export interface MortgageApiResponse {
+  conventionalInterestRate: number;
+  fhaInterestRate: number;
+  propertyTax: number;
+  propertyInsurance: number;
+}
+
+export interface DataSummaryProps {
+  loanType: 'conventional' | 'fha';
+  conventionalInterestRate: number | null;
+  fhaInterestRate: number | null;
+  propertyTax: number | null;
+  propertyInsurance: number | null;
+  hasAttemptedFetch: boolean;
+  isError: boolean;
+  errorMessage: string | null;
+  isLoading: boolean;
+  onFetchData: (silent?: boolean) => Promise<boolean>;
 }

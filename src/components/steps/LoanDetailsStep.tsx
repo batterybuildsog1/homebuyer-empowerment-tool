@@ -16,7 +16,7 @@ const LoanDetailsStep: React.FC = () => {
   const { userData, updateLoanDetails } = useMortgage();
   const { convertDebtItemsToLegacy } = useFinancialForm();
   
-  // Function to check if we have all necessary data to proceed
+  // Check if we have all necessary data to proceed
   const checkDataReadiness = useCallback(() => {
     const loanType = formData.loanType;
     
@@ -80,8 +80,8 @@ const LoanDetailsStep: React.FC = () => {
       <CardContent>
         {fetchProgress.isLoading ? (
           <LoadingIndicator 
-            progress={fetchProgress.progress} 
-            message={fetchProgress.message} 
+            message={fetchProgress.message || 'Loading...'}
+            progress={fetchProgress.progress || 0}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { DollarSign, TrendingUp } from "lucide-react";
@@ -41,17 +40,11 @@ const AnnualIncomeInput = ({
       debounceTimerRef.current = setTimeout(async () => {
         console.log("Triggering background data fetch based on income entry:", annualIncome);
         try {
-          const fetchedData = await fetchExternalData();
-          if (fetchedData && 
-              (fetchedData.conventionalInterestRate !== null || 
-               fetchedData.fhaInterestRate !== null)) {
-            console.log("Updating context with fetched data:", fetchedData);
-            updateLoanDetails(fetchedData);
+          const success = await fetchExternalData(true);
+          if (success) {
+            setFetchCalled(true);
+            localStorage.setItem("data_fetch_timestamp", Date.now().toString());
           }
-          
-          setFetchCalled(true);
-          
-          localStorage.setItem("data_fetch_timestamp", Date.now().toString());
         } catch (error) {
           console.error("Background data fetch failed:", error);
         }
@@ -63,7 +56,7 @@ const AnnualIncomeInput = ({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [annualIncome, fetchCalled, fetchExternalData, updateLoanDetails]);
+  }, [annualIncome, fetchCalled, fetchExternalData]);
 
   useEffect(() => {
     const lastFetchTime = localStorage.getItem("data_fetch_timestamp");
@@ -73,21 +66,7 @@ const AnnualIncomeInput = ({
         setFetchCalled(true);
       }
     }
-    
-    const cachedData = localStorage.getItem("cached_loan_data");
-    if (cachedData) {
-      try {
-        const parsedData = JSON.parse(cachedData);
-        if (parsedData.conventionalInterestRate !== null || 
-            parsedData.fhaInterestRate !== null) {
-          console.log("Loading cached loan data from AnnualIncomeInput:", parsedData);
-          updateLoanDetails(parsedData);
-        }
-      } catch (e) {
-        console.error("Error parsing cached loan data", e);
-      }
-    }
-  }, [updateLoanDetails]);
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9]/g, '');
