@@ -11,3 +11,6 @@ schedule = "@daily"
 [functions.get-mortgage-rates]
 verify_jwt = false
 
+[functions.get-county-data]
+verify_jwt = false
+

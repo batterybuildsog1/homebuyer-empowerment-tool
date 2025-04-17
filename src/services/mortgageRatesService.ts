@@ -1,6 +1,7 @@
 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { CountyPropertyData } from "@/hooks/data/usePropertyData";
 
 export interface MortgageDataResponse {
   conventionalInterestRate: number | null;
@@ -65,8 +66,7 @@ export const fetchMortgageRates = async (): Promise<{
 };
 
 /**
- * Fetches property tax rate and insurance premium
- * Note: This uses hardcoded test data as per requirements
+ * Fetches property tax rate and insurance premium from county data
  */
 export const fetchPropertyData = async (
   state: string,
@@ -76,13 +76,44 @@ export const fetchPropertyData = async (
   propertyTax: number | null;
   propertyInsurance: number | null;
 }> => {
-  console.log(`Getting property data for ${county}, ${state} (${zipCode}) - using test data`);
-  
-  // Return test values as requested
-  return {
-    propertyTax: TEST_DATA.propertyTax,
-    propertyInsurance: TEST_DATA.propertyInsurance
-  };
+  try {
+    console.log(`Fetching property data for ${county}, ${state}`);
+    
+    if (!state || !county) {
+      throw new Error("State and county are required");
+    }
+    
+    // Call the get-county-data edge function
+    const { data, error } = await supabase.functions.invoke('get-county-data', {
+      body: { state, county }
+    });
+    
+    if (error) {
+      throw new Error(`Error calling get-county-data: ${error.message}`);
+    }
+    
+    if (!data || !data.success) {
+      throw new Error(data?.error || "Failed to fetch property data");
+    }
+    
+    const countyData = data.data as CountyPropertyData;
+    
+    // Use primary tax rate, assuming all users are primary residents
+    return {
+      propertyTax: countyData.primary_tax,
+      propertyInsurance: countyData.insurance
+    };
+    
+  } catch (error) {
+    console.error(`Error fetching property data:`, error);
+    toast.error("Error retrieving property data. Using estimates.");
+    
+    // Return test values if the API call fails
+    return {
+      propertyTax: TEST_DATA.propertyTax,
+      propertyInsurance: TEST_DATA.propertyInsurance
+    };
+  }
 };
 
 /**
@@ -99,7 +130,7 @@ export const fetchAllMortgageData = async (
     // First, get the interest rates from the edge function
     const rates = await fetchMortgageRates();
     
-    // Then, get property data (still using test data)
+    // Then, get property data
     const propertyData = await fetchPropertyData(state, county, zipCode);
     
     // Return combined data

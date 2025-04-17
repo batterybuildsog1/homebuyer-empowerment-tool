@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      county_property_data: {
+        Row: {
+          county: string
+          general_tax: number
+          id: number
+          insurance: number
+          last_fetched: string
+          primary_tax: number
+          state: string
+        }
+        Insert: {
+          county: string
+          general_tax: number
+          id?: number
+          insurance: number
+          last_fetched?: string
+          primary_tax: number
+          state: string
+        }
+        Update: {
+          county?: string
+          general_tax?: number
+          id?: number
+          insurance?: number
+          last_fetched?: string
+          primary_tax?: number
+          state?: string
+        }
+        Relationships: []
+      }
       daily_mortgage_rates: {
         Row: {
           conventional: number

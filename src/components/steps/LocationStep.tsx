@@ -12,6 +12,7 @@ const LocationStep: React.FC = () => {
   const { userData, updateLocation, setCurrentStep } = useMortgage();
   const [formData, setFormData] = useState({
     city: userData.location.city,
+    county: userData.location.county || '',
     state: userData.location.state,
     zipCode: userData.location.zipCode,
   });
@@ -22,6 +23,10 @@ const LocationStep: React.FC = () => {
     
     if (!formData.city.trim()) {
       newErrors.city = "City is required";
+    }
+    
+    if (!formData.county.trim()) {
+      newErrors.county = "County is required";
     }
     
     if (!formData.state.trim()) {
@@ -81,6 +86,19 @@ const LocationStep: React.FC = () => {
           </div>
           
           <div className="space-y-2">
+            <Label htmlFor="county">County</Label>
+            <Input
+              id="county"
+              value={formData.county}
+              onChange={(e) => setFormData({ ...formData, county: e.target.value })}
+              placeholder="Enter county name"
+            />
+            {errors.county && <p className="text-sm text-destructive mt-1">{errors.county}</p>}
+          </div>
+        </div>
+        
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-2">
             <Label htmlFor="state">State (2-letter code)</Label>
             <Input
               id="state"
@@ -92,17 +110,17 @@ const LocationStep: React.FC = () => {
             />
             {errors.state && <p className="text-sm text-destructive mt-1">{errors.state}</p>}
           </div>
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="zipCode">ZIP Code</Label>
-          <Input
-            id="zipCode"
-            value={formData.zipCode}
-            onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-            placeholder="12345"
-          />
-          {errors.zipCode && <p className="text-sm text-destructive mt-1">{errors.zipCode}</p>}
+          
+          <div className="space-y-2">
+            <Label htmlFor="zipCode">ZIP Code</Label>
+            <Input
+              id="zipCode"
+              value={formData.zipCode}
+              onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+              placeholder="12345"
+            />
+            {errors.zipCode && <p className="text-sm text-destructive mt-1">{errors.zipCode}</p>}
+          </div>
         </div>
 
         <div className="pt-4">
