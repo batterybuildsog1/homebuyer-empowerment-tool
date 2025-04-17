@@ -55,7 +55,12 @@ Deno.serve(async (req) => {
       if (ageInDays < DATA_TTL_DAYS) {
         console.log(`Using cached data for ${county}, ${state} (${ageInDays.toFixed(1)} days old)`);
         return new Response(
-          JSON.stringify({ success: true, data: cachedData }),
+          JSON.stringify({ 
+            success: true, 
+            data: cachedData, 
+            fromCache: true,
+            ageInDays: Math.round(ageInDays)
+          }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -174,7 +179,12 @@ Return only valid JSON.
 
     // 4. Return the data
     return new Response(
-      JSON.stringify({ success: true, data: upsertData }),
+      JSON.stringify({ 
+        success: true, 
+        data: upsertData, 
+        fromCache: false,
+        source: 'openai'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
     

@@ -12,6 +12,7 @@ export interface MortgageDataResponse {
   ongoingMIP?: number | null;
   rateDate?: string;
   source?: string;
+  fromCache?: boolean;
 }
 
 // Fallback test values for development - used only if API calls fail
@@ -30,6 +31,8 @@ const TEST_DATA = {
 export const fetchMortgageRates = async (): Promise<{
   conventionalInterestRate: number | null;
   fhaInterestRate: number | null;
+  source?: string;
+  fromCache?: boolean;
 }> => {
   try {
     console.log("Fetching mortgage rates from edge function...");
@@ -51,7 +54,9 @@ export const fetchMortgageRates = async (): Promise<{
     
     return {
       conventionalInterestRate: data.data.conventionalInterestRate,
-      fhaInterestRate: data.data.fhaInterestRate
+      fhaInterestRate: data.data.fhaInterestRate,
+      source: data.data.source,
+      fromCache: data.data.fromCache || false
     };
   } catch (error) {
     console.error("Error fetching mortgage rates:", error);
@@ -60,7 +65,8 @@ export const fetchMortgageRates = async (): Promise<{
     // Return test values if the API call fails
     return {
       conventionalInterestRate: TEST_DATA.conventionalInterestRate,
-      fhaInterestRate: TEST_DATA.fhaInterestRate
+      fhaInterestRate: TEST_DATA.fhaInterestRate,
+      source: 'test_data'
     };
   }
 };
@@ -75,6 +81,8 @@ export const fetchPropertyData = async (
 ): Promise<{
   propertyTax: number | null;
   propertyInsurance: number | null;
+  source?: string;
+  fromCache?: boolean;
 }> => {
   try {
     console.log(`Fetching property data for ${county}, ${state}`);
@@ -101,7 +109,9 @@ export const fetchPropertyData = async (
     // Use primary tax rate, assuming all users are primary residents
     return {
       propertyTax: countyData.primary_tax,
-      propertyInsurance: countyData.insurance
+      propertyInsurance: countyData.insurance,
+      source: 'supabase',
+      fromCache: data.fromCache || false
     };
     
   } catch (error) {
@@ -111,7 +121,8 @@ export const fetchPropertyData = async (
     // Return test values if the API call fails
     return {
       propertyTax: TEST_DATA.propertyTax,
-      propertyInsurance: TEST_DATA.propertyInsurance
+      propertyInsurance: TEST_DATA.propertyInsurance,
+      source: 'test_data'
     };
   }
 };
@@ -140,7 +151,9 @@ export const fetchAllMortgageData = async (
       propertyTax: propertyData.propertyTax,
       propertyInsurance: propertyData.propertyInsurance,
       upfrontMIP: TEST_DATA.upfrontMIP,
-      ongoingMIP: TEST_DATA.ongoingMIP
+      ongoingMIP: TEST_DATA.ongoingMIP,
+      source: propertyData.fromCache && rates.fromCache ? 'cache' : 'api',
+      fromCache: propertyData.fromCache && rates.fromCache
     };
     
   } catch (error) {

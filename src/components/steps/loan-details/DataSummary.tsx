@@ -1,8 +1,10 @@
 
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, RefreshCw } from "lucide-react";
+import { formatPercentage, formatCurrency } from "@/utils/formatters";
+import { useMortgage } from "@/context/MortgageContext";
+import { getRelativeTimeString } from "@/utils/formatters";
 
 interface DataSummaryProps {
   loanType: 'conventional' | 'fha';
@@ -11,10 +13,10 @@ interface DataSummaryProps {
   propertyTax: number | null;
   propertyInsurance: number | null;
   hasAttemptedFetch: boolean;
-  onFetchData: () => Promise<any>; 
+  onFetchData: () => Promise<any>;
 }
 
-const DataSummary = ({
+const DataSummary: React.FC<DataSummaryProps> = ({
   loanType,
   conventionalInterestRate,
   fhaInterestRate,
@@ -22,130 +24,65 @@ const DataSummary = ({
   propertyInsurance,
   hasAttemptedFetch,
   onFetchData
-}: DataSummaryProps) => {
-  // Helper function to format interest rates with two decimal places
-  const formatInterestRate = (rate: number | null): string => {
-    if (rate === null) return "N/A";
-    return rate.toFixed(2) + "%";
-  };
+}) => {
+  const { userData } = useMortgage();
+  const interestRate = loanType === 'conventional' ? conventionalInterestRate : fhaInterestRate;
+  const dataSource = userData.loanDetails.dataSource || 'unknown';
+  const dataTimestamp = userData.loanDetails.dataTimestamp || 0;
+  
+  // Format relative time for when data was last updated
+  const timeString = dataTimestamp > 0 
+    ? getRelativeTimeString(new Date(dataTimestamp)) 
+    : 'unknown';
 
-  // Check if we have any data to display
-  const hasData = conventionalInterestRate !== null || fhaInterestRate !== null || propertyTax !== null || propertyInsurance !== null;
-  
-  // Check if we have the required data for current loan type
-  const hasRequiredData = loanType === 'conventional' ? 
-    (conventionalInterestRate !== null && propertyTax !== null && propertyInsurance !== null) : 
-    (fhaInterestRate !== null && propertyTax !== null && propertyInsurance !== null);
-  
-  // Check what specific data is missing
-  const missingData = {
-    interestRate: loanType === 'conventional' ? conventionalInterestRate === null : fhaInterestRate === null,
-    propertyTax: propertyTax === null,
-    propertyInsurance: propertyInsurance === null
-  };
-  
-  const handleFetchClick = async () => {
-    try {
-      toast.info("Fetching current mortgage data...");
-      const result = await onFetchData();
-      if (!result) {
-        toast.error("Couldn't retrieve data. Please check your location information and try again.");
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("An error occurred while fetching data.");
+  const renderDataSourceBadge = () => {
+    if (dataSource === 'api') {
+      return <Badge variant="default" className="ml-2">Live Data</Badge>;
+    } else if (dataSource === 'cache') {
+      return <Badge variant="secondary" className="ml-2">Cached</Badge>;
+    } else if (dataSource === 'test_data') {
+      return <Badge variant="outline" className="ml-2">Test Data</Badge>;
     }
+    return null;
   };
-
-  if (!hasData) {
-    return (
-      <Card className="p-4 border border-amber-200 bg-amber-50">
-        <div className="text-center py-4">
-          <p className="mb-3 text-amber-800">
-            {hasAttemptedFetch 
-              ? "Data fetch attempted but no results were found. Please check your location information and try again."
-              : "No data fetched yet. Data will be automatically retrieved when you enter your location and income."
-            }
-          </p>
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={handleFetchClick}
-            className="flex items-center gap-1"
-          >
-            {hasAttemptedFetch ? <RefreshCw className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            {hasAttemptedFetch ? "Retry Fetch Data" : "Fetch Current Data"}
-          </Button>
-        </div>
-      </Card>
-    );
-  }
 
   return (
-    <div className="border rounded-lg p-4 space-y-3">
-      <h3 className="font-medium">Data Summary</h3>
-      
-      <div className="space-y-2 divide-y">
-        <div className="pb-2">
-          <h4 className="text-sm font-medium mb-1">Interest Rates</h4>
-          <div className="grid grid-cols-2 gap-1">
-            <div className="flex justify-between text-sm">
-              <span>Conventional:</span>
-              <span className={conventionalInterestRate === null ? "text-amber-500" : "font-medium"}>
-                {formatInterestRate(conventionalInterestRate)}
-              </span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span>FHA:</span>
-              <span className={fhaInterestRate === null ? "text-amber-500" : "font-medium"}>
-                {formatInterestRate(fhaInterestRate)}
-              </span>
-            </div>
-          </div>
+    <div className="border rounded-lg p-4 bg-muted/30">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-medium">Data Summary</h3>
+        <div className="flex items-center">
+          {renderDataSourceBadge()}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="ml-2"
+            onClick={onFetchData}
+          >
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
         </div>
-        
-        <div className="py-2">
-          <h4 className="text-sm font-medium mb-1">Property Data</h4>
-          <div className="space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Property Tax Rate:</span>
-              <span className={propertyTax === null ? "text-amber-500" : "font-medium"}>
-                {propertyTax === null ? "N/A" : `${propertyTax.toFixed(2)}%`}
-              </span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span>Annual Insurance:</span>
-              <span className={propertyInsurance === null ? "text-amber-500" : "font-medium"}>
-                {propertyInsurance === null ? "N/A" : `$${propertyInsurance?.toLocaleString()}`}
-              </span>
-            </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-sm">
+            <p className="text-muted-foreground">Current {loanType === 'conventional' ? 'Conventional' : 'FHA'} Rate:</p>
+            <p className="font-medium">{interestRate ? formatPercentage(interestRate) : 'Not available'}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted-foreground">Property Tax Rate:</p>
+            <p className="font-medium">{propertyTax ? formatPercentage(propertyTax) : 'Not available'}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted-foreground">Annual Insurance:</p>
+            <p className="font-medium">{propertyInsurance ? formatCurrency(propertyInsurance) : 'Not available'}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted-foreground">Data Updated:</p>
+            <p className="font-medium">{timeString}</p>
           </div>
         </div>
       </div>
-      
-      {!hasRequiredData && (
-        <div className="pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full flex items-center justify-center gap-1"
-            onClick={handleFetchClick}
-          >
-            <RefreshCw className="h-4 w-4" />
-            Fetch Missing Data
-          </Button>
-          <p className="text-xs text-amber-600 mt-2 text-center">
-            {missingData.interestRate && `Missing ${loanType} interest rate. `}
-            {missingData.propertyTax && "Missing property tax rate. "}
-            {missingData.propertyInsurance && "Missing insurance data. "}
-            These are required to calculate accurate results.
-          </p>
-        </div>
-      )}
     </div>
   );
 };

@@ -60,12 +60,18 @@ Deno.serve(async (req) => {
             upfrontMIP: TEST_DATA.upfrontMIP,
             ongoingMIP: TEST_DATA.ongoingMIP,
             rateDate: new Date().toISOString().split('T')[0],
-            source: "test_data"
+            source: "test_data",
+            fromCache: false
           }
         }),
         { headers: corsHeaders }
       )
     }
+    
+    // Calculate data age
+    const rateDate = new Date(latestRates[0].rate_date);
+    const now = new Date();
+    const ageInDays = Math.round((now.getTime() - rateDate.getTime()) / (1000 * 60 * 60 * 24));
     
     // Format the response with the latest rates
     const responseData = {
@@ -78,7 +84,9 @@ Deno.serve(async (req) => {
         upfrontMIP: TEST_DATA.upfrontMIP,
         ongoingMIP: TEST_DATA.ongoingMIP,
         rateDate: latestRates[0].rate_date,
-        source: "database"
+        source: "database",
+        fromCache: true,
+        ageInDays: ageInDays
       }
     }
     

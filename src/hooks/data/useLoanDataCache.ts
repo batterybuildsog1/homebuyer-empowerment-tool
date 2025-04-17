@@ -49,7 +49,9 @@ export const useLoanDataCache = () => {
           propertyTax: mortgageData.propertyTax,
           propertyInsurance: mortgageData.propertyInsurance,
           upfrontMIP: mortgageData.upfrontMIP,
-          ongoingMIP: mortgageData.ongoingMIP
+          ongoingMIP: mortgageData.ongoingMIP,
+          dataSource: cachedData.source || 'cache',
+          dataTimestamp: cachedData.timestamp
         });
         
         return true;

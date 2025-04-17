@@ -20,6 +20,8 @@ export const useDataFetching = () => {
   
   /**
    * Fetches external mortgage data from the API
+   * @param silent If true, don't show loading states or toasts
+   * @returns The fetched mortgage data or null if the fetch failed
    */
   const fetchExternalData = useCallback(async (silent = false) => {
     // Check if we have location data
@@ -35,12 +37,19 @@ export const useDataFetching = () => {
         setFetchProgress({
           isLoading: true,
           progress: 10,
-          message: 'Fetching mortgage rates...',
+          message: 'Checking for cached data...',
           hasAttemptedFetch: true
         });
+      } else {
+        // Just mark as loading without UI updates
+        setFetchProgress(prev => ({
+          ...prev,
+          isLoading: true,
+          hasAttemptedFetch: true
+        }));
       }
       
-      // Fetch all mortgage data at once
+      // Fetch all mortgage data at once - the edge function will check Supabase first
       const mortgageData = await fetchAllMortgageData(
         userData.location.state,
         userData.location.county,
@@ -67,7 +76,9 @@ export const useDataFetching = () => {
         propertyTax: mortgageData.propertyTax,
         propertyInsurance: mortgageData.propertyInsurance,
         upfrontMIP: mortgageData.upfrontMIP,
-        ongoingMIP: mortgageData.ongoingMIP
+        ongoingMIP: mortgageData.ongoingMIP,
+        dataSource: mortgageData.source || 'api',
+        dataTimestamp: Date.now()
       });
       
       // Store data in cache
@@ -88,6 +99,13 @@ export const useDataFetching = () => {
         });
         
         toast.success('Mortgage data updated successfully');
+      } else {
+        setFetchProgress(prev => ({
+          ...prev,
+          isLoading: false,
+          progress: 100,
+          message: 'Data fetch complete',
+        }));
       }
       
       return mortgageData;
@@ -104,6 +122,13 @@ export const useDataFetching = () => {
           message: 'Error fetching data',
           hasAttemptedFetch: true
         });
+      } else {
+        setFetchProgress(prev => ({
+          ...prev,
+          isLoading: false,
+          progress: 0,
+          message: 'Error fetching data',
+        }));
       }
       
       return null;
