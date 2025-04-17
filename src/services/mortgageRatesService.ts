@@ -118,22 +118,3 @@ export const fetchAllMortgageData = async (
     return null;
   }
 };
-
-// Legacy function wrappers for backward compatibility
-export const getInterestRates = async (state: string): Promise<number | null> => {
-  const rates = await fetchMortgageRates();
-  return rates.conventionalInterestRate;
-};
-
-export const getFhaInterestRates = async (state: string): Promise<number | null> => {
-  const rates = await fetchMortgageRates();
-  return rates.fhaInterestRate;
-};
-
-export const getPropertyTaxRate = async (state: string, county: string): Promise<number | null> => {
-  return TEST_DATA.propertyTax;
-};
-
-export const getPropertyInsurance = async (state: string, zipCode: string): Promise<number | null> => {
-  return TEST_DATA.propertyInsurance;
-};

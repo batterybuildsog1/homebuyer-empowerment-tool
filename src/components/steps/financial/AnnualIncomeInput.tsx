@@ -41,7 +41,7 @@ const AnnualIncomeInput = ({
       debounceTimerRef.current = setTimeout(async () => {
         console.log("Triggering background data fetch based on income entry:", annualIncome);
         try {
-          const fetchedData = await fetchExternalData(true);
+          const fetchedData = await fetchExternalData();
           if (fetchedData && 
               (fetchedData.conventionalInterestRate !== null || 
                fetchedData.fhaInterestRate !== null)) {
