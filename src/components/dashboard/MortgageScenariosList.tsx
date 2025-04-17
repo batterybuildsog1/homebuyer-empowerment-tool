@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { formatCurrency } from '@/utils/formatters';
+import { useMortgage } from '@/context/MortgageContext';
 
 interface MortgageScenariosListProps {
   readOnly?: boolean;
@@ -19,6 +21,7 @@ const MortgageScenariosList: React.FC<MortgageScenariosListProps> = ({
 }) => {
   const { isLoggedIn } = useUser();
   const { scenarios, isLoadingList, fetchScenarios, loadScenario } = useMortgageScenarios();
+  const { setUserData, completeWorkflow } = useMortgage();
   const navigate = useNavigate();
 
   useEffect(() => {

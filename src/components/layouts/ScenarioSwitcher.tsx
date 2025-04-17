@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { FilePlus, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
-import { useMortgage } from '@/store/mortgage';
+import { useMortgage } from '@/context/MortgageContext';
 
 const ScenarioSwitcher: React.FC = () => {
   const { isLoggedIn } = useUser();
